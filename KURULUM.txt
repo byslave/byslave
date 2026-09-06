@@ -7,7 +7,9 @@ Masaustunde calistirma
 
 2) Bu klasoru masaustune koy (zip'ten cikar).
 
-3) Klasorde .env dosyasi yoksa .env.example'i kopyala, adini .env yap.
+3) Windows noktali dosyalari gizler. .env.example gozukmeyebilir.
+   Bunun yerine env.ornek.txt var. olustur-env.bat cift tikla
+   veya VS Code'da New File deyip adini .env yap.
 
 4) UCRETSIZ (onerilen):
    https://console.groq.com/keys adresinden ucretsiz anahtar al (kart istemez).
