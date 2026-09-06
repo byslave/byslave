@@ -2,25 +2,28 @@
 setlocal
 cd /d "%~dp0"
 
+set PY=python
 where python >nul 2>nul
+if errorlevel 1 set PY=py
+
+where %PY% >nul 2>nul
 if errorlevel 1 (
-  echo Python yok. Once https://www.python.org/downloads/ adresinden Python kur.
-  echo Kurulumda "Add python.exe to PATH" kutusunu isaretle.
+  echo Python yok. https://www.python.org/downloads/ adresinden kur.
+  echo Add python.exe to PATH kutusunu isaretle.
   pause
   exit /b 1
 )
 
 if not exist ".venv\Scripts\python.exe" (
   echo Sanal ortam kuruluyor...
-  python -m venv .venv
+  %PY% -m venv .venv
 )
 
-call .venv\Scripts\activate.bat
-
 echo Paketler kontrol ediliyor...
-python -m pip install -q -r requirements.txt
+.venv\Scripts\python.exe -m pip install -q --upgrade pip
+.venv\Scripts\python.exe -m pip install -q -r requirements.txt
 if errorlevel 1 (
-  echo Paket kurulumu basarisiz. Internetini kontrol et.
+  echo Paket kurulumu basarisiz. Derleyici gerekmez; pip ve numpy guncel olmali.
   pause
   exit /b 1
 )
@@ -40,7 +43,7 @@ if errorlevel 1 (
 )
 
 echo Bot aciliyor...
-python main.py
+.venv\Scripts\python.exe main.py
 if errorlevel 1 (
   echo Bot kapandi veya hata verdi.
   pause
