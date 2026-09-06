@@ -1,4 +1,11 @@
-from sohbet.config import Settings, diagnose_setup, get_settings, parse_env_text, remap_groq_model
+from sohbet.config import (
+    Settings,
+    diagnose_setup,
+    get_settings,
+    inspect_env_file,
+    parse_env_text,
+    remap_groq_model,
+)
 
 
 def test_missing_key_is_not_configured(monkeypatch, tmp_path) -> None:
@@ -61,6 +68,25 @@ def test_placeholder_key_is_ignored(monkeypatch, tmp_path) -> None:
 def test_remap_deprecated_groq_models() -> None:
     assert remap_groq_model("llama-3.1-8b-instant") == "qwen/qwen3.8-27b"
     assert remap_groq_model("openai/gpt-oss-20b") == "openai/gpt-oss-20b"
+
+
+def test_inspect_messy_env(tmp_path) -> None:
+    (tmp_path / ".env").write_text(
+        "\n".join(
+            [
+                "GROQ_API_KEY=gsk_this_is_a_real_looking_key_value",
+                "GROQ_API_KEY=gsk_...",
+                "GROQ_MODEL=qwen/qwen3.8-27b",
+                ".venv\\Scripts\\python.exe main.py",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    info = inspect_env_file(tmp_path / ".env")
+    assert info["key_lines"] == 2
+    assert info["real_key"] is True
+    assert info["placeholder_key"] is True
+    assert info["command_line"] is True
 
 
 def test_diagnose_env_txt(monkeypatch, tmp_path) -> None:

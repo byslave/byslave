@@ -17,8 +17,9 @@ Masaustunde calistirma
 
    OpenAI kredi ister. Groq varken OpenAI'ye gerek yok.
 
-5) Windows:  baslat.bat  dosyasina cift tikla.
-   Mac/Linux:  terminalde  bash baslat.sh
+5) Once kontrol.bat cift tikla (anahtari yazmaz).
+   "Groq yanit verdi" deyince:  .venv\Scripts\python.exe main.py
+   veya baslat.bat
 
 Ilk acilista paketler inecek, biraz surebilir.
 Sonra Sohbet penceresi acilir. Canli baslat'a bas, konus.

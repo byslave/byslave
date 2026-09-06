@@ -1,0 +1,23 @@
+Bu ekrandaki "Bir seyler ters gitti" yazisi ESKI programdir.
+Yeni kod o mesaji gostermez; baslikta "kisisel sesli sohbet · 2" yazar.
+
+1) Zip indir (guncel dal):
+   https://github.com/byslave/byslave/archive/refs/heads/cursor/date-voice-chat-bot-509c.zip
+
+2) Icinden sohbet klasorunu, main.py, kontrol.py, kontrol.bat dosyalarini
+   senin sohbet_masaustu klasorune kopyala (uzerine yaz).
+   .env dosyana DOKUNMA, silme.
+
+3) .env dosyasini tamamen su 3 satira indir (anahtari kendin yaz):
+
+GROQ_API_KEY=
+GROQ_MODEL=qwen/qwen3.8-27b
+PROVIDER=auto
+
+   GROQ_API_KEY= sagina Groq konsolundaki gercek anahtari yapistir.
+   Ikinci GROQ_API_KEY yazma. gsk_... birakma.
+   .venv\Scripts\python.exe satirini buraya yazma.
+
+4) kontrol.bat cift tikla. Anahtari ekrana yazmaz.
+   "Groq yanit verdi" derse:
+   .venv\Scripts\python.exe main.py

@@ -15,6 +15,7 @@ from sohbet.live import LiveSession, create_live
 from sohbet.turn_live import TurnLiveSession
 from sohbet.session import ChatSession
 from sohbet.ui import theme
+from sohbet.version import APP_VERSION
 from sohbet.voices import VOICE_LABELS, label_for, voice_from_label
 
 
@@ -59,7 +60,7 @@ class ChatApp(ctk.CTk):
 
         subtitle = ctk.CTkLabel(
             header,
-            text="kişisel sesli sohbet",
+            text=f"kişisel sesli sohbet · {APP_VERSION}",
             font=ctk.CTkFont(family=theme.FONT_FAMILY, size=14),
             text_color=theme.MUTED,
         )

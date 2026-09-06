@@ -177,6 +177,42 @@ def _file_has_filled_key(path: Path) -> bool:
     return False
 
 
+def inspect_env_file(path: Path | None = None) -> dict[str, object]:
+    """Anahtar yazmadan .env kargaşasını özetle."""
+    target = path or PROJECT_ROOT / ".env"
+    info: dict[str, object] = {
+        "exists": target.exists(),
+        "key_lines": 0,
+        "placeholder_key": False,
+        "real_key": False,
+        "command_line": False,
+        "models": [],
+    }
+    if not target.exists():
+        return info
+    text = _read_env_text(target)
+    models: list[str] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if "python.exe" in line.lower() or line.lower().startswith(".venv"):
+            info["command_line"] = True
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = _clean_env(value)
+        if key == "GROQ_API_KEY":
+            info["key_lines"] = int(info["key_lines"]) + 1
+            if _is_placeholder_secret(value):
+                info["placeholder_key"] = True
+            else:
+                info["real_key"] = True
+        if key == "GROQ_MODEL" and value:
+            models.append(value)
+    info["models"] = models
+    return info
+
+
 def diagnose_setup(settings: Settings | None = None) -> str:
     """Anahtar yoksa kullanıcıya dosya adını / konumu anlat. Anahtar yazdırılmaz."""
     if settings is not None and settings.api_configured:
@@ -208,9 +244,24 @@ def diagnose_setup(settings: Settings | None = None) -> str:
             "`.env` bulunamadı. `env.ornek.txt` dosyasını kopyalayıp adını `.env` yap, "
             "içine GROQ_API_KEY=gsk_... yaz. Anahtar: https://console.groq.com/keys"
         )
+    inspected = inspect_env_file()
+    if inspected["placeholder_key"] and inspected["real_key"]:
+        return (
+            "`.env` içinde GROQ_API_KEY iki kez var. `gsk_...` yazan satırı sil; "
+            "yalnız gerçek anahtar kalsın. Komut satırını da sil."
+        )
+    if inspected["placeholder_key"] and not inspected["real_key"]:
+        return (
+            "`.env` içinde anahtar `gsk_...` diye duruyor. Groq konsolundaki gerçek anahtarı yaz."
+        )
+    if inspected["command_line"]:
+        return (
+            "`.env` içine `.venv\\Scripts\\python.exe main.py` yazılmış. "
+            "O satırı sil; komutu terminale yaz."
+        )
     return (
         "`.env` var ama GROQ_API_KEY boş. https://console.groq.com/keys adresinden "
-        "ücretsiz anahtar alıp `GROQ_API_KEY=gsk_...` diye yaz (eşittirden sonra boşluk olmasın)."
+        "ücretsiz anahtar alıp `GROQ_API_KEY=` sağına gerçek anahtarı yaz."
     )
 
 
