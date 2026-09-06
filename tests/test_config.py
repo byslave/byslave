@@ -1,4 +1,4 @@
-from sohbet.config import Settings, diagnose_setup, get_settings, remap_groq_model
+from sohbet.config import Settings, diagnose_setup, get_settings, parse_env_text, remap_groq_model
 
 
 def test_missing_key_is_not_configured(monkeypatch, tmp_path) -> None:
@@ -18,14 +18,44 @@ def test_quoted_groq_key_and_deprecated_model(monkeypatch, tmp_path) -> None:
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     monkeypatch.delenv("GROQ_MODEL", raising=False)
     (tmp_path / ".env").write_text(
-        'GROQ_API_KEY="gsk_testquotedkey"\nGROQ_MODEL=llama-3.1-8b-instant\n',
+        'GROQ_API_KEY="gsk_testquotedkey_long_enough"\nGROQ_MODEL=llama-3.1-8b-instant\n',
         encoding="utf-8",
     )
     monkeypatch.setattr("sohbet.config.PROJECT_ROOT", tmp_path)
     settings = get_settings()
-    assert settings.groq_api_key == "gsk_testquotedkey"
+    assert settings.groq_api_key == "gsk_testquotedkey_long_enough"
     assert settings.resolved_provider == "groq"
     assert settings.llm_model == "qwen/qwen3.8-27b"
+
+
+def test_messy_env_keeps_first_real_key() -> None:
+    parsed = parse_env_text(
+        "\n".join(
+            [
+                "GROQ_API_KEY=gsk_this_is_a_real_looking_key_value",
+                "GROQ_API_KEY=gsk_...",
+                "GROQ_MODEL=qwen/qwen3.8-27b",
+                "GROQ_MODEL=llama-3.1-8b-instant",
+                ".venv\\Scripts\\python.exe main.py",
+            ]
+        )
+    )
+    assert parsed["GROQ_API_KEY"] == "gsk_this_is_a_real_looking_key_value"
+    assert parsed["GROQ_MODEL"] == "qwen/qwen3.8-27b"
+    assert ".venv" not in parsed
+
+
+def test_placeholder_key_is_ignored(monkeypatch, tmp_path) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    (tmp_path / ".env").write_text(
+        "GROQ_API_KEY=gsk_...\nGROQ_MODEL=qwen/qwen3.8-27b\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("sohbet.config.PROJECT_ROOT", tmp_path)
+    settings = get_settings()
+    assert settings.api_configured is False
+    assert settings.groq_api_key == ""
 
 
 def test_remap_deprecated_groq_models() -> None:

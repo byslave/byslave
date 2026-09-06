@@ -26,7 +26,7 @@ Sonra Sohbet penceresi acilir. Canli baslat'a bas, konus.
 Sorun olursa:
 - Sag ust "API bagli degil" ise anahtar .env'de degil demektir.
   Dosya adi tam olarak .env olsun (.env.txt veya env.ornek.txt degil).
-  Satir: GROQ_API_KEY=gsk_...  (esittirden sonra bosluk yok)
+  Satir: GROQ_API_KEY=gsk_gercekanahtar  (tek satir, gsk_... yazma)
 - Eski model hatasi icin .env icine su satiri ekle:
   GROQ_MODEL=qwen/qwen3.8-27b
 - Mikrofon iznini ac

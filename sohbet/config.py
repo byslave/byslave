@@ -30,6 +30,26 @@ def _clean_env(value: str) -> str:
     return text
 
 
+def _is_placeholder_secret(value: str) -> bool:
+    """gsk_... / sk-... gibi şablon veya çok kısa değerleri anahtar sayma."""
+    text = _clean_env(value)
+    if not text:
+        return True
+    if "..." in text or text.endswith("...") or set(text) <= {".", "*", "x", "_", "-"}:
+        return True
+    if text in {"gsk_", "sk-", "sk-proj-", "your_key", "gsk_senin_anahtarin"}:
+        return True
+    if text.startswith("gsk_") and len(text) < 20:
+        return True
+    if text.startswith("sk-") and len(text) < 20:
+        return True
+    return False
+
+
+def _is_env_key(name: str) -> bool:
+    return bool(name) and all(ch.isalnum() or ch == "_" for ch in name)
+
+
 def _env(name: str, default: str = "") -> str:
     return _clean_env(os.getenv(name, default))
 
@@ -53,31 +73,63 @@ def _env_candidates(explicit: Path | None = None) -> list[Path]:
     return out
 
 
-def _apply_env_text(text: str) -> None:
+def parse_env_text(text: str) -> dict[str, str]:
+    """İlk geçerli değeri tut. Şablon gsk_... ve komut satırlarını atla."""
+    found: dict[str, str] = {}
     for raw in text.splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, _, value = line.partition("=")
         key = key.strip()
-        if not key or key in os.environ:
+        value = _clean_env(value)
+        if not _is_env_key(key):
             continue
-        os.environ[key] = _clean_env(value)
+        if key in {"GROQ_API_KEY", "OPENAI_API_KEY"}:
+            if key in found or _is_placeholder_secret(value):
+                continue
+            found[key] = value
+            continue
+        if key not in found and value:
+            found[key] = value
+    return found
+
+
+def _apply_parsed(parsed: dict[str, str]) -> None:
+    for key, value in parsed.items():
+        current = os.environ.get(key, "")
+        if key in {"GROQ_API_KEY", "OPENAI_API_KEY"}:
+            if current and not _is_placeholder_secret(current):
+                continue
+            os.environ[key] = value
+            continue
+        if not current:
+            os.environ[key] = value
+    if _is_placeholder_secret(_env("GROQ_API_KEY")):
+        os.environ.pop("GROQ_API_KEY", None)
+    if _is_placeholder_secret(_env("OPENAI_API_KEY")):
+        os.environ.pop("OPENAI_API_KEY", None)
+
+
+def _read_env_text(path: Path) -> str:
+    for encoding in ("utf-8", "utf-8-sig", "utf-16", "utf-16-le", "cp1254"):
+        try:
+            return path.read_text(encoding=encoding)
+        except (OSError, UnicodeError):
+            continue
+    return ""
 
 
 def _load_env_file(path: Path) -> bool:
     if not path.exists():
         return False
-    load_dotenv(path, override=False)
-    if _env("GROQ_API_KEY") or _env("OPENAI_API_KEY"):
+    text = _read_env_text(path)
+    parsed = parse_env_text(text) if text else {}
+    if parsed:
+        _apply_parsed(parsed)
         return True
-    for encoding in ("utf-8-sig", "utf-16", "utf-16-le", "cp1254"):
-        try:
-            _apply_env_text(path.read_text(encoding=encoding))
-        except (OSError, UnicodeError):
-            continue
-        if _env("GROQ_API_KEY") or _env("OPENAI_API_KEY"):
-            return True
+    load_dotenv(path, override=False)
+    _apply_parsed({})
     return True
 
 
@@ -117,7 +169,10 @@ def _file_has_filled_key(path: Path) -> bool:
         return False
     for raw in text.splitlines():
         line = raw.strip().replace(" ", "")
-        if line.startswith("GROQ_API_KEY=gsk_") or line.startswith("OPENAI_API_KEY=sk-"):
+        if "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        if key in {"GROQ_API_KEY", "OPENAI_API_KEY"} and not _is_placeholder_secret(value):
             return True
     return False
 
@@ -239,7 +294,7 @@ def get_settings() -> Settings:
             _env("OPENAI_REALTIME_MODEL", "gpt-4o-mini-realtime-preview")
             or "gpt-4o-mini-realtime-preview"
         ),
-        groq_api_key=_env("GROQ_API_KEY"),
+        groq_api_key="" if _is_placeholder_secret(_env("GROQ_API_KEY")) else _env("GROQ_API_KEY"),
         groq_model=remap_groq_model(_env("GROQ_MODEL", DEFAULT_GROQ_MODEL)),
         groq_stt_model=_env("GROQ_STT_MODEL", "whisper-large-v3") or "whisper-large-v3",
         provider=_env("PROVIDER", "auto") or "auto",
