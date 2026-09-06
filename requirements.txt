@@ -1,5 +1,5 @@
 customtkinter==5.2.2
-openai==1.54.4
+openai>=1.59.0,<2
 python-dotenv==1.0.1
 sounddevice==0.5.1
 numpy==2.1.3

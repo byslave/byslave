@@ -18,6 +18,9 @@ def load_env(env_path: Path | None = None) -> None:
     path = env_path or PROJECT_ROOT / ".env"
     if path.exists():
         load_dotenv(path, override=False)
+    # Boş OPENAI_BASE_URL SDK'yı kırıyor (protokolsüz adres).
+    if not os.getenv("OPENAI_BASE_URL", "").strip():
+        os.environ.pop("OPENAI_BASE_URL", None)
 
 
 @dataclass(frozen=True)

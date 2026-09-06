@@ -1,0 +1,24 @@
+Masaustunde calistirma
+======================
+
+1) Python kur (yoksa):
+   https://www.python.org/downloads/
+   Windows'ta "Add python.exe to PATH" kutusunu isaretle.
+
+2) Bu klasoru masaustune koy (zip'ten cikar).
+
+3) Klasorde .env dosyasi yoksa .env.example'i kopyala, adini .env yap.
+
+4) .env icinde su satiri doldur:
+   OPENAI_API_KEY=sk-senin-anahtarin
+
+5) Windows:  baslat.bat  dosyasina cift tikla.
+   Mac/Linux:  terminalde  bash baslat.sh
+
+Ilk acilista paketler inecek, biraz surebilir.
+Sonra Sohbet penceresi acilir. Canli baslat'a bas, konus.
+
+Sorun olursa:
+- Mikrofon iznini ac
+- Python 3.10+ olsun
+- Anahtari .env.example'a degil .env'e yaz
