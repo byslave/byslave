@@ -1,4 +1,4 @@
-"""Date? krem / kahve paleti."""
+"""Krem / kahve paleti."""
 
 from __future__ import annotations
 

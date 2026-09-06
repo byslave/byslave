@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Date? kişisel sesli sohbet botunu başlatır."""
+"""Kişisel sesli sohbet botunu başlatır."""
 
 from __future__ import annotations
 
@@ -9,10 +9,10 @@ import traceback
 
 def main() -> int:
     try:
-        from date_bot.factory import build_session
-        from date_bot.ui.app import run_app
+        from sohbet.factory import build_session
+        from sohbet.ui.app import run_app
     except Exception as exc:
-        print(f"Date? başlatılamadı: {exc}", file=sys.stderr)
+        print(f"Bot başlatılamadı: {exc}", file=sys.stderr)
         traceback.print_exc()
         return 1
 
@@ -24,7 +24,7 @@ def main() -> int:
         run_app(session, api_ready=api_ready)
         return 0
     except Exception as exc:
-        print(f"Date? çalışırken durdu: {exc}", file=sys.stderr)
+        print(f"Bot çalışırken durdu: {exc}", file=sys.stderr)
         traceback.print_exc()
         return 1
 

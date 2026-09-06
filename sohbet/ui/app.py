@@ -1,4 +1,4 @@
-"""Date? masaüstü arayüzü. Bas-konuş döngüsü arka planda çalışır."""
+"""Kişisel sohbet masaüstü arayüzü. Bas-konuş döngüsü arka planda çalışır."""
 
 from __future__ import annotations
 
@@ -9,13 +9,13 @@ from collections.abc import Callable
 
 import customtkinter as ctk
 
-from date_bot.audio.recorder import PushToTalkRecorder
-from date_bot.errors import DateError, user_message
-from date_bot.session import ChatSession
-from date_bot.ui import theme
+from sohbet.audio.recorder import PushToTalkRecorder
+from sohbet.errors import user_message
+from sohbet.session import ChatSession
+from sohbet.ui import theme
 
 
-class DateApp(ctk.CTk):
+class ChatApp(ctk.CTk):
     def __init__(self, session: ChatSession, api_ready: bool) -> None:
         super().__init__()
         self.session = session
@@ -24,7 +24,7 @@ class DateApp(ctk.CTk):
         self._busy = False
 
         theme.apply_appearance()
-        self.title("Date?")
+        self.title("Sohbet")
         self.geometry("880x720")
         self.minsize(720, 580)
         self.configure(fg_color=theme.CREAM)
@@ -40,7 +40,7 @@ class DateApp(ctk.CTk):
 
         title = ctk.CTkLabel(
             header,
-            text="Date?",
+            text="Sohbet",
             font=ctk.CTkFont(family=theme.FONT_FAMILY, size=32, weight="bold"),
             text_color=theme.COFFEE,
         )
@@ -97,7 +97,7 @@ class DateApp(ctk.CTk):
 
         reply_title = ctk.CTkLabel(
             reply_card,
-            text="Date? şu an",
+            text="Cevap",
             font=ctk.CTkFont(family=theme.FONT_FAMILY, size=13, weight="bold"),
             text_color=theme.COFFEE_SOFT,
         )
@@ -208,7 +208,7 @@ class DateApp(ctk.CTk):
 
     def _append_history(self, who: str, text: str) -> None:
         self.history.configure(state="normal")
-        prefix = "Sen" if who == "user" else "Date?"
+        prefix = "Sen" if who == "user" else "Bot"
         self.history.insert("end", f"{prefix}\n{text}\n\n")
         self.history.see("end")
         self.history.configure(state="disabled")
@@ -247,7 +247,7 @@ class DateApp(ctk.CTk):
         if self._busy:
             return
         self._busy = True
-        self.hint.configure(text="Date? düşünüyor…")
+        self.hint.configure(text="Düşünüyor…")
 
         def target() -> None:
             try:
@@ -294,5 +294,5 @@ class DateApp(ctk.CTk):
 
 
 def run_app(session: ChatSession, api_ready: bool) -> None:
-    app = DateApp(session, api_ready=api_ready)
+    app = ChatApp(session, api_ready=api_ready)
     app.mainloop()

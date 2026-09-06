@@ -1,8 +1,8 @@
-from date_bot.errors import DateError, user_message
+from sohbet.errors import AppError, user_message
 
 
 def test_date_error_passthrough() -> None:
-    assert user_message(DateError("mikrofon yok")) == "mikrofon yok"
+    assert user_message(AppError("mikrofon yok")) == "mikrofon yok"
 
 
 def test_maps_auth_and_mic() -> None:

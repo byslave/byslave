@@ -1,6 +1,6 @@
-from date_bot.conversation import ConversationMemory
-from date_bot.errors import DateError
-from date_bot.session import ChatSession
+from sohbet.conversation import ConversationMemory
+from sohbet.errors import AppError
+from sohbet.session import ChatSession
 
 
 class FakeSTT:
@@ -79,8 +79,8 @@ def test_empty_text_raises() -> None:
     session, _, _ = _session()
     try:
         session.handle_text("   ")
-        raise AssertionError("expected DateError")
-    except DateError as exc:
+        raise AssertionError("expected AppError")
+    except AppError as exc:
         assert "yazılmadı" in exc.message
 
 

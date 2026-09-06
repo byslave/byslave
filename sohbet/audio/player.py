@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import threading
 
-from date_bot.errors import DateError
+from sohbet.errors import AppError
 
 
 class AudioPlayer:
@@ -24,7 +24,7 @@ class AudioPlayer:
             self._mixer = pygame.mixer
             self._ready = True
         except Exception as exc:
-            raise DateError("Ses çıkışı başlatılamadı. Hoparlör / ses sürücüsünü kontrol et.") from exc
+            raise AppError("Ses çıkışı başlatılamadı. Hoparlör / ses sürücüsünü kontrol et.") from exc
 
     def play(self, audio_bytes: bytes) -> None:
         if not audio_bytes:
@@ -38,7 +38,7 @@ class AudioPlayer:
                 while self._mixer.music.get_busy():
                     self._mixer.time.wait(50)
             except Exception as exc:
-                raise DateError("Sesli cevap çalınamadı.") from exc
+                raise AppError("Sesli cevap çalınamadı.") from exc
 
     def stop(self) -> None:
         if not self._ready or self._mixer is None:

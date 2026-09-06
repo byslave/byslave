@@ -1,6 +1,6 @@
 import numpy as np
 
-from date_bot.audio.recorder import PushToTalkRecorder, _float32_to_wav
+from sohbet.audio.recorder import PushToTalkRecorder, _float32_to_wav
 
 
 def test_wav_header_is_valid() -> None:

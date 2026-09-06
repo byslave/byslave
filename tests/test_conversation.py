@@ -1,12 +1,12 @@
-from date_bot.conversation import ConversationMemory
+from sohbet.conversation import ConversationMemory
 
 
 def test_history_keeps_system_and_turns() -> None:
-    memory = ConversationMemory(system_prompt="sen Date?")
+    memory = ConversationMemory(system_prompt="sen sohbet arkadaşısın")
     memory.add_user("merhaba")
     memory.add_assistant("hey")
     payload = memory.as_api_messages()
-    assert payload[0] == {"role": "system", "content": "sen Date?"}
+    assert payload[0] == {"role": "system", "content": "sen sohbet arkadaşısın"}
     assert payload[1]["role"] == "user"
     assert payload[2]["content"] == "hey"
 

@@ -5,8 +5,8 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Protocol
 
-from date_bot.config import Settings
-from date_bot.errors import DateError, user_message
+from sohbet.config import Settings
+from sohbet.errors import AppError, user_message
 
 
 class Transcriber(Protocol):
@@ -22,7 +22,7 @@ class SpeechToText:
         if self._client is not None:
             return self._client
         if not self._settings.api_configured:
-            raise DateError("API anahtarı yok. Proje klasörüne .env ekleyip OPENAI_API_KEY yaz.")
+            raise AppError("API anahtarı yok. Proje klasörüne .env ekleyip OPENAI_API_KEY yaz.")
         from openai import OpenAI
 
         kwargs: dict = {"api_key": self._settings.openai_api_key}
@@ -33,7 +33,7 @@ class SpeechToText:
 
     def transcribe(self, wav_bytes: bytes, language: str = "tr") -> str:
         if not wav_bytes:
-            raise DateError("Kaydedilecek ses yok.")
+            raise AppError("Kaydedilecek ses yok.")
         try:
             client = self._client_or_raise()
             audio = BytesIO(wav_bytes)
@@ -43,12 +43,12 @@ class SpeechToText:
                 file=audio,
                 language=language,
             )
-        except DateError:
+        except AppError:
             raise
         except Exception as exc:
-            raise DateError(user_message(exc), detail=str(exc)) from exc
+            raise AppError(user_message(exc), detail=str(exc)) from exc
 
         text = (getattr(result, "text", None) or str(result)).strip()
         if not text:
-            raise DateError("Konuşma anlaşılamadı. Biraz daha net ve yavaş dene.")
+            raise AppError("Konuşma anlaşılamadı. Biraz daha net ve yavaş dene.")
         return text

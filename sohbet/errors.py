@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-class DateError(Exception):
+class AppError(Exception):
     """Uygulama içi, kullanıcıya güvenle gösterilebilen hata."""
 
     def __init__(self, message: str, *, detail: str | None = None) -> None:
@@ -14,7 +14,7 @@ class DateError(Exception):
 
 def user_message(exc: Exception) -> str:
     """Teknik istisnayı kısa, Türkçe bir mesaja çevir."""
-    if isinstance(exc, DateError):
+    if isinstance(exc, AppError):
         return exc.message
 
     text = str(exc).lower()

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from date_bot.audio.player import AudioPlayer
-from date_bot.conversation import ConversationMemory
-from date_bot.engines.llm import ChatEngine
-from date_bot.engines.stt import SpeechToText
-from date_bot.engines.tts import TextToSpeech
-from date_bot.errors import DateError
+from sohbet.audio.player import AudioPlayer
+from sohbet.conversation import ConversationMemory
+from sohbet.engines.llm import ChatEngine
+from sohbet.engines.stt import SpeechToText
+from sohbet.engines.tts import TextToSpeech
+from sohbet.errors import AppError
 
 
 class ChatSession:
@@ -33,7 +33,7 @@ class ChatSession:
     def handle_text(self, user_text: str) -> tuple[str, str]:
         clean = user_text.strip()
         if not clean:
-            raise DateError("Bir şey duyulmadı veya yazılmadı.")
+            raise AppError("Bir şey duyulmadı veya yazılmadı.")
         self.memory.add_user(clean)
         reply = self.llm.reply(self.memory)
         self.memory.add_assistant(reply)

@@ -1,4 +1,4 @@
-from date_bot.config import Settings, get_settings
+from sohbet.config import Settings, get_settings
 
 
 def test_missing_key_is_not_configured(monkeypatch) -> None:

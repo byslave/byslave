@@ -1,6 +1,6 @@
-from date_bot.config import Settings
-from date_bot.factory import build_session
-from date_bot.ui.app import DateApp
+from sohbet.config import Settings
+from sohbet.factory import build_session
+from sohbet.ui.app import ChatApp
 
 
 def test_window_builds_and_shows_disconnected_status() -> None:
@@ -13,10 +13,10 @@ def test_window_builds_and_shows_disconnected_status() -> None:
         openai_base_url=None,
     )
     session, _ = build_session(settings)
-    app = DateApp(session, api_ready=False)
+    app = ChatApp(session, api_ready=False)
     try:
         app.update()
-        assert app.title() == "Date?"
+        assert app.title() == "Sohbet"
         assert "bağlı değil" in app.status_label.cget("text")
         assert app.voice_var.get() is True
         app._clear_history()

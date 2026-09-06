@@ -9,7 +9,7 @@ from typing import Protocol
 
 import numpy as np
 
-from date_bot.errors import DateError
+from sohbet.errors import AppError
 
 
 class AudioInput(Protocol):
@@ -38,7 +38,7 @@ class PushToTalkRecorder:
         try:
             import sounddevice as sd
         except ImportError as exc:
-            raise DateError("Ses kayıt kütüphanesi yüklü değil. requirements.txt ile kurulum yap.") from exc
+            raise AppError("Ses kayıt kütüphanesi yüklü değil. requirements.txt ile kurulum yap.") from exc
 
         self._chunks = []
 
@@ -58,7 +58,7 @@ class PushToTalkRecorder:
             self._stream.start()
         except Exception as exc:
             self._stream = None
-            raise DateError(
+            raise AppError(
                 "Mikrofon açılamadı. Cihaz bağlı mı ve izinler açık mı?",
                 detail=str(exc),
             ) from exc
@@ -84,11 +84,11 @@ class PushToTalkRecorder:
             self._chunks = []
 
         if not chunks:
-            raise DateError("Kayıt boş geldi. Mikrofonu kontrol edip biraz daha uzun bas.")
+            raise AppError("Kayıt boş geldi. Mikrofonu kontrol edip biraz daha uzun bas.")
 
         audio = np.concatenate(chunks, axis=0)
         if float(np.max(np.abs(audio))) < 1e-4:
-            raise DateError("Ses algılanamadı. Mikrofonunu kontrol et veya daha yakın konuş.")
+            raise AppError("Ses algılanamadı. Mikrofonunu kontrol et veya daha yakın konuş.")
 
         return _float32_to_wav(audio[:, 0], self.sample_rate)
 

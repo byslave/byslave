@@ -1,8 +1,8 @@
-# Date?
+# Kişisel sesli sohbet botu
 
-Bilgisayarında çalışan kişisel sesli sohbet botu. Mikrofonla konuşur, cevabı hem metin hem ses olarak verir. İlk sürüm **bas-konuş**; gerçek zamanlı konuşma için ses ve motor katmanları ayrı duruyor.
+Kendi bilgisayarında çalışan, yalnızca senin kullanacağın bir sesli sohbet arkadaşı. Mikrofonla konuşur, cevabı hem metin hem ses olarak verir. İlk sürüm **bas-konuş**; gerçek zamanlı konuşma için ses ve motor katmanları ayrı duruyor.
 
-Bu bot yalnızca flört için değil. Günlük sohbet, mizah, ilişkiler, duygular, fikir alışverişi ve (sen açarsan) yetişkin konularında da konuşur.
+Günlük sohbet, mizah, ilişkiler, duygular, fikir alışverişi ve (sen açarsan) yetişkin konularında konuşur. Bir ürün veya marka değil.
 
 ## Hangi teknolojiler, neden
 
@@ -24,9 +24,9 @@ Gerçek zamanlı (sürekli dinleme) için ileride `audio/` altına streaming kay
 ├── main.py
 ├── requirements.txt
 ├── .env.example
-├── date_bot/
+├── sohbet/
 │   ├── config.py          # .env okuma
-│   ├── personality.py     # Date? kişiliği
+│   ├── personality.py     # kişilik
 │   ├── conversation.py    # bellek içi geçmiş
 │   ├── session.py         # STT → LLM → TTS turu
 │   ├── factory.py
@@ -79,7 +79,7 @@ python main.py
 
 1. Pencere açılınca sağ üstte **API bağlı** görünmeli.
 2. **Bas-konuş** düğmesini basılı tut, konuş, bırak.
-3. Metin geçmişe düşer; Date? cevabı alt kartta durur.
+3. Metin geçmişe düşer; bot cevabı alt kartta durur.
 4. **Sesli cevap** anahtarıyla TTS’i kapatıp açabilirsin.
 5. **Geçmişi temizle** belleği sıfırlar.
 6. Mikrofon yoksa alttaki metin kutusuna yazıp Enter’a bas.

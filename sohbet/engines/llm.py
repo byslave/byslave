@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from date_bot.config import Settings
-from date_bot.conversation import ConversationMemory
-from date_bot.errors import DateError, user_message
+from sohbet.config import Settings
+from sohbet.conversation import ConversationMemory
+from sohbet.errors import AppError, user_message
 
 
 class Responder(Protocol):
@@ -22,7 +22,7 @@ class ChatEngine:
         if self._client is not None:
             return self._client
         if not self._settings.api_configured:
-            raise DateError("API anahtarı yok. Proje klasörüne .env ekleyip OPENAI_API_KEY yaz.")
+            raise AppError("API anahtarı yok. Proje klasörüne .env ekleyip OPENAI_API_KEY yaz.")
         from openai import OpenAI
 
         kwargs: dict = {"api_key": self._settings.openai_api_key}
@@ -41,13 +41,13 @@ class ChatEngine:
                 max_tokens=280,
             )
             text = (response.choices[0].message.content or "").strip()
-        except DateError:
+        except AppError:
             raise
         except Exception as exc:
-            raise DateError(user_message(exc), detail=str(exc)) from exc
+            raise AppError(user_message(exc), detail=str(exc)) from exc
 
         if not text:
-            raise DateError("Date? bu turda suskun kaldı. Tekrar dene.")
+            raise AppError("Bu turda cevap gelmedi. Tekrar dene.")
         return text
 
     def ping(self) -> bool:

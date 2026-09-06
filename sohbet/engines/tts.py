@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from date_bot.config import Settings
-from date_bot.errors import DateError, user_message
+from sohbet.config import Settings
+from sohbet.errors import AppError, user_message
 
 
 class Speaker(Protocol):
@@ -21,7 +21,7 @@ class TextToSpeech:
         if self._client is not None:
             return self._client
         if not self._settings.api_configured:
-            raise DateError("API anahtarı yok. Proje klasörüne .env ekleyip OPENAI_API_KEY yaz.")
+            raise AppError("API anahtarı yok. Proje klasörüne .env ekleyip OPENAI_API_KEY yaz.")
         from openai import OpenAI
 
         kwargs: dict = {"api_key": self._settings.openai_api_key}
@@ -43,7 +43,7 @@ class TextToSpeech:
                 response_format="mp3",
             )
             return response.content
-        except DateError:
+        except AppError:
             raise
         except Exception as exc:
-            raise DateError(user_message(exc), detail=str(exc)) from exc
+            raise AppError(user_message(exc), detail=str(exc)) from exc
