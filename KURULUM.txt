@@ -1,0 +1,37 @@
+Masaustunde calistirma
+======================
+
+1) Python kur (yoksa):
+   https://www.python.org/downloads/
+   Windows'ta "Add python.exe to PATH" kutusunu isaretle.
+
+2) Bu klasoru masaustune koy (zip'ten cikar).
+
+3) Windows noktali dosyalari gizler. Sablon dosyasi env.ornek.txt.
+   olustur-env.bat cift tikla veya VS Code'da New File deyip adini .env yap.
+
+4) UCRETSIZ (onerilen):
+   https://console.groq.com/keys adresinden ucretsiz anahtar al (kart istemez).
+   .env icine yaz:
+   GROQ_API_KEY=gsk_senin_anahtarin
+
+   OpenAI kredi ister. Groq varken OpenAI'ye gerek yok.
+
+5) Once kontrol.bat cift tikla (anahtari yazmaz).
+   "Groq yanit verdi" deyince:  .venv\Scripts\python.exe main.py
+   veya baslat.bat
+
+Ilk acilista paketler inecek, biraz surebilir.
+Sonra Sohbet penceresi acilir. Canli baslat'a bas, konus.
+
+Sorun olursa:
+- Sag ust "API bagli degil" ise anahtar .env'de degil demektir.
+  Dosya adi tam olarak .env olsun (.env.txt veya env.ornek.txt degil).
+  Satir: GROQ_API_KEY=gsk_gercekanahtar  (tek satir, gsk_... yazma)
+- Eski model hatasi icin .env icine su satiri ekle:
+  GROQ_MODEL=qwen/qwen3.8-27b
+- Mikrofon iznini ac
+- Python 3.10+ olsun
+- Anahtari env.ornek.txt'ye degil .env'e yaz. .env.example varsa sil.
+- Canli yerine once kutuya yazi yazip Enter'a bas; metin calisiyorsa sorun mikrofondadir
+- Ses robotikse: pip install edge-tts   (Turkce nöral ses, gTTS'ten akici)
