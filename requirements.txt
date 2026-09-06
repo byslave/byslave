@@ -4,6 +4,7 @@ python-dotenv>=1.0.1
 sounddevice>=0.5.1
 numpy>=2.2.0
 gTTS>=2.5.4
+edge-tts>=7.0.0
 websockets>=13.1
 pytest>=8.3.3
 # pygame isteğe bağlı; Windows'ta yoksa sistem oynatıcı kullanılır

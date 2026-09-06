@@ -27,7 +27,7 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-.venv\Scripts\python.exe -m pip install customtkinter "openai>=1.59" python-dotenv sounddevice soundfile pygame websockets gTTS
+.venv\Scripts\python.exe -m pip install customtkinter "openai>=1.59" python-dotenv sounddevice soundfile pygame websockets gTTS edge-tts
 if errorlevel 1 (
   echo Paket kurulumu basarisiz.
   pause

@@ -1,6 +1,6 @@
 from sohbet.config import Settings
-from sohbet.engines.tts import TextToSpeech
-from sohbet.voices import label_for, normalize_voice, voice_from_label
+from sohbet.engines.tts import TextToSpeech, spoken_text
+from sohbet.voices import edge_voice_for, label_for, normalize_voice, voice_from_label
 
 
 def test_normalize_unknown_falls_back_to_nova() -> None:
@@ -26,3 +26,12 @@ def test_tts_voice_can_change_at_runtime() -> None:
     assert tts.voice == "nova"
     assert tts.set_voice("onyx") == "onyx"
     assert tts.voice == "onyx"
+
+
+def test_edge_maps_female_and_male() -> None:
+    assert edge_voice_for("nova") == "tr-TR-EmelNeural"
+    assert edge_voice_for("onyx") == "tr-TR-AhmetNeural"
+
+
+def test_spoken_text_strips_markup() -> None:
+    assert spoken_text("**merhaba** <think>gizli</think> dünya") == "merhaba dünya"

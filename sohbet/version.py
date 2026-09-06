@@ -1,3 +1,3 @@
 """Pencerede görünen sürüm. Eski zip ile karışmasın."""
 
-APP_VERSION = "2"
+APP_VERSION = "3"

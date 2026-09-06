@@ -34,3 +34,4 @@ Sorun olursa:
 - Python 3.10+ olsun
 - Anahtari env.ornek.txt'ye degil .env'e yaz. .env.example varsa sil.
 - Canli yerine once kutuya yazi yazip Enter'a bas; metin calisiyorsa sorun mikrofondadir
+- Ses robotikse: pip install edge-tts   (Turkce nöral ses, gTTS'ten akici)
