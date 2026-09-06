@@ -34,7 +34,7 @@ class Settings:
     openai_base_url: str | None
     openai_realtime_model: str = "gpt-4o-mini-realtime-preview"
     groq_api_key: str = ""
-    groq_model: str = "llama-3.1-8b-instant"
+    groq_model: str = "openai/gpt-oss-20b"
     groq_stt_model: str = "whisper-large-v3"
     provider: str = "auto"
     sample_rate: int = 16000
@@ -105,7 +105,7 @@ def get_settings() -> Settings:
             or "gpt-4o-mini-realtime-preview"
         ),
         groq_api_key=os.getenv("GROQ_API_KEY", "").strip(),
-        groq_model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant").strip() or "llama-3.1-8b-instant",
+        groq_model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b").strip() or "openai/gpt-oss-20b",
         groq_stt_model=os.getenv("GROQ_STT_MODEL", "whisper-large-v3").strip() or "whisper-large-v3",
         provider=(os.getenv("PROVIDER", "auto").strip() or "auto"),
     )
