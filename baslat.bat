@@ -29,11 +29,12 @@ if not exist ".env" (
   copy /y ".env.example" ".env" >nul
 )
 
-findstr /r /c:"OPENAI_API_KEY=sk-" ".env" >nul
+findstr /r /c:"GROQ_API_KEY=gsk" ".env" >nul
+if errorlevel 1 findstr /r /c:"OPENAI_API_KEY=sk-" ".env" >nul
 if errorlevel 1 (
   echo.
-  echo .env dosyasina OpenAI anahtarini yazman gerekiyor.
-  echo Notepad acilacak. OPENAI_API_KEY= satirinin sagina sk- anahtarini yapistir, kaydet, kapat.
+  echo .env icine GROQ_API_KEY yaz. Ucretsiz anahtar: https://console.groq.com/keys
+  echo Notepad acilacak. GROQ_API_KEY= satirinin sagina gsk_ anahtarini yapistir, kaydet, kapat.
   echo.
   notepad .env
 )

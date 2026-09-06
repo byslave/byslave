@@ -6,6 +6,7 @@ from typing import Protocol
 
 from sohbet.config import Settings
 from sohbet.conversation import ConversationMemory
+from sohbet.engines.client import build_client
 from sohbet.errors import AppError, user_message
 
 
@@ -19,23 +20,14 @@ class ChatEngine:
         self._client = client
 
     def _client_or_raise(self):
-        if self._client is not None:
-            return self._client
-        if not self._settings.api_configured:
-            raise AppError("API anahtarı yok. Proje klasörüne .env ekleyip OPENAI_API_KEY yaz.")
-        from openai import OpenAI
-
-        kwargs: dict = {"api_key": self._settings.openai_api_key}
-        if self._settings.openai_base_url:
-            kwargs["base_url"] = self._settings.openai_base_url
-        self._client = OpenAI(**kwargs)
+        self._client = build_client(self._settings, self._client)
         return self._client
 
     def reply(self, memory: ConversationMemory) -> str:
         try:
             client = self._client_or_raise()
             response = client.chat.completions.create(
-                model=self._settings.openai_model,
+                model=self._settings.llm_model,
                 messages=memory.as_api_messages(),
                 temperature=0.8,
                 max_tokens=280,
@@ -56,7 +48,7 @@ class ChatEngine:
             return False
         try:
             client = self._client_or_raise()
-            client.models.retrieve(self._settings.openai_model)
+            client.models.retrieve(self._settings.llm_model)
             return True
         except Exception:
             return False

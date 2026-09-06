@@ -11,6 +11,18 @@ from sohbet.conversation import ConversationMemory
 from sohbet.engines.realtime import ParsedEvent, RealtimeClient, TranscriptBuffer
 from sohbet.errors import AppError
 from sohbet.personality import build_system_prompt
+from sohbet.session import ChatSession
+from sohbet.turn_live import TurnLiveSession
+
+
+def create_live(session: ChatSession, on_ui) -> LiveSession | TurnLiveSession:
+    settings = session.settings
+    if settings is not None and settings.uses_openai_realtime:
+        voice = "nova"
+        if hasattr(session.tts, "voice"):
+            voice = getattr(session.tts, "voice") or "nova"
+        return LiveSession(settings, session.memory, voice, on_ui)
+    return TurnLiveSession(session, on_ui)
 
 
 class LiveSession:

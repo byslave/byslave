@@ -77,7 +77,7 @@ source .venv/bin/activate
 python main.py
 ```
 
-1. İlk seferde `cp .env.example .env` yap, `OPENAI_API_KEY` yaz.
+1. İlk seferde `cp .env.example .env` yap. Ücretsiz için `GROQ_API_KEY` yaz (https://console.groq.com/keys). OpenAI kredi ister.
 2. `python main.py` — pencere açılır, sağ üstte **API bağlı** olmalı.
 3. **Canlı konuşma** açıkken **Canlı başlat**’a bir kez bas. Konuş, sus; bot cevaplar. Sözünü kesmek için tekrar konuş.
 4. Bitince **Canlı · durdur**.

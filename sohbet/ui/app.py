@@ -10,9 +10,9 @@ from collections.abc import Callable
 import customtkinter as ctk
 
 from sohbet.audio.recorder import PushToTalkRecorder
-from sohbet.config import get_settings
 from sohbet.errors import user_message
-from sohbet.live import LiveSession
+from sohbet.live import LiveSession, create_live
+from sohbet.turn_live import TurnLiveSession
 from sohbet.session import ChatSession
 from sohbet.ui import theme
 from sohbet.voices import VOICE_LABELS, label_for, voice_from_label
@@ -23,7 +23,7 @@ class ChatApp(ctk.CTk):
         super().__init__()
         self.session = session
         self.recorder = PushToTalkRecorder()
-        self._live: LiveSession | None = None
+        self._live: LiveSession | TurnLiveSession | None = None
         self._events: queue.Queue[tuple[str, object]] = queue.Queue()
         self._busy = False
 
@@ -276,14 +276,8 @@ class ChatApp(ctk.CTk):
         return "nova"
 
     def _start_live(self) -> None:
-        settings = self.session.settings or get_settings()
         self.session.player.stop()
-        live = LiveSession(
-            settings=settings,
-            memory=self.session.memory,
-            voice=self._current_voice(),
-            on_ui=self._on_live_event,
-        )
+        live = create_live(self.session, self._on_live_event)
         try:
             live.start()
         except Exception as exc:
@@ -327,7 +321,13 @@ class ChatApp(ctk.CTk):
             return
         if connected:
             self.status_dot.configure(text_color=theme.OK)
-            self.status_label.configure(text="API bağlı")
+            provider = ""
+            if self.session.settings is not None:
+                provider = self.session.settings.resolved_provider
+            if provider == "groq":
+                self.status_label.configure(text="Groq bağlı (ücretsiz)")
+            else:
+                self.status_label.configure(text="API bağlı")
         else:
             self.status_dot.configure(text_color=theme.ERR)
             self.status_label.configure(text="API bağlı değil")

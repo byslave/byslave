@@ -20,8 +20,8 @@ if [ ! -f .env ]; then
   cp .env.example .env
 fi
 
-if ! grep -q '^OPENAI_API_KEY=sk-' .env; then
-  echo ".env icine OPENAI_API_KEY=sk-... yaz, kaydet, sonra bu dosyayi tekrar calistir."
+if ! grep -qE '^GROQ_API_KEY=gsk|^OPENAI_API_KEY=sk-' .env; then
+  echo ".env icine GROQ_API_KEY=gsk_... yaz (ucretsiz: https://console.groq.com/keys)"
   exit 1
 fi
 

@@ -21,7 +21,7 @@ def user_message(exc: Exception) -> str:
     name = type(exc).__name__.lower()
 
     if "api key" in text or "authentication" in text or "401" in text or "invalid_api_key" in text:
-        return "API anahtarı geçersiz veya eksik. .env dosyasındaki OPENAI_API_KEY değerini kontrol et."
+        return "API anahtarı geçersiz. .env içinde GROQ_API_KEY (ücretsiz) veya OPENAI_API_KEY kontrol et."
     if "proxies" in text:
         return "Python paketleri eski. Terminalde: pip install -U openai"
     if "rate limit" in text or "429" in text:

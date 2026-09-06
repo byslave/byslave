@@ -93,6 +93,16 @@ class PushToTalkRecorder:
         return _float32_to_wav(audio[:, 0], self.sample_rate)
 
 
+def pcm16_to_wav(pcm16: bytes, sample_rate: int) -> bytes:
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(pcm16)
+    return buffer.getvalue()
+
+
 def _float32_to_wav(samples: np.ndarray, sample_rate: int) -> bytes:
     clipped = np.clip(samples, -1.0, 1.0)
     pcm = (clipped * 32767).astype(np.int16)

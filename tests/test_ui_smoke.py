@@ -29,7 +29,7 @@ def test_window_builds_and_shows_disconnected_status() -> None:
         assert "temiz" in app.reply_label.cget("text").lower()
         app._start_live()
         app.update()
-        assert "API anahtarı" in app.reply_label.cget("text")
+        assert "GROQ_API_KEY" in app.reply_label.cget("text") or "API anahtarı" in app.reply_label.cget("text")
         app.live_var.set(False)
         app._on_live_toggle()
         app.update()

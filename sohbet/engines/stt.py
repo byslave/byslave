@@ -6,6 +6,7 @@ from io import BytesIO
 from typing import Protocol
 
 from sohbet.config import Settings
+from sohbet.engines.client import build_client
 from sohbet.errors import AppError, user_message
 
 
@@ -19,16 +20,7 @@ class SpeechToText:
         self._client = client
 
     def _client_or_raise(self):
-        if self._client is not None:
-            return self._client
-        if not self._settings.api_configured:
-            raise AppError("API anahtarı yok. Proje klasörüne .env ekleyip OPENAI_API_KEY yaz.")
-        from openai import OpenAI
-
-        kwargs: dict = {"api_key": self._settings.openai_api_key}
-        if self._settings.openai_base_url:
-            kwargs["base_url"] = self._settings.openai_base_url
-        self._client = OpenAI(**kwargs)
+        self._client = build_client(self._settings, self._client)
         return self._client
 
     def transcribe(self, wav_bytes: bytes, language: str = "tr") -> str:
@@ -39,7 +31,7 @@ class SpeechToText:
             audio = BytesIO(wav_bytes)
             audio.name = "speech.wav"
             result = client.audio.transcriptions.create(
-                model=self._settings.openai_stt_model,
+                model=self._settings.stt_model,
                 file=audio,
                 language=language,
             )
