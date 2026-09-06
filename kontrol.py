@@ -10,21 +10,31 @@ from pathlib import Path
 def main() -> int:
     root = Path(__file__).resolve().parent
     sys.path.insert(0, str(root))
-    from sohbet.config import get_settings, inspect_env_file
+    try:
+        from sohbet.version import APP_VERSION
+    except ImportError:
+        APP_VERSION = "eski-sohbet-klasoru"
+    from sohbet.config import get_settings
     from sohbet.factory import build_session
-    from sohbet.version import APP_VERSION
+
+    try:
+        from sohbet.config import inspect_env_file
+    except ImportError:
+        inspect_env_file = None  # type: ignore[assignment]
+        print("UYARI: sohbet klasoru eski. Zip'ten sohbet klasorunun TAMAMINI kopyala.")
 
     env_path = root / ".env"
     print(f"Sohbet surum {APP_VERSION}")
     print(f".env yolu: {env_path}")
     print(f".env var mi: {'evet' if env_path.exists() else 'HAYIR'}")
 
-    info = inspect_env_file(env_path)
-    print(f"GROQ_API_KEY satiri: {info['key_lines']}")
-    print(f"Gercek anahtar: {'evet' if info['real_key'] else 'hayir'}")
-    print(f"Sablon gsk_... : {'evet' if info['placeholder_key'] else 'hayir'}")
-    print(f"Komut satiri .env icinde: {'evet' if info['command_line'] else 'hayir'}")
-    print(f"GROQ_MODEL satirlari: {info['models'] or '-'}")
+    if inspect_env_file is not None:
+        info = inspect_env_file(env_path)
+        print(f"GROQ_API_KEY satiri: {info['key_lines']}")
+        print(f"Gercek anahtar: {'evet' if info['real_key'] else 'hayir'}")
+        print(f"Sablon gsk_... : {'evet' if info['placeholder_key'] else 'hayir'}")
+        print(f"Komut satiri .env icinde: {'evet' if info['command_line'] else 'hayir'}")
+        print(f"GROQ_MODEL satirlari: {info['models'] or '-'}")
 
     settings = get_settings()
     print(f"Secilen saglayici: {settings.resolved_provider}")
@@ -38,7 +48,13 @@ def main() -> int:
         return 1
 
     session, _ = build_session(settings)
-    ok, err = session.llm.ping_detail()
+    if hasattr(session.llm, "ping_detail"):
+        ok, err = session.llm.ping_detail()
+    else:
+        try:
+            ok, err = bool(session.llm.ping()), ""
+        except Exception as exc:
+            ok, err = False, str(exc)
     if ok:
         print("SONUC: Groq yanit verdi. Botu ac: .venv\\Scripts\\python.exe main.py")
         return 0

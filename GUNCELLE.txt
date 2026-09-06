@@ -4,8 +4,9 @@ Yeni kod o mesaji gostermez; baslikta "kisisel sesli sohbet · 2" yazar.
 1) Zip indir (guncel dal):
    https://github.com/byslave/byslave/archive/refs/heads/cursor/date-voice-chat-bot-509c.zip
 
-2) Icinden sohbet klasorunu, main.py, kontrol.py, kontrol.bat dosyalarini
-   senin sohbet_masaustu klasorune kopyala (uzerine yaz).
+2) Icinden sohbet klasorunun TAMAMINI kopyala (uzerine yaz).
+   Yalniz main.py yetmez; config.py de yeni olmali.
+   Ayrica main.py, kontrol.py, kontrol.bat kopyala.
    .env dosyana DOKUNMA, silme.
 
 3) .env dosyasini tamamen su 3 satira indir (anahtari kendin yaz):
