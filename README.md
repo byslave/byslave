@@ -1,6 +1,6 @@
 # Kişisel sesli sohbet botu
 
-Kendi bilgisayarında çalışan, yalnızca senin kullanacağın bir sesli sohbet arkadaşı. Mikrofonla konuşur, cevabı hem metin hem ses olarak verir. İlk sürüm **bas-konuş**; gerçek zamanlı konuşma için ses ve motor katmanları ayrı duruyor.
+Kendi bilgisayarında çalışan, yalnızca senin kullanacağın bir sesli sohbet arkadaşı. Mikrofonla konuşur, cevabı hem metin hem ses olarak verir. Varsayılan **canlı konuşma** (OpenAI Realtime API): sürekli dinler, sustuğunda cevap verir, sözünü kesebilirsin. İstersen **bas-konuş**a da geçebilirsin.
 
 Günlük sohbet, mizah, ilişkiler, duygular, fikir alışverişi ve (sen açarsan) yetişkin konularında konuşur. Bir ürün veya marka değil.
 
@@ -15,7 +15,7 @@ Günlük sohbet, mizah, ilişkiler, duygular, fikir alışverişi ve (sen açars
 | Ses çalma | pygame mixer | MP3 TTS’i bloklamadan çalmak için yeterli. |
 | Ayarlar | `python-dotenv` | Anahtarlar yalnızca `.env` / ortam değişkeninden okunur, koda yazılmaz. |
 
-Gerçek zamanlı (sürekli dinleme) için ileride `audio/` altına streaming kaydedici, `engines/` altına streaming STT eklenebilir. `ChatSession` aynı kalır.
+Canlı konuşma `sohbet/engines/realtime.py` ve `sohbet/live.py` içinde. Bas-konuş `ChatSession` ile duruyor.
 
 ## Klasör yapısı
 
@@ -79,13 +79,14 @@ python main.py
 
 1. İlk seferde `cp .env.example .env` yap, `OPENAI_API_KEY` yaz.
 2. `python main.py` — pencere açılır, sağ üstte **API bağlı** olmalı.
-3. **Bas-konuş**’u basılı tut, konuş, bırak. Bot metni çözer, cevap yazar, sesli okur.
-4. Mikrofon yoksa kutuya yazıp Enter’a bas.
-5. **Ses tonu** listesinden sesi değiştir (nova, onyx, coral…). Bir sonraki cevap yeni sesle gelir.
-6. **Sesli cevap** kapalıysa sadece yazar, okumaz.
-7. **Geçmişi temizle** konuşmayı sıfırlar.
+3. **Canlı konuşma** açıkken **Canlı başlat**’a bir kez bas. Konuş, sus; bot cevaplar. Sözünü kesmek için tekrar konuş.
+4. Bitince **Canlı · durdur**.
+5. Canlıyı kapatırsan eski **bas-konuş** (basılı tut / bırak) geri gelir.
+6. Mikrofon yoksa kutuya yazıp Enter’a bas (canlı kapalıyken).
+7. **Ses tonu** listesinden sesi değiştir.
+8. **Geçmişi temizle** konuşmayı sıfırlar.
 
-Bu sürüm **bas-konuş**. ChatGPT Voice gibi sürekli dinleyip anında keserek cevap vermez. Sen konuşursun, bırakırsın, sonra cevap gelir (birkaç saniye). Gerçek zamanlı katman ayrı duruyor; istersen sonra eklenebilir.
+Canlı mod OpenAI Realtime API kullanır (`OPENAI_REALTIME_MODEL`, varsayılan `gpt-4o-mini-realtime-preview`). ChatGPT Voice gibi sunucu tarafında konuşma bitişini algılar ve sesi akış olarak çalar.
 
 Cevaplar kısa tutulur; hata olursa uygulama kapanmaz, mesajı ekranda gösterir.
 

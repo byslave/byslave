@@ -28,7 +28,9 @@ class Settings:
     openai_tts_model: str
     openai_tts_voice: str
     openai_base_url: str | None
+    openai_realtime_model: str = "gpt-4o-mini-realtime-preview"
     sample_rate: int = 16000
+    live_sample_rate: int = 24000
 
     @property
     def api_configured(self) -> bool:
@@ -45,4 +47,8 @@ def get_settings() -> Settings:
         openai_tts_model=os.getenv("OPENAI_TTS_MODEL", "tts-1").strip() or "tts-1",
         openai_tts_voice=normalize_voice(os.getenv("OPENAI_TTS_VOICE", "nova")),
         openai_base_url=base_url,
+        openai_realtime_model=(
+            os.getenv("OPENAI_REALTIME_MODEL", "gpt-4o-mini-realtime-preview").strip()
+            or "gpt-4o-mini-realtime-preview"
+        ),
     )

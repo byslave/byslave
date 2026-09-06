@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from sohbet.audio.player import AudioPlayer
+from sohbet.config import Settings
 from sohbet.conversation import ConversationMemory
 from sohbet.engines.llm import ChatEngine
 from sohbet.engines.stt import SpeechToText
@@ -18,12 +19,14 @@ class ChatSession:
         llm: ChatEngine,
         tts: TextToSpeech,
         player: AudioPlayer | None = None,
+        settings: Settings | None = None,
     ) -> None:
         self.memory = memory
         self.stt = stt
         self.llm = llm
         self.tts = tts
         self.player = player or AudioPlayer()
+        self.settings = settings
         self.voice_enabled = True
 
     def set_tts_voice(self, name: str) -> str:

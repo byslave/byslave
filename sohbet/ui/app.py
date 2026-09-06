@@ -10,7 +10,9 @@ from collections.abc import Callable
 import customtkinter as ctk
 
 from sohbet.audio.recorder import PushToTalkRecorder
+from sohbet.config import get_settings
 from sohbet.errors import user_message
+from sohbet.live import LiveSession
 from sohbet.session import ChatSession
 from sohbet.ui import theme
 from sohbet.voices import VOICE_LABELS, label_for, voice_from_label
@@ -21,13 +23,14 @@ class ChatApp(ctk.CTk):
         super().__init__()
         self.session = session
         self.recorder = PushToTalkRecorder()
+        self._live: LiveSession | None = None
         self._events: queue.Queue[tuple[str, object]] = queue.Queue()
         self._busy = False
 
         theme.apply_appearance()
         self.title("Sohbet")
-        self.geometry("880x720")
-        self.minsize(720, 580)
+        self.geometry("920x760")
+        self.minsize(760, 620)
         self.configure(fg_color=theme.CREAM)
 
         self._build()
@@ -106,7 +109,7 @@ class ChatApp(ctk.CTk):
 
         self.reply_label = ctk.CTkLabel(
             reply_card,
-            text="Mikrofon düğmesine bas, konuş, bırak. Dinliyorum.",
+            text="Canlı konuşmayı aç veya bas-konuş ile konuş.",
             font=ctk.CTkFont(family=theme.FONT_FAMILY, size=15),
             text_color=theme.COFFEE,
             wraplength=760,
@@ -180,6 +183,21 @@ class ChatApp(ctk.CTk):
         extras = ctk.CTkFrame(self, fg_color=theme.CREAM)
         extras.pack(fill="x", padx=28, pady=(0, 4))
 
+        self.live_var = ctk.BooleanVar(value=True)
+        self.live_switch = ctk.CTkSwitch(
+            extras,
+            text="Canlı konuşma",
+            variable=self.live_var,
+            command=self._on_live_toggle,
+            progress_color=theme.LATTE,
+            button_color=theme.COFFEE,
+            button_hover_color=theme.COFFEE_SOFT,
+            fg_color=theme.CREAM_DARK,
+            text_color=theme.COFFEE,
+            font=ctk.CTkFont(family=theme.FONT_FAMILY, size=13),
+        )
+        self.live_switch.pack(side="left", padx=(0, 18))
+
         voice_label = ctk.CTkLabel(
             extras,
             text="Ses tonu",
@@ -210,22 +228,94 @@ class ChatApp(ctk.CTk):
 
         self.hint = ctk.CTkLabel(
             self,
-            text="Bas-konuş: düğmeyi basılı tut, konuş, bırak. ChatGPT Voice gibi anlık değil; sıra sende, sonra cevap gelir.",
+            text="Canlı: düğmeye bir kez bas, konuşmaya başla. Sustuğunda cevap gelir; sözünü kesmek için konuş.",
             font=ctk.CTkFont(family=theme.FONT_FAMILY, size=12),
             text_color=theme.MUTED,
         )
         self.hint.pack(padx=28, pady=(0, 18), anchor="w")
 
+        self.mic_button.configure(command=self._on_mic_click)
+        self.mic_button.configure(text="🎤  Canlı başlat")
+
     def _on_voice_choice(self, label: str) -> None:
         chosen = self.session.set_tts_voice(voice_from_label(label))
+        if self._live is not None:
+            self._live.set_voice(chosen)
         self.hint.configure(text=f"Ses tonu: {label_for(chosen)}. Bir sonraki cevap bu sesle okunur.")
 
     def _on_voice_toggle(self) -> None:
         self.session.voice_enabled = bool(self.voice_var.get())
 
+    def _on_live_toggle(self) -> None:
+        if self.live_var.get():
+            if self.recorder.is_recording():
+                try:
+                    self.recorder.stop()
+                except Exception:
+                    pass
+            self.mic_button.configure(text="🎤  Canlı başlat", fg_color=theme.COFFEE, hover_color=theme.COFFEE_SOFT)
+            self.hint.configure(text="Canlı: düğmeye bir kez bas, konuşmaya başla. Sustuğunda cevap gelir.")
+            return
+        self._stop_live(user_stopped=True)
+        self.mic_button.configure(text="🎤  Bas-konuş", fg_color=theme.COFFEE, hover_color=theme.COFFEE_SOFT)
+        self.hint.configure(text="Bas-konuş: düğmeyi basılı tut, konuş, bırak.")
+
+    def _on_mic_click(self) -> None:
+        if self.live_var.get():
+            self._toggle_live()
+
+    def _toggle_live(self) -> None:
+        if self._live is not None and self._live.running:
+            self._stop_live(user_stopped=True)
+            return
+        self._start_live()
+
+    def _current_voice(self) -> str:
+        if hasattr(self.session.tts, "voice"):
+            return getattr(self.session.tts, "voice") or "nova"
+        return "nova"
+
+    def _start_live(self) -> None:
+        settings = self.session.settings or get_settings()
+        self.session.player.stop()
+        live = LiveSession(
+            settings=settings,
+            memory=self.session.memory,
+            voice=self._current_voice(),
+            on_ui=self._on_live_event,
+        )
+        try:
+            live.start()
+        except Exception as exc:
+            self._show_error(user_message(exc))
+            return
+        self._live = live
+        self.mic_button.configure(text="●  Canlı · durdur", fg_color=theme.RECORD, hover_color="#9A4A2E")
+        self.reply_label.configure(text="Dinliyorum. Konuşman yeterli, düğmeye tekrar basmana gerek yok.")
+        self.hint.configure(text="Canlı oturum açık. Sözünü kesmek için konuş.")
+
+    def _stop_live(self, user_stopped: bool = False) -> None:
+        live = self._live
+        self._live = None
+        if live is not None:
+            try:
+                live.stop()
+            except Exception:
+                pass
+        if self.live_var.get():
+            self.mic_button.configure(text="🎤  Canlı başlat", fg_color=theme.COFFEE, hover_color=theme.COFFEE_SOFT)
+            if user_stopped:
+                self.hint.configure(text="Canlı durdu. Tekrar başlatmak için düğmeye bas.")
+
+    def _on_live_event(self, kind: str, text: str) -> None:
+        self._events.put((f"live_{kind}", text))
+
     def _on_text_submit(self, _event: tk.Event | None = None) -> None:
         text = self.text_entry.get().strip()
         if not text or self._busy:
+            return
+        if self._live is not None and self._live.running:
+            self.hint.configure(text="Canlı oturum açıkken yazma kapalı. Önce canlıyı durdur veya konuş.")
             return
         self.text_entry.delete(0, "end")
         self._run_async(lambda: self.session.handle_text(text), after=self._on_turn_done)
@@ -250,14 +340,18 @@ class ChatApp(ctk.CTk):
         self.history.configure(state="disabled")
 
     def _clear_history(self) -> None:
+        was_live = self._live is not None and self._live.running
+        self._stop_live()
         self.session.clear()
         self.history.configure(state="normal")
         self.history.delete("1.0", "end")
         self.history.configure(state="disabled")
         self.reply_label.configure(text="Geçmiş temiz. Yeni bir şey söyle, baştan başlarız.")
+        if was_live and self.live_var.get():
+            self._start_live()
 
     def _on_mic_press(self, _event: tk.Event) -> None:
-        if self._busy:
+        if self.live_var.get() or self._busy:
             return
         try:
             self.recorder.start()
@@ -268,7 +362,7 @@ class ChatApp(ctk.CTk):
         self.hint.configure(text="Konuşuyorsun. Bitince düğmeyi bırak.")
 
     def _on_mic_release(self, _event: tk.Event) -> None:
-        if not self.recorder.is_recording():
+        if self.live_var.get() or not self.recorder.is_recording():
             return
         try:
             wav_bytes = self.recorder.stop()
@@ -313,6 +407,19 @@ class ChatApp(ctk.CTk):
                 if kind == "ok":
                     user_text, reply = payload  # type: ignore[misc]
                     self._pending_after(user_text, reply)
+                elif kind == "live_user":
+                    self._append_history("user", str(payload))
+                elif kind == "live_assistant_partial":
+                    self.reply_label.configure(text=str(payload))
+                elif kind == "live_assistant":
+                    self._append_history("assistant", str(payload))
+                    self.reply_label.configure(text=str(payload))
+                    self.hint.configure(text="Cevap geldi. Konuşmaya devam edebilirsin.")
+                elif kind == "live_status":
+                    self.hint.configure(text=str(payload))
+                elif kind == "live_err":
+                    self._show_error(str(payload))
+                    self._stop_live()
                 else:
                     self._show_error(str(payload))
         except queue.Empty:
@@ -320,6 +427,7 @@ class ChatApp(ctk.CTk):
         self.after(80, self._drain_events)
 
     def _on_close(self) -> None:
+        self._stop_live()
         try:
             if self.recorder.is_recording():
                 self.recorder.stop()

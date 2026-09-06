@@ -21,5 +21,6 @@ def build_session(settings: Settings | None = None) -> tuple[ChatSession, Settin
         llm=ChatEngine(settings),
         tts=TextToSpeech(settings),
         player=AudioPlayer(),
+        settings=settings,
     )
     return session, settings

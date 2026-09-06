@@ -19,11 +19,20 @@ def test_window_builds_and_shows_disconnected_status() -> None:
         assert app.title() == "Sohbet"
         assert "bağlı değil" in app.status_label.cget("text")
         assert app.voice_var.get() is True
+        assert app.live_var.get() is True
+        assert "Canlı" in app.mic_button.cget("text")
         assert "nova" in app.voice_choice.get()
         app._on_voice_choice("onyx — derin erkek")
         assert session.tts.voice == "onyx"
         app._clear_history()
         app.update()
         assert "temiz" in app.reply_label.cget("text").lower()
+        app._start_live()
+        app.update()
+        assert "API anahtarı" in app.reply_label.cget("text")
+        app.live_var.set(False)
+        app._on_live_toggle()
+        app.update()
+        assert "Bas-konuş" in app.mic_button.cget("text")
     finally:
         app.destroy()
