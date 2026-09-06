@@ -17,7 +17,7 @@ source .venv/bin/activate
 python -m pip install -q -r requirements.txt
 
 if [ ! -f .env ]; then
-  cp .env.example .env
+  cp env.ornek.txt .env
 fi
 
 if ! grep -qE '^GROQ_API_KEY=gsk|^OPENAI_API_KEY=sk-' .env; then

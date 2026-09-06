@@ -23,7 +23,7 @@ Canlı konuşma `sohbet/engines/realtime.py` ve `sohbet/live.py` içinde. Bas-ko
 .
 ├── main.py
 ├── requirements.txt
-├── .env.example
+├── env.ornek.txt
 ├── sohbet/
 │   ├── config.py          # .env okuma
 │   ├── personality.py     # kişilik
@@ -59,16 +59,14 @@ brew install portaudio
 ## API anahtarı
 
 ```bash
-cp .env.example .env
+cp env.ornek.txt .env
 ```
 
-`.env` içine kendi anahtarını yaz:
+`.env` içine kendi anahtarını yaz. Anahtarı koda veya sohbete yapıştırma.
 
 ```
-OPENAI_API_KEY=sk-...
+GROQ_API_KEY=gsk_...
 ```
-
-Anahtarı koda yapıştırma. İsteğe bağlı modeller `.env.example` içinde.
 
 ## Nasıl kullanılır
 
@@ -77,7 +75,7 @@ source .venv/bin/activate
 python main.py
 ```
 
-1. İlk seferde `cp .env.example .env` yap. Ücretsiz için `GROQ_API_KEY` yaz (https://console.groq.com/keys). OpenAI kredi ister.
+1. İlk seferde `cp env.ornek.txt .env` yap. Ücretsiz için `GROQ_API_KEY` yaz (https://console.groq.com/keys). OpenAI kredi ister.
 2. `python main.py` — pencere açılır, sağ üstte **API bağlı** olmalı.
 3. **Canlı konuşma** açıkken **Canlı başlat**’a bir kez bas. Konuş, sus; bot cevaplar. Sözünü kesmek için tekrar konuş.
 4. Bitince **Canlı · durdur**.

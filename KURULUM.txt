@@ -7,9 +7,8 @@ Masaustunde calistirma
 
 2) Bu klasoru masaustune koy (zip'ten cikar).
 
-3) Windows noktali dosyalari gizler. .env.example gozukmeyebilir.
-   Bunun yerine env.ornek.txt var. olustur-env.bat cift tikla
-   veya VS Code'da New File deyip adini .env yap.
+3) Windows noktali dosyalari gizler. Sablon dosyasi env.ornek.txt.
+   olustur-env.bat cift tikla veya VS Code'da New File deyip adini .env yap.
 
 4) UCRETSIZ (onerilen):
    https://console.groq.com/keys adresinden ucretsiz anahtar al (kart istemez).
@@ -32,5 +31,5 @@ Sorun olursa:
   GROQ_MODEL=qwen/qwen3.8-27b
 - Mikrofon iznini ac
 - Python 3.10+ olsun
-- Anahtari .env.example'a degil .env'e yaz
+- Anahtari env.ornek.txt'ye degil .env'e yaz. .env.example varsa sil.
 - Canli yerine once kutuya yazi yazip Enter'a bas; metin calisiyorsa sorun mikrofondadir

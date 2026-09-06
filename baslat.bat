@@ -29,7 +29,7 @@ if errorlevel 1 (
 )
 
 if not exist ".env" (
-  copy /y ".env.example" ".env" >nul
+  copy /y "env.ornek.txt" ".env" >nul
 )
 
 findstr /r /c:"GROQ_API_KEY=gsk" ".env" >nul
