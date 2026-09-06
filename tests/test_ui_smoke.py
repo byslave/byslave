@@ -36,3 +36,23 @@ def test_window_builds_and_shows_disconnected_status() -> None:
         assert "Bas-konuş" in app.mic_button.cget("text")
     finally:
         app.destroy()
+
+
+def test_startup_error_is_shown_in_reply() -> None:
+    settings = Settings(
+        openai_api_key="",
+        openai_model="gpt-4o-mini",
+        openai_stt_model="whisper-1",
+        openai_tts_model="tts-1",
+        openai_tts_voice="nova",
+        openai_base_url=None,
+        groq_api_key="gsk-test",
+    )
+    session, _ = build_session(settings)
+    app = ChatApp(session, api_ready=False, startup_error="Model bulunamadı. GROQ_MODEL yaz.")
+    try:
+        app.update()
+        assert "yanıt vermedi" in app.status_label.cget("text")
+        assert "GROQ_MODEL" in app.reply_label.cget("text")
+    finally:
+        app.destroy()

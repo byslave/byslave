@@ -10,7 +10,7 @@ from collections.abc import Callable
 import customtkinter as ctk
 
 from sohbet.audio.recorder import PushToTalkRecorder
-from sohbet.errors import user_message
+from sohbet.errors import AppError, user_message
 from sohbet.live import LiveSession, create_live
 from sohbet.turn_live import TurnLiveSession
 from sohbet.session import ChatSession
@@ -19,7 +19,12 @@ from sohbet.voices import VOICE_LABELS, label_for, voice_from_label
 
 
 class ChatApp(ctk.CTk):
-    def __init__(self, session: ChatSession, api_ready: bool) -> None:
+    def __init__(
+        self,
+        session: ChatSession,
+        api_ready: bool,
+        startup_error: str | None = None,
+    ) -> None:
         super().__init__()
         self.session = session
         self.recorder = PushToTalkRecorder()
@@ -35,6 +40,8 @@ class ChatApp(ctk.CTk):
 
         self._build()
         self._set_api_status(connected=api_ready, checking=False)
+        if startup_error and not api_ready:
+            self._show_error(startup_error)
         self.after(80, self._drain_events)
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
@@ -277,11 +284,14 @@ class ChatApp(ctk.CTk):
 
     def _start_live(self) -> None:
         self.session.player.stop()
-        live = create_live(self.session, self._on_live_event)
         try:
+            live = create_live(self.session, self._on_live_event)
             live.start()
         except Exception as exc:
-            self._show_error(user_message(exc))
+            detail = user_message(exc)
+            if isinstance(exc, AppError) and exc.detail:
+                detail = f"{detail} ({exc.detail[:120]})"
+            self._show_error(detail)
             return
         self._live = live
         self.mic_button.configure(text="●  Canlı · durdur", fg_color=theme.RECORD, hover_color="#9A4A2E")
@@ -328,8 +338,12 @@ class ChatApp(ctk.CTk):
                 self.status_label.configure(text="Groq bağlı (ücretsiz)")
             else:
                 self.status_label.configure(text="API bağlı")
+            return
+        self.status_dot.configure(text_color=theme.ERR)
+        configured = bool(self.session.settings and self.session.settings.api_configured)
+        if configured:
+            self.status_label.configure(text="API yanıt vermedi")
         else:
-            self.status_dot.configure(text_color=theme.ERR)
             self.status_label.configure(text="API bağlı değil")
 
     def _append_history(self, who: str, text: str) -> None:
@@ -437,6 +451,10 @@ class ChatApp(ctk.CTk):
         self.destroy()
 
 
-def run_app(session: ChatSession, api_ready: bool) -> None:
-    app = ChatApp(session, api_ready=api_ready)
+def run_app(
+    session: ChatSession,
+    api_ready: bool,
+    startup_error: str | None = None,
+) -> None:
+    app = ChatApp(session, api_ready=api_ready, startup_error=startup_error)
     app.mainloop()

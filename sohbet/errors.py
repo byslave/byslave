@@ -32,6 +32,13 @@ def user_message(exc: Exception) -> str:
         return "OpenAI'ye bağlanılamadı. Bu Cursor bulutunda genelde kapalıdır; botu kendi bilgisayarında çalıştır."
     if "microphone" in text or "input device" in text or "no default input" in text:
         return "Mikrofon bulunamadı veya kullanılamıyor. Sistem ayarlarından mikrofon iznini kontrol et."
-    if "quota" in text or "insufficient" in text or "credit" in text or "billing" in text or "429" in text:
-        return "OpenAI bakiyen bitmiş. platform.openai.com → Settings → Billing kısmına kredi yükle."
-    return "Bir şeyler ters gitti. Tekrar dene; sorun sürerse .env ve internet bağlantını kontrol et."
+    if "quota" in text or "insufficient" in text or "credit" in text or "billing" in text:
+        return "OpenAI bakiyen bitmiş. Ücretsiz için GROQ_API_KEY kullan."
+    if "model_not_found" in text or "does not exist" in text:
+        return "Model bulunamadı. .env içine GROQ_MODEL=qwen/qwen3.8-27b yaz, kaydet, botu yeniden aç."
+    if "numpy" in text:
+        return "numpy eksik. Terminal: .venv\\Scripts\\python.exe -m pip install --upgrade pip numpy"
+    if "sounddevice" in text or "portaudio" in text:
+        return "Ses kütüphanesi eksik. Terminal: .venv\\Scripts\\python.exe -m pip install sounddevice"
+    short = str(exc).replace("\n", " ")[:160]
+    return f"Hata: {type(exc).__name__}: {short}"

@@ -42,13 +42,22 @@ class ChatEngine:
             raise AppError("Bu turda cevap gelmedi. Tekrar dene.")
         return text
 
-    def ping(self) -> bool:
-        """Bağlantı durumu için ucuz bir doğrulama."""
+    def ping_detail(self) -> tuple[bool, str]:
+        """Bağlantıyı dene; başarısızsa kullanıcıya gösterilecek nedeni dön."""
         if not self._settings.api_configured:
-            return False
+            return False, "API anahtarı yok. .env içine GROQ_API_KEY yaz."
         try:
             client = self._client_or_raise()
-            client.models.retrieve(self._settings.llm_model)
-            return True
-        except Exception:
-            return False
+            client.chat.completions.create(
+                model=self._settings.llm_model,
+                messages=[{"role": "user", "content": "ok"}],
+                max_tokens=1,
+            )
+            return True, ""
+        except Exception as exc:
+            return False, user_message(exc)
+
+    def ping(self) -> bool:
+        """Bağlantı durumu için kısa bir deneme."""
+        ok, _ = self.ping_detail()
+        return ok

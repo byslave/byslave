@@ -12,16 +12,151 @@ from sohbet.voices import normalize_voice
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 GROQ_BASE = "https://api.groq.com/openai/v1"
+DEFAULT_GROQ_MODEL = "qwen/qwen3.8-27b"
+
+# Groq ücretsiz planda kapanmış modeller — eski .env dosyaları bozulmasın.
+DEPRECATED_GROQ_MODELS = {
+    "llama-3.1-8b-instant": DEFAULT_GROQ_MODEL,
+    "llama-3.3-70b-versatile": DEFAULT_GROQ_MODEL,
+    "qwen/qwen3-32b": DEFAULT_GROQ_MODEL,
+    "meta-llama/llama-4-scout-17b-16e-instruct": DEFAULT_GROQ_MODEL,
+}
+
+
+def _clean_env(value: str) -> str:
+    text = (value or "").strip()
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in {'"', "'"}:
+        return text[1:-1].strip()
+    return text
+
+
+def _env(name: str, default: str = "") -> str:
+    return _clean_env(os.getenv(name, default))
+
+
+def remap_groq_model(model: str) -> str:
+    name = _clean_env(model) or DEFAULT_GROQ_MODEL
+    return DEPRECATED_GROQ_MODELS.get(name, name)
+
+
+def _env_candidates(explicit: Path | None = None) -> list[Path]:
+    if explicit is not None:
+        return [explicit]
+    seen: set[Path] = set()
+    out: list[Path] = []
+    for path in (PROJECT_ROOT / ".env", Path.cwd() / ".env"):
+        resolved = path.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        out.append(path)
+    return out
+
+
+def _apply_env_text(text: str) -> None:
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        os.environ[key] = _clean_env(value)
+
+
+def _load_env_file(path: Path) -> bool:
+    if not path.exists():
+        return False
+    load_dotenv(path, override=False)
+    if _env("GROQ_API_KEY") or _env("OPENAI_API_KEY"):
+        return True
+    for encoding in ("utf-8-sig", "utf-16", "utf-16-le", "cp1254"):
+        try:
+            _apply_env_text(path.read_text(encoding=encoding))
+        except (OSError, UnicodeError):
+            continue
+        if _env("GROQ_API_KEY") or _env("OPENAI_API_KEY"):
+            return True
+    return True
+
+
+def _clear_empty_base_url() -> None:
+    # Boş OPENAI_BASE_URL SDK'yı kırıyor (protokolsüz adres).
+    if not _env("OPENAI_BASE_URL"):
+        os.environ.pop("OPENAI_BASE_URL", None)
 
 
 def load_env(env_path: Path | None = None) -> None:
     """Proje kökündeki .env dosyasını yükle. Mevcut ortam değişkenlerini ezme."""
-    path = env_path or PROJECT_ROOT / ".env"
-    if path.exists():
-        load_dotenv(path, override=False)
-    # Boş OPENAI_BASE_URL SDK'yı kırıyor (protokolsüz adres).
-    if not os.getenv("OPENAI_BASE_URL", "").strip():
-        os.environ.pop("OPENAI_BASE_URL", None)
+    for path in _env_candidates(env_path):
+        if path.exists():
+            _load_env_file(path)
+            break
+    _clear_empty_base_url()
+
+
+def _search_dirs() -> list[Path]:
+    seen: set[Path] = set()
+    out: list[Path] = []
+    for path in (PROJECT_ROOT, Path.cwd()):
+        resolved = path.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        out.append(path)
+    return out
+
+
+def _file_has_filled_key(path: Path) -> bool:
+    if not path.exists():
+        return False
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return False
+    for raw in text.splitlines():
+        line = raw.strip().replace(" ", "")
+        if line.startswith("GROQ_API_KEY=gsk_") or line.startswith("OPENAI_API_KEY=sk-"):
+            return True
+    return False
+
+
+def diagnose_setup(settings: Settings | None = None) -> str:
+    """Anahtar yoksa kullanıcıya dosya adını / konumu anlat. Anahtar yazdırılmaz."""
+    if settings is not None and settings.api_configured:
+        return ""
+
+    env_exists = False
+    env_txt = False
+    example_has_key = False
+    for folder in _search_dirs():
+        if (folder / ".env").exists():
+            env_exists = True
+        if (folder / ".env.txt").exists() or (folder / "env.txt").exists():
+            env_txt = True
+        if _file_has_filled_key(folder / ".env.example") or _file_has_filled_key(folder / "env.ornek.txt"):
+            example_has_key = True
+
+    if env_txt and not env_exists:
+        return (
+            "`.env` yok; `.env.txt` var. Windows uzantıyı gizliyor olabilir. "
+            "Dosya adını tam olarak `.env` yap (uzantısız), botu yeniden aç."
+        )
+    if example_has_key:
+        return (
+            "Anahtar `.env.example` veya `env.ornek.txt` içinde duruyor. "
+            "Aynı satırı `main.py` yanındaki `.env` dosyasına taşı."
+        )
+    if not env_exists:
+        return (
+            "`.env` bulunamadı. `env.ornek.txt` dosyasını kopyalayıp adını `.env` yap, "
+            "içine GROQ_API_KEY=gsk_... yaz. Anahtar: https://console.groq.com/keys"
+        )
+    return (
+        "`.env` var ama GROQ_API_KEY boş. https://console.groq.com/keys adresinden "
+        "ücretsiz anahtar alıp `GROQ_API_KEY=gsk_...` diye yaz (eşittirden sonra boşluk olmasın)."
+    )
 
 
 @dataclass(frozen=True)
@@ -34,7 +169,7 @@ class Settings:
     openai_base_url: str | None
     openai_realtime_model: str = "gpt-4o-mini-realtime-preview"
     groq_api_key: str = ""
-    groq_model: str = "openai/gpt-oss-20b"
+    groq_model: str = DEFAULT_GROQ_MODEL
     groq_stt_model: str = "whisper-large-v3"
     provider: str = "auto"
     sample_rate: int = 16000
@@ -92,20 +227,20 @@ class Settings:
 
 def get_settings() -> Settings:
     load_env()
-    base_url = os.getenv("OPENAI_BASE_URL", "").strip() or None
+    base_url = _env("OPENAI_BASE_URL") or None
     return Settings(
-        openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
-        openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini",
-        openai_stt_model=os.getenv("OPENAI_STT_MODEL", "whisper-1").strip() or "whisper-1",
-        openai_tts_model=os.getenv("OPENAI_TTS_MODEL", "tts-1").strip() or "tts-1",
-        openai_tts_voice=normalize_voice(os.getenv("OPENAI_TTS_VOICE", "nova")),
+        openai_api_key=_env("OPENAI_API_KEY"),
+        openai_model=_env("OPENAI_MODEL", "gpt-4o-mini") or "gpt-4o-mini",
+        openai_stt_model=_env("OPENAI_STT_MODEL", "whisper-1") or "whisper-1",
+        openai_tts_model=_env("OPENAI_TTS_MODEL", "tts-1") or "tts-1",
+        openai_tts_voice=normalize_voice(_env("OPENAI_TTS_VOICE", "nova")),
         openai_base_url=base_url,
         openai_realtime_model=(
-            os.getenv("OPENAI_REALTIME_MODEL", "gpt-4o-mini-realtime-preview").strip()
+            _env("OPENAI_REALTIME_MODEL", "gpt-4o-mini-realtime-preview")
             or "gpt-4o-mini-realtime-preview"
         ),
-        groq_api_key=os.getenv("GROQ_API_KEY", "").strip(),
-        groq_model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b").strip() or "openai/gpt-oss-20b",
-        groq_stt_model=os.getenv("GROQ_STT_MODEL", "whisper-large-v3").strip() or "whisper-large-v3",
-        provider=(os.getenv("PROVIDER", "auto").strip() or "auto"),
+        groq_api_key=_env("GROQ_API_KEY"),
+        groq_model=remap_groq_model(_env("GROQ_MODEL", DEFAULT_GROQ_MODEL)),
+        groq_stt_model=_env("GROQ_STT_MODEL", "whisper-large-v3") or "whisper-large-v3",
+        provider=_env("PROVIDER", "auto") or "auto",
     )

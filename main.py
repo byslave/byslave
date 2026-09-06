@@ -17,11 +17,20 @@ def main() -> int:
         return 1
 
     try:
+        from sohbet.config import diagnose_setup
+
         session, settings = build_session()
         api_ready = False
+        startup_error: str | None = None
         if settings.api_configured:
-            api_ready = session.llm.ping()
-        run_app(session, api_ready=api_ready)
+            api_ready, startup_error = session.llm.ping_detail()
+            if api_ready:
+                startup_error = None
+        else:
+            startup_error = diagnose_setup(settings)
+        if startup_error:
+            print(startup_error, file=sys.stderr)
+        run_app(session, api_ready=api_ready, startup_error=startup_error)
         return 0
     except Exception as exc:
         print(f"Bot çalışırken durdu: {exc}", file=sys.stderr)
