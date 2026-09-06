@@ -84,6 +84,11 @@ def test_empty_text_raises() -> None:
         assert "yazılmadı" in exc.message
 
 
+def test_set_tts_voice_without_setter() -> None:
+    session, _, _ = _session()
+    assert session.set_tts_voice("coral") == "coral"
+
+
 def test_clear_stops_audio() -> None:
     session, _, player = _session()
     session.handle_text("hey")

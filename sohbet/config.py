@@ -8,6 +8,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from sohbet.voices import normalize_voice
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -41,6 +43,6 @@ def get_settings() -> Settings:
         openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini",
         openai_stt_model=os.getenv("OPENAI_STT_MODEL", "whisper-1").strip() or "whisper-1",
         openai_tts_model=os.getenv("OPENAI_TTS_MODEL", "tts-1").strip() or "tts-1",
-        openai_tts_voice=os.getenv("OPENAI_TTS_VOICE", "nova").strip() or "nova",
+        openai_tts_voice=normalize_voice(os.getenv("OPENAI_TTS_VOICE", "nova")),
         openai_base_url=base_url,
     )

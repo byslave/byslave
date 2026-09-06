@@ -19,6 +19,9 @@ def test_window_builds_and_shows_disconnected_status() -> None:
         assert app.title() == "Sohbet"
         assert "bağlı değil" in app.status_label.cget("text")
         assert app.voice_var.get() is True
+        assert "nova" in app.voice_choice.get()
+        app._on_voice_choice("onyx — derin erkek")
+        assert session.tts.voice == "onyx"
         app._clear_history()
         app.update()
         assert "temiz" in app.reply_label.cget("text").lower()

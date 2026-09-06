@@ -70,19 +70,22 @@ OPENAI_API_KEY=sk-...
 
 Anahtarı koda yapıştırma. İsteğe bağlı modeller `.env.example` içinde.
 
-## Çalıştırma
+## Nasıl kullanılır
 
 ```bash
 source .venv/bin/activate
 python main.py
 ```
 
-1. Pencere açılınca sağ üstte **API bağlı** görünmeli.
-2. **Bas-konuş** düğmesini basılı tut, konuş, bırak.
-3. Metin geçmişe düşer; bot cevabı alt kartta durur.
-4. **Sesli cevap** anahtarıyla TTS’i kapatıp açabilirsin.
-5. **Geçmişi temizle** belleği sıfırlar.
-6. Mikrofon yoksa alttaki metin kutusuna yazıp Enter’a bas.
+1. İlk seferde `cp .env.example .env` yap, `OPENAI_API_KEY` yaz.
+2. `python main.py` — pencere açılır, sağ üstte **API bağlı** olmalı.
+3. **Bas-konuş**’u basılı tut, konuş, bırak. Bot metni çözer, cevap yazar, sesli okur.
+4. Mikrofon yoksa kutuya yazıp Enter’a bas.
+5. **Ses tonu** listesinden sesi değiştir (nova, onyx, coral…). Bir sonraki cevap yeni sesle gelir.
+6. **Sesli cevap** kapalıysa sadece yazar, okumaz.
+7. **Geçmişi temizle** konuşmayı sıfırlar.
+
+Bu sürüm **bas-konuş**. ChatGPT Voice gibi sürekli dinleyip anında keserek cevap vermez. Sen konuşursun, bırakırsın, sonra cevap gelir (birkaç saniye). Gerçek zamanlı katman ayrı duruyor; istersen sonra eklenebilir.
 
 Cevaplar kısa tutulur; hata olursa uygulama kapanmaz, mesajı ekranda gösterir.
 

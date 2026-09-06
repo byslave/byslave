@@ -13,6 +13,7 @@ from sohbet.audio.recorder import PushToTalkRecorder
 from sohbet.errors import user_message
 from sohbet.session import ChatSession
 from sohbet.ui import theme
+from sohbet.voices import VOICE_LABELS, label_for, voice_from_label
 
 
 class ChatApp(ctk.CTk):
@@ -176,13 +177,48 @@ class ChatApp(ctk.CTk):
         )
         clear_btn.pack(side="right")
 
+        extras = ctk.CTkFrame(self, fg_color=theme.CREAM)
+        extras.pack(fill="x", padx=28, pady=(0, 4))
+
+        voice_label = ctk.CTkLabel(
+            extras,
+            text="Ses tonu",
+            font=ctk.CTkFont(family=theme.FONT_FAMILY, size=13),
+            text_color=theme.COFFEE,
+        )
+        voice_label.pack(side="left")
+
+        current = "nova"
+        if hasattr(self.session.tts, "voice"):
+            current = getattr(self.session.tts, "voice") or "nova"
+        self.voice_choice = ctk.CTkOptionMenu(
+            extras,
+            values=list(VOICE_LABELS.values()),
+            command=self._on_voice_choice,
+            width=220,
+            height=32,
+            fg_color=theme.CREAM_DARK,
+            button_color=theme.COFFEE,
+            button_hover_color=theme.COFFEE_SOFT,
+            dropdown_fg_color=theme.PAPER,
+            dropdown_hover_color=theme.CREAM_DARK,
+            text_color=theme.COFFEE,
+            font=ctk.CTkFont(family=theme.FONT_FAMILY, size=13),
+        )
+        self.voice_choice.set(label_for(current))
+        self.voice_choice.pack(side="left", padx=(10, 0))
+
         self.hint = ctk.CTkLabel(
             self,
-            text="Düğmeyi basılı tutarak konuş. İlk sürüm bas-konuş; gerçek zamanlı katman ayrı duruyor.",
+            text="Bas-konuş: düğmeyi basılı tut, konuş, bırak. ChatGPT Voice gibi anlık değil; sıra sende, sonra cevap gelir.",
             font=ctk.CTkFont(family=theme.FONT_FAMILY, size=12),
             text_color=theme.MUTED,
         )
         self.hint.pack(padx=28, pady=(0, 18), anchor="w")
+
+    def _on_voice_choice(self, label: str) -> None:
+        chosen = self.session.set_tts_voice(voice_from_label(label))
+        self.hint.configure(text=f"Ses tonu: {label_for(chosen)}. Bir sonraki cevap bu sesle okunur.")
 
     def _on_voice_toggle(self) -> None:
         self.session.voice_enabled = bool(self.voice_var.get())

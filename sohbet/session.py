@@ -26,6 +26,11 @@ class ChatSession:
         self.player = player or AudioPlayer()
         self.voice_enabled = True
 
+    def set_tts_voice(self, name: str) -> str:
+        if hasattr(self.tts, "set_voice"):
+            return self.tts.set_voice(name)
+        return name
+
     def handle_audio(self, wav_bytes: bytes) -> tuple[str, str]:
         user_text = self.stt.transcribe(wav_bytes, language="tr")
         return self.handle_text(user_text)
