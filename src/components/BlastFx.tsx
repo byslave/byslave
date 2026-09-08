@@ -49,14 +49,14 @@ export default function BlastFx({ burst, equipped, cell, gap }: Props) {
       for (let r = 0; r < 8; r++) cells.push([r, c])
     }
 
-    const count = set.kind === 'lightning' ? 10 : 14
+    const count = (set.kind === 'lightning' ? 10 : 14) + Math.min(burst.combo, 6) * 4
     for (const [r, c] of cells) {
       const cx = c * stride + cell / 2
       const cy = r * stride + cell / 2
       for (let i = 0; i < count; i++) {
         const color = set.colors[i % set.colors.length]
         const angle = Math.random() * Math.PI * 2
-        const speed = 1.2 + Math.random() * 3.4
+        const speed = 1.2 + Math.random() * 3.4 + burst.combo * 0.35
         spawn.push({
           x: cx,
           y: cy,

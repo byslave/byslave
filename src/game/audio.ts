@@ -58,6 +58,13 @@ export function sfxClear(combo: number): void {
   window.setTimeout(() => tone(base * 1.5, 0.18, 'triangle', 0.05, 80), 40)
 }
 
+export function sfxCombo(combo: number): void {
+  const n = Math.min(combo, 6)
+  tone(260 + n * 80, 0.12, 'square', 0.08, 220)
+  window.setTimeout(() => tone(440 + n * 70, 0.18, 'triangle', 0.07, 160), 45)
+  if (n >= 3) window.setTimeout(() => tone(920, 0.22, 'sawtooth', 0.045, -240), 90)
+}
+
 export function sfxOver(): void {
   tone(240, 0.22, 'sawtooth', 0.06, -160)
   window.setTimeout(() => tone(120, 0.28, 'triangle', 0.05, -40), 90)
