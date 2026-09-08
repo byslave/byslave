@@ -2,41 +2,67 @@ import { useEffect, useState } from 'react'
 import BottomNav from './components/BottomNav'
 import CrateScreen from './screens/CrateScreen'
 import LeaderboardScreen from './screens/LeaderboardScreen'
+import LoginScreen from './screens/LoginScreen'
 import PlayScreen from './screens/PlayScreen'
-import { freshlyUnlocked, loadProgress, saveProgress } from './game/progress'
+import { currentAccount, logout, saveProgress, type Account } from './game/auth'
+import { setMuted, unlockAudio } from './game/audio'
+import { freshlyUnlocked } from './game/progress'
 import type { BlastSetId, Progress, TabId } from './game/types'
 
 export default function App() {
+  const [account, setAccount] = useState<Account | null>(() => currentAccount())
   const [tab, setTab] = useState<TabId>('play')
-  const [progress, setProgress] = useState<Progress>(() => loadProgress())
 
   useEffect(() => {
-    saveProgress(progress)
-  }, [progress])
+    setMuted(account?.progress.muted ?? false)
+  }, [account?.progress.muted])
 
   function patch(partial: Partial<Progress>) {
-    setProgress((p) => {
-      const next = { ...p, ...partial }
-      return { ...next, unlocked: freshlyUnlocked(next) }
+    setAccount((current) => {
+      if (!current) return current
+      const next = { ...current.progress, ...partial }
+      const progress = { ...next, unlocked: freshlyUnlocked(next) }
+      return saveProgress(current, progress)
     })
   }
 
   function equip(id: BlastSetId) {
-    if (!progress.unlocked.includes(id)) return
+    if (!account?.progress.unlocked.includes(id)) return
     patch({ equipped: id })
   }
 
+  function signOut() {
+    logout()
+    setTab('play')
+    setAccount(null)
+  }
+
+  if (!account) {
+    return (
+      <div className="stage">
+        <div className="phone">
+          <LoginScreen onEnter={setAccount} />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="stage">
+    <div className="stage" onPointerDown={unlockAudio}>
       <div className="phone">
         <div className={`pane ${tab === 'play' ? 'show' : ''}`}>
-          <PlayScreen progress={progress} onProgress={patch} />
+          <PlayScreen
+            key={account.id}
+            progress={account.progress}
+            onProgress={patch}
+            onLogout={signOut}
+          />
         </div>
         <div className={`pane ${tab === 'ranks' ? 'show' : ''}`}>
-          <LeaderboardScreen progress={progress} />
+          <LeaderboardScreen progress={account.progress} />
         </div>
         <div className={`pane ${tab === 'crate' ? 'show' : ''}`}>
-          <CrateScreen progress={progress} onEquip={equip} />
+          <CrateScreen progress={account.progress} onEquip={equip} />
         </div>
         <BottomNav tab={tab} onChange={setTab} />
       </div>

@@ -9,6 +9,7 @@ import {
 } from 'react'
 import BlastFx, { type Burst } from '../components/BlastFx'
 import PieceView from '../components/PieceView'
+import { sfxClear, sfxFall, sfxOver, sfxPlace, sfxTap, unlockAudio } from '../game/audio'
 import {
   anyTrayFits,
   canPlace,
@@ -18,11 +19,12 @@ import {
   placePiece,
   rollTray,
 } from '../game/engine'
-import { GRID_SIZE, type Grid, type Piece, type Progress } from '../game/types'
+import { GRID_SIZE, type Grid, type Piece, type PlaceResult, type Progress } from '../game/types'
 
 type Props = {
   progress: Progress
   onProgress: (partial: Partial<Progress>) => void
+  onLogout: () => void
 }
 
 type Drag = {
@@ -45,6 +47,10 @@ function buzz(style: 'light' | 'medium' = 'light') {
   }
 }
 
+function wait(ms: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, ms))
+}
+
 function bootMatch() {
   if (new URLSearchParams(window.location.search).get('demo') === 'patlat') {
     return demoNearClear()
@@ -53,7 +59,7 @@ function bootMatch() {
   return { grid, tray: rollTray(Math.random, 12, grid) }
 }
 
-export default function PlayScreen({ progress, onProgress }: Props) {
+export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
   const [boot] = useState(bootMatch)
   const [grid, setGrid] = useState<Grid>(boot.grid)
   const [tray, setTray] = useState<Array<Piece | null>>(boot.tray)
@@ -64,12 +70,15 @@ export default function PlayScreen({ progress, onProgress }: Props) {
   const [drag, setDrag] = useState<Drag | null>(null)
   const [burst, setBurst] = useState<Burst | null>(null)
   const [clearing, setClearing] = useState<{ rows: number[]; cols: number[] } | null>(null)
+  const [falling, setFalling] = useState<Record<string, number> | null>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const boardRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<Drag | null>(null)
   const gridRef = useRef(grid)
   const cellRef = useRef(36)
   const burstId = useRef(1)
+  const busyRef = useRef(false)
+  const playId = useRef(0)
   const [cell, setCell] = useState(36)
   const gap = 5
   const lift = 40
@@ -101,6 +110,8 @@ export default function PlayScreen({ progress, onProgress }: Props) {
   }, [measure])
 
   function restart() {
+    playId.current += 1
+    busyRef.current = false
     const nextGrid = emptyGrid()
     setGrid(nextGrid)
     setTray(rollTray(Math.random, 12, nextGrid))
@@ -108,7 +119,10 @@ export default function PlayScreen({ progress, onProgress }: Props) {
     setCombo(0)
     setOver(false)
     setPaused(false)
+    setFalling(null)
+    setClearing(null)
     setDragState(null)
+    sfxTap()
     onProgress({ gamesPlayed: progress.gamesPlayed + 1 })
   }
 
@@ -135,7 +149,8 @@ export default function PlayScreen({ progress, onProgress }: Props) {
   }
 
   function onDown(index: number, piece: Piece, e: PointerEvent<HTMLDivElement>) {
-    if (paused || over) return
+    if (paused || over || busyRef.current) return
+    unlockAudio()
     e.currentTarget.setPointerCapture(e.pointerId)
     setDragState({
       index,
@@ -157,44 +172,88 @@ export default function PlayScreen({ progress, onProgress }: Props) {
     })
   }
 
+  function settleTray(finalGrid: Grid, nextTray: Array<Piece | null>) {
+    let trayNext = nextTray
+    if (trayNext.every((p) => p === null)) {
+      trayNext = rollTray(Math.random, 12, finalGrid)
+    }
+    setTray(trayNext)
+    if (!anyTrayFits(finalGrid, trayNext)) {
+      setOver(true)
+      sfxOver()
+    }
+  }
+
+  async function playBlast(result: PlaceResult, nextTray: Array<Piece | null>, nextScore: number) {
+    const token = ++playId.current
+    const live = () => token === playId.current
+    busyRef.current = true
+    setGrid(result.placedGrid)
+    sfxPlace()
+    buzz('light')
+
+    if (result.events.length === 0) {
+      setCombo(0)
+      setScore(nextScore)
+      settleTray(result.grid, nextTray)
+      busyRef.current = false
+      return
+    }
+
+    await wait(80)
+    for (const ev of result.events) {
+      if (!live()) return
+      if (ev.type === 'clear') {
+        setCombo(ev.combo)
+        setClearing({ rows: ev.rows, cols: ev.cols })
+        setBurst({
+          id: burstId.current++,
+          rows: ev.rows,
+          cols: ev.cols,
+          combo: ev.combo,
+        })
+        sfxClear(ev.combo)
+        buzz('medium')
+        await wait(220)
+        if (!live()) return
+        setGrid(ev.grid)
+        setClearing(null)
+      } else {
+        const drop: Record<string, number> = {}
+        for (const move of ev.moves) drop[`${move.toR}:${move.toC}`] = move.toR - move.fromR
+        setFalling(drop)
+        setGrid(ev.grid)
+        sfxFall()
+        await wait(200)
+        if (!live()) return
+        setFalling(null)
+      }
+    }
+
+    if (!live()) return
+    setGrid(result.grid)
+    setScore(nextScore)
+    setCombo(result.combo)
+    settleTray(result.grid, nextTray)
+    busyRef.current = false
+  }
+
   function onUp() {
     const current = dragRef.current
     if (!current) return
     const { hover, piece, index } = current
     setDragState(null)
-    if (!hover?.valid) return
+    if (!hover?.valid || busyRef.current) return
     const result = placePiece(gridRef.current, piece, hover.row, hover.col, combo)
     if (!result) return
 
-    let nextTray = tray.map((p, i) => (i === index ? null : p))
+    const nextTray = tray.map((p, i) => (i === index ? null : p))
     const nextScore = score + result.scoreGain
-    const nextBest = Math.max(progress.best, nextScore)
-    const nextMaxCombo = Math.max(progress.maxCombo, result.combo)
-
-    if (nextTray.every((p) => p === null)) {
-      nextTray = rollTray(Math.random, 12, result.grid)
-    }
-    if (!anyTrayFits(result.grid, nextTray)) setOver(true)
-
-    setGrid(result.grid)
-    if (result.clear.lines > 0) {
-      setClearing({ rows: result.clear.clearedRows, cols: result.clear.clearedCols })
-      setBurst({
-        id: burstId.current++,
-        rows: result.clear.clearedRows,
-        cols: result.clear.clearedCols,
-        combo: result.combo,
-      })
-      buzz('medium')
-      window.setTimeout(() => setClearing(null), 220)
-    } else {
-      buzz('light')
-    }
-
-    setTray(nextTray)
-    setScore(nextScore)
-    setCombo(result.combo)
-    onProgress({ best: nextBest, maxCombo: nextMaxCombo })
+    onProgress({
+      best: Math.max(progress.best, nextScore),
+      maxCombo: Math.max(progress.maxCombo, result.combo),
+    })
+    void playBlast(result, nextTray, nextScore)
   }
 
   const preview = useMemo(() => {
@@ -217,7 +276,14 @@ export default function PlayScreen({ progress, onProgress }: Props) {
           <label>EN İYİ</label>
           <strong>{formatScore(progress.best)}</strong>
         </div>
-        <button className="icon-btn" aria-label="Duraklat" onClick={() => setPaused(true)}>
+        <button
+          className="icon-btn"
+          aria-label="Duraklat"
+          onClick={() => {
+            sfxTap()
+            setPaused(true)
+          }}
+        >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <rect x="6" y="5" width="4" height="14" rx="1" />
             <rect x="14" y="5" width="4" height="14" rx="1" />
@@ -242,40 +308,43 @@ export default function PlayScreen({ progress, onProgress }: Props) {
               ['--cell' as string]: `${cell}px`,
             }}
           >
-          {grid.flatMap((row, r) =>
-            row.map((color, c) => {
-              const key = `${r}:${c}`
-              const previewing = preview.has(key)
-              const isClear =
-                clearing && (clearing.rows.includes(r) || clearing.cols.includes(c))
-              const cls = [
-                'cell',
-                color ? 'filled' : '',
-                isClear ? 'clearing' : '',
-                previewing && drag?.hover?.valid ? 'preview-ok' : '',
-                previewing && drag && !drag.hover?.valid ? 'preview-bad' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')
-              return (
-                <div
-                  key={key}
-                  className={cls}
-                  style={
-                    {
-                      '--c': previewing ? drag?.piece.color : color ?? 'transparent',
-                    } as CSSProperties
-                  }
-                />
-              )
-            }),
-          )}
+            {grid.flatMap((row, r) =>
+              row.map((color, c) => {
+                const key = `${r}:${c}`
+                const previewing = preview.has(key)
+                const fall = falling?.[key]
+                const isClear =
+                  clearing && (clearing.rows.includes(r) || clearing.cols.includes(c))
+                const cls = [
+                  'cell',
+                  color ? 'filled' : '',
+                  isClear ? 'clearing' : '',
+                  fall ? 'drop' : '',
+                  previewing && drag?.hover?.valid ? 'preview-ok' : '',
+                  previewing && drag && !drag.hover?.valid ? 'preview-bad' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')
+                return (
+                  <div
+                    key={key}
+                    className={cls}
+                    style={
+                      {
+                        '--c': previewing ? drag?.piece.color : color ?? 'transparent',
+                        '--fall': fall ?? 1,
+                      } as CSSProperties
+                    }
+                  />
+                )
+              }),
+            )}
           </div>
           <BlastFx burst={burst} equipped={progress.equipped} cell={cell} gap={gap} />
         </div>
       </div>
 
-      <p className="hint">Parçanı sürükle, satırı patlat!</p>
+      <p className="hint">Bloklar düşer — zinciri patlat!</p>
 
       <div className="tray">
         {tray.map((piece, i) => (
@@ -311,13 +380,24 @@ export default function PlayScreen({ progress, onProgress }: Props) {
         <div className="overlay">
           <div className="modal">
             <h2>DURAKLATILDI</h2>
-            <p>Reaktör çekirdeği bekliyor.</p>
+            <p>
+              {progress.playerName} · Reaktör çekirdeği bekliyor.
+            </p>
             <div className="actions">
               <button className="btn primary" onClick={() => setPaused(false)}>
                 Devam et
               </button>
+              <button
+                className="btn ghost"
+                onClick={() => onProgress({ muted: !progress.muted })}
+              >
+                {progress.muted ? 'Sesi aç' : 'Sesi kapat'}
+              </button>
               <button className="btn ghost" onClick={restart}>
                 Yeniden başla
+              </button>
+              <button className="btn ghost" onClick={onLogout}>
+                Hesaptan çık
               </button>
             </div>
           </div>

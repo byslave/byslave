@@ -3,13 +3,14 @@ import type { BlastSetId, Progress } from './types'
 
 const KEY = 'neonpatlat-progress-v1'
 
-const DEFAULT: Progress = {
+export const DEFAULT: Progress = {
   best: 0,
   maxCombo: 0,
   gamesPlayed: 0,
   playerName: 'Deniz',
   equipped: 'neon-yagmuru',
   unlocked: ['neon-yagmuru', 'kozmik-kupler', 'disko-simsegi'],
+  muted: false,
 }
 
 export function loadProgress(): Progress {

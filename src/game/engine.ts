@@ -1,4 +1,4 @@
-import { GRID_SIZE, type Grid, type Piece, type ClearResult, type PlaceResult } from './types'
+import { GRID_SIZE, type BlastEvent, type FallMove, type Grid, type Piece, type ClearResult, type PlaceResult } from './types'
 import { matrixToPiece, randomPiece } from './pieces'
 
 export function emptyGrid(): Grid {
@@ -74,6 +74,64 @@ export function clearCompleted(grid: Grid): ClearResult {
   }
 }
 
+export function applyGravity(grid: Grid): { grid: Grid; moves: FallMove[] } {
+  const next = emptyGrid()
+  const moves: FallMove[] = []
+  for (let c = 0; c < GRID_SIZE; c++) {
+    const stack: Array<{ r: number; color: string }> = []
+    for (let r = GRID_SIZE - 1; r >= 0; r--) {
+      const color = grid[r][c]
+      if (color) stack.push({ r, color })
+    }
+    let dest = GRID_SIZE - 1
+    for (const cell of stack) {
+      next[dest][c] = cell.color
+      if (cell.r !== dest) {
+        moves.push({ fromR: cell.r, fromC: c, toR: dest, toC: c, color: cell.color })
+      }
+      dest -= 1
+    }
+  }
+  return { grid: next, moves }
+}
+
+export function resolveBlasts(start: Grid, combo: number): {
+  grid: Grid
+  events: BlastEvent[]
+  combo: number
+  lines: number
+  scoreGain: number
+} {
+  let grid = start
+  let nextCombo = combo
+  let lines = 0
+  let scoreGain = 0
+  const events: BlastEvent[] = []
+
+  for (let wave = 0; wave < 12; wave++) {
+    const clear = clearCompleted(grid)
+    if (clear.lines <= 0) break
+    nextCombo += 1
+    lines += clear.lines
+    scoreGain += clear.lines * clear.lines * 100 * nextCombo
+    events.push({
+      type: 'clear',
+      rows: clear.clearedRows,
+      cols: clear.clearedCols,
+      grid: clear.grid,
+      combo: nextCombo,
+      lines: clear.lines,
+    })
+    grid = clear.grid
+    const fall = applyGravity(grid)
+    if (fall.moves.length === 0) continue
+    events.push({ type: 'fall', grid: fall.grid, moves: fall.moves })
+    grid = fall.grid
+  }
+
+  return { grid, events, combo: events.length ? nextCombo : 0, lines, scoreGain }
+}
+
 export function scoreForMove(placedCells: number, lines: number, combo: number): number {
   const place = placedCells * 10
   if (lines <= 0) return place
@@ -90,15 +148,16 @@ export function placePiece(
   combo: number,
 ): PlaceResult | null {
   if (!canPlace(grid, piece, row, col)) return null
-  const filled = applyPiece(grid, piece, row, col)
-  const clear = clearCompleted(filled)
-  const nextCombo = clear.lines > 0 ? combo + 1 : 0
+  const placedGrid = applyPiece(grid, piece, row, col)
+  const blast = resolveBlasts(placedGrid, combo)
   return {
-    grid: clear.grid,
+    grid: blast.grid,
+    placedGrid,
     placedCells: piece.cells.length,
-    clear,
-    combo: nextCombo,
-    scoreGain: scoreForMove(piece.cells.length, clear.lines, nextCombo),
+    events: blast.events,
+    lines: blast.lines,
+    combo: blast.combo,
+    scoreGain: piece.cells.length * 10 + blast.scoreGain,
   }
 }
 

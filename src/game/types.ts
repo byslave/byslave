@@ -18,10 +18,35 @@ export type ClearResult = {
   lines: number
 }
 
+export type FallMove = {
+  fromR: number
+  fromC: number
+  toR: number
+  toC: number
+  color: string
+}
+
+export type BlastEvent =
+  | {
+      type: 'clear'
+      rows: number[]
+      cols: number[]
+      grid: Grid
+      combo: number
+      lines: number
+    }
+  | {
+      type: 'fall'
+      grid: Grid
+      moves: FallMove[]
+    }
+
 export type PlaceResult = {
   grid: Grid
+  placedGrid: Grid
   placedCells: number
-  clear: ClearResult
+  events: BlastEvent[]
+  lines: number
   scoreGain: number
   combo: number
 }
@@ -54,4 +79,5 @@ export type Progress = {
   playerName: string
   equipped: BlastSetId
   unlocked: BlastSetId[]
+  muted: boolean
 }
