@@ -9,13 +9,14 @@ import {
 } from 'react'
 import BlastFx, { type Burst } from '../components/BlastFx'
 import PieceView from '../components/PieceView'
-import { sfxClear, sfxFall, sfxOver, sfxPlace, sfxTap, unlockAudio } from '../game/audio'
+import { sfxClear, sfxFall, sfxLogin, sfxOver, sfxPlace, sfxTap, unlockAudio } from '../game/audio'
 import {
   anyTrayFits,
   canPlace,
   demoNearClear,
   emptyGrid,
   formatScore,
+  gridEmpty,
   placePiece,
   rollTray,
 } from '../game/engine'
@@ -24,7 +25,7 @@ import { GRID_SIZE, type Grid, type Piece, type PlaceResult, type Progress } fro
 type Props = {
   progress: Progress
   onProgress: (partial: Partial<Progress>) => void
-  onLogout: () => void
+  onMood: (mood: string) => void
 }
 
 type Drag = {
@@ -60,7 +61,7 @@ function bootMatch() {
   return { grid, tray: rollTray(Math.random, 12, grid) }
 }
 
-export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
+export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   const [boot] = useState(bootMatch)
   const [grid, setGrid] = useState<Grid>(boot.grid)
   const [tray, setTray] = useState<Array<Piece | null>>(boot.tray)
@@ -72,6 +73,8 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
   const [burst, setBurst] = useState<Burst | null>(null)
   const [clearing, setClearing] = useState<{ rows: number[]; cols: number[] } | null>(null)
   const [falling, setFalling] = useState<Record<string, number> | null>(null)
+  const [skin, setSkin] = useState(0)
+  const emptyRef = useRef(gridEmpty(boot.grid))
   const wrapRef = useRef<HTMLDivElement>(null)
   const boardRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<Drag | null>(null)
@@ -90,6 +93,19 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
   useEffect(() => {
     cellRef.current = cell
   }, [cell])
+
+  useEffect(() => {
+    const empty = gridEmpty(grid)
+    if (empty && !emptyRef.current) {
+      setSkin((s) => s + 1)
+      sfxLogin()
+    }
+    emptyRef.current = empty
+    if (empty) onMood(`void-${skin % 4}`)
+    else if (combo >= 6) onMood('overdrive')
+    else if (combo >= 3) onMood('heat')
+    else onMood('calm')
+  }, [grid, combo, skin, onMood])
 
   const measure = useCallback(() => {
     const el = wrapRef.current
@@ -122,6 +138,7 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
     setFalling(null)
     setClearing(null)
     setDragState(null)
+    emptyRef.current = true
     sfxTap()
     onProgress({ gamesPlayed: progress.gamesPlayed + 1 })
   }
@@ -312,7 +329,7 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
       </div>
 
       <div className="board-wrap" ref={wrapRef}>
-        <div className="board-card">
+        <div className={`board-card ${gridEmpty(grid) ? 'void' : ''} ${combo >= 3 ? 'hot' : ''}`}>
           <div
             className="grid"
             ref={boardRef}
@@ -360,7 +377,9 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
         </div>
       </div>
 
-      <p className="hint">Bloklar düşer — zinciri patlat!</p>
+      <p className="hint">
+        {gridEmpty(grid) ? 'Reaktör temiz — ışık değişti!' : 'Bloklar düşer — zinciri patlat!'}
+      </p>
 
       <div className="tray">
         {tray.map((piece, i) => (
@@ -398,9 +417,7 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
         <div className="overlay">
           <div className="modal">
             <h2>DURAKLATILDI</h2>
-            <p>
-              {progress.playerName} · Reaktör çekirdeği bekliyor.
-            </p>
+            <p>Reaktör çekirdeği bekliyor.</p>
             <div className="actions">
               <button className="btn primary" onClick={() => setPaused(false)}>
                 Devam et
@@ -413,9 +430,6 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
               </button>
               <button className="btn ghost" onClick={restart}>
                 Yeniden başla
-              </button>
-              <button className="btn ghost" onClick={onLogout}>
-                Hesaptan çık
               </button>
             </div>
           </div>

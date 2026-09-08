@@ -1,27 +1,34 @@
 import { useState } from 'react'
-import { enterGuest, enterReactor, listAccounts, switchAccount, type Account } from '../game/auth'
+import {
+  bindLeague,
+  listAccounts,
+  resumeRanked,
+  type Account,
+} from '../game/auth'
 import { sfxLogin, sfxTap, unlockAudio } from '../game/audio'
+import type { Progress } from '../game/types'
 
 type Props = {
-  onEnter: (account: Account) => void
+  progress: Progress
+  onBound: (account: Account) => void
 }
 
-export default function LoginScreen({ onEnter }: Props) {
+export default function LoginScreen({ progress, onBound }: Props) {
   const [name, setName] = useState('')
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
-  const saved = listAccounts()
+  const saved = listAccounts().filter((a) => !a.guest)
 
   function submit() {
     unlockAudio()
-    const result = enterReactor(name, pin)
+    const result = bindLeague(name, pin, progress)
     if (result.ok === false) {
       setError(result.error)
       sfxTap()
       return
     }
     sfxLogin()
-    onEnter(result.account)
+    onBound(result.account)
   }
 
   return (
@@ -33,8 +40,8 @@ export default function LoginScreen({ onEnter }: Props) {
           <span />
           <span />
         </div>
-        <h1>NEONPATLAT</h1>
-        <p>Reaktöre bağlan, komboyu büyüt.</p>
+        <h1>REAKTÖR LİGİ</h1>
+        <p>Sıralamaya girmek için hesabını bağla. Skorun burada kalır.</p>
       </div>
 
       <label className="field">
@@ -42,7 +49,7 @@ export default function LoginScreen({ onEnter }: Props) {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Deniz"
+          placeholder="Nova"
           autoComplete="username"
           maxLength={16}
         />
@@ -57,25 +64,19 @@ export default function LoginScreen({ onEnter }: Props) {
           autoComplete="off"
         />
       </label>
-      {error ? <p className="login-error">{error}</p> : <p className="login-hint">Yeni isim hesap açar, kayıtlı isim giriş yapar.</p>}
+      {error ? (
+        <p className="login-error">{error}</p>
+      ) : (
+        <p className="login-hint">Yeni isim lig hesabı açar, kayıtlı isim giriş yapar.</p>
+      )}
 
       <button className="btn primary" onClick={submit}>
-        Reaktöre gir
-      </button>
-      <button
-        className="btn ghost"
-        onClick={() => {
-          unlockAudio()
-          sfxLogin()
-          onEnter(enterGuest())
-        }}
-      >
-        Misafir olarak oyna
+        Lige bağlan
       </button>
 
       {saved.length > 0 ? (
         <div className="saved">
-          <div className="saved-label">Kayıtlı profiller</div>
+          <div className="saved-label">Kayıtlı lig profilleri</div>
           <div className="saved-row">
             {saved.map((account) => (
               <button
@@ -84,12 +85,14 @@ export default function LoginScreen({ onEnter }: Props) {
                 onClick={() => {
                   unlockAudio()
                   sfxTap()
-                  const next = switchAccount(account.id)
-                  if (next) onEnter(next)
+                  const next = resumeRanked(account.id, progress)
+                  if (next) {
+                    sfxLogin()
+                    onBound(next)
+                  }
                 }}
               >
                 {account.name}
-                {account.guest ? ' · misafir' : ''}
               </button>
             ))}
           </div>

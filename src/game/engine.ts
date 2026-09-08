@@ -197,3 +197,7 @@ export function rollTray(rng: () => number = Math.random, attempts = 12, grid?: 
 export function formatScore(n: number): string {
   return n.toLocaleString('tr-TR')
 }
+
+export function gridEmpty(grid: Grid): boolean {
+  return grid.every((row) => row.every((cell) => cell === null))
+}

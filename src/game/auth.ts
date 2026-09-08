@@ -84,12 +84,36 @@ export function persistAccount(account: Account): Account {
 }
 
 export function saveProgress(account: Account, progress: Progress): Account {
-  return persistAccount({ ...account, progress, name: progress.playerName })
+  return persistAccount({
+    ...account,
+    progress,
+    name: account.guest ? account.name : progress.playerName,
+  })
+}
+
+export function ranked(account: Account | null): boolean {
+  return !!account && !account.guest && !!account.pinHash
+}
+
+export function mergeProgress(base: Progress, incoming: Progress, name: string): Progress {
+  return {
+    ...base,
+    ...incoming,
+    playerName: name,
+    best: Math.max(base.best, incoming.best),
+    maxCombo: Math.max(base.maxCombo, incoming.maxCombo),
+    gamesPlayed: Math.max(base.gamesPlayed, incoming.gamesPlayed),
+    unlocked: Array.from(new Set([...base.unlocked, ...incoming.unlocked])),
+  }
+}
+
+export function ensureLocalProfile(): Account {
+  return currentAccount() ?? enterGuest()
 }
 
 export type AuthResult = { ok: true; account: Account } | { ok: false; error: string }
 
-export function enterReactor(name: string, pin: string): AuthResult {
+export function bindLeague(name: string, pin: string, local: Progress): AuthResult {
   const trimmed = name.trim()
   if (trimmed.length < 2) return { ok: false, error: 'İsim en az 2 karakter olsun.' }
   if (!/^\d{4}$/.test(pin)) return { ok: false, error: 'PIN 4 haneli olmalı.' }
@@ -100,9 +124,11 @@ export function enterReactor(name: string, pin: string): AuthResult {
 
   if (existing) {
     if (existing.pinHash !== pinHash) return { ok: false, error: 'PIN hatalı.' }
-    store.sessionId = existing.id
-    write(store)
-    return { ok: true, account: existing }
+    const account = persistAccount({
+      ...existing,
+      progress: mergeProgress(existing.progress, local, existing.name),
+    })
+    return { ok: true, account }
   }
 
   const account: Account = {
@@ -110,10 +136,32 @@ export function enterReactor(name: string, pin: string): AuthResult {
     name: trimmed,
     pinHash,
     guest: false,
-    progress: { ...DEFAULT, playerName: trimmed, unlocked: [...DEFAULT.unlocked] },
+    progress: { ...local, playerName: trimmed },
   }
   persistAccount(account)
   return { ok: true, account }
+}
+
+export function resumeRanked(id: string, local: Progress): Account | null {
+  const store = read()
+  const existing = store.accounts.find((a) => a.id === id && !a.guest)
+  if (!existing) return null
+  return persistAccount({
+    ...existing,
+    progress: mergeProgress(existing.progress, local, existing.name),
+  })
+}
+
+export function unbindLeague(local: Progress): Account {
+  const store = read()
+  const guest = store.accounts.find((a) => a.guest)
+  if (guest) {
+    return persistAccount({
+      ...guest,
+      progress: mergeProgress(guest.progress, { ...local, playerName: guest.name }, guest.name),
+    })
+  }
+  return enterGuest()
 }
 
 export function enterGuest(name = 'Misafir'): Account {

@@ -10,9 +10,13 @@ createRoot(document.getElementById('root')!).render(
 )
 
 void import('@capacitor/status-bar')
-  .then(({ StatusBar, Style }) => {
-    void StatusBar.setStyle({ style: Style.Dark })
-    void StatusBar.setBackgroundColor({ color: '#070A16' })
+  .then(async ({ StatusBar, Style }) => {
+    try {
+      await StatusBar.setStyle({ style: Style.Dark })
+      await StatusBar.setBackgroundColor({ color: '#070A16' })
+    } catch {
+      /* tarayıcı */
+    }
   })
   .catch(() => {
     /* tarayıcı */

@@ -6,10 +6,9 @@ iOS ve Android için tek kod tabanı: **React + Vite + Capacitor**.
 
 ## Ekranlar
 
-- **Oyna** — 8x8 tahta, sürükle-bırak, satır/sütun patlatma, **gravity** (üstteki bloklar düşer, zincir patlatma), kombo, ses
-- **Giriş** — isim + 4 haneli PIN veya misafir
-- **Sıralama** — Reaktör Ligi haftalık yarış (arkadaşlar / dünya)
-- **Patlama Kasası** — patlama efektleri (Neon Yağmuru, Jelibon Fırtınası, …)
+- **Oyna** — direkt başlar; 8x8, gravity, kombo, ses. Tahta boşalınca reaktör ışığı değişir.
+- **Sıralama** — lige girmek isteyen burada hesap bağlar (isim + PIN)
+- **Patlama Kasası** — patlama efektleri
 
 ## Geliştirme
 

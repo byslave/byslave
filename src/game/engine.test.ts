@@ -6,6 +6,7 @@ import {
   clearCompleted,
   demoNearClear,
   emptyGrid,
+  gridEmpty,
   placePiece,
   scoreForMove,
 } from './engine'
@@ -97,6 +98,13 @@ describe('engine', () => {
     const miss = placePiece(emptyGrid(), dot, 0, 0, 2)
     expect(miss?.combo).toBe(0)
     expect(miss?.scoreGain).toBe(10)
+  })
+
+  it('treats a fresh board as empty', () => {
+    expect(gridEmpty(emptyGrid())).toBe(true)
+    const grid = emptyGrid()
+    grid[0][0] = cyan
+    expect(gridEmpty(grid)).toBe(false)
   })
 
   it('scores multi-line clears with combo multiplier', () => {

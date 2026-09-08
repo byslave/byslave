@@ -1,11 +1,19 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { formatScore } from '../game/engine'
 import { friendBoard, weekResetLabel, worldBoard } from '../game/progress'
+import { sfxTap } from '../game/audio'
 import type { Progress } from '../game/types'
+import LoginScreen from './LoginScreen'
+import type { Account } from '../game/auth'
 
-type Props = { progress: Progress }
+type Props = {
+  progress: Progress
+  ranked: boolean
+  onBound: (account: Account) => void
+  onUnbind: () => void
+}
 
-export default function LeaderboardScreen({ progress }: Props) {
+export default function LeaderboardScreen({ progress, ranked, onBound, onUnbind }: Props) {
   const [tab, setTab] = useState<'friends' | 'world'>('world')
   const reset = weekResetLabel()
   const rows = useMemo(
@@ -17,6 +25,10 @@ export default function LeaderboardScreen({ progress }: Props) {
   const above = youIndex > 0 ? rows[youIndex - 1] : null
   const need = above ? Math.max(0, above.score - progress.best + 10) : 0
   const ring = Math.min(100, Math.round((progress.best / Math.max(above?.score ?? progress.best, 1)) * 100))
+
+  if (!ranked) {
+    return <LoginScreen progress={progress} onBound={onBound} />
+  }
 
   return (
     <section className="screen">
@@ -67,6 +79,15 @@ export default function LeaderboardScreen({ progress }: Props) {
           </div>
         ))}
       </div>
+      <button
+        className="btn ghost unbind"
+        onClick={() => {
+          sfxTap()
+          onUnbind()
+        }}
+      >
+        Lig hesabını ayır
+      </button>
     </section>
   )
 }

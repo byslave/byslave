@@ -2,24 +2,29 @@ import { useEffect, useState } from 'react'
 import BottomNav from './components/BottomNav'
 import CrateScreen from './screens/CrateScreen'
 import LeaderboardScreen from './screens/LeaderboardScreen'
-import LoginScreen from './screens/LoginScreen'
 import PlayScreen from './screens/PlayScreen'
-import { currentAccount, logout, saveProgress, type Account } from './game/auth'
+import {
+  ensureLocalProfile,
+  ranked,
+  saveProgress,
+  unbindLeague,
+  type Account,
+} from './game/auth'
 import { setMuted, unlockAudio } from './game/audio'
 import { freshlyUnlocked } from './game/progress'
 import type { BlastSetId, Progress, TabId } from './game/types'
 
 export default function App() {
-  const [account, setAccount] = useState<Account | null>(() => currentAccount())
+  const [account, setAccount] = useState<Account>(() => ensureLocalProfile())
   const [tab, setTab] = useState<TabId>('play')
+  const [mood, setMood] = useState('calm')
 
   useEffect(() => {
-    setMuted(account?.progress.muted ?? false)
-  }, [account?.progress.muted])
+    setMuted(account.progress.muted)
+  }, [account.progress.muted])
 
   function patch(partial: Partial<Progress>) {
     setAccount((current) => {
-      if (!current) return current
       const next = { ...current.progress, ...partial }
       const progress = { ...next, unlocked: freshlyUnlocked(next) }
       return saveProgress(current, progress)
@@ -27,39 +32,23 @@ export default function App() {
   }
 
   function equip(id: BlastSetId) {
-    if (!account?.progress.unlocked.includes(id)) return
+    if (!account.progress.unlocked.includes(id)) return
     patch({ equipped: id })
   }
 
-  function signOut() {
-    logout()
-    setTab('play')
-    setAccount(null)
-  }
-
-  if (!account) {
-    return (
-      <div className="stage">
-        <div className="phone">
-          <LoginScreen onEnter={setAccount} />
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="stage" onPointerDown={unlockAudio}>
-      <div className="phone">
+    <div className="stage" data-mood={mood} onPointerDown={unlockAudio}>
+      <div className="phone" data-mood={mood}>
         <div className={`pane ${tab === 'play' ? 'show' : ''}`}>
-          <PlayScreen
-            key={account.id}
-            progress={account.progress}
-            onProgress={patch}
-            onLogout={signOut}
-          />
+          <PlayScreen progress={account.progress} onProgress={patch} onMood={setMood} />
         </div>
         <div className={`pane ${tab === 'ranks' ? 'show' : ''}`}>
-          <LeaderboardScreen progress={account.progress} />
+          <LeaderboardScreen
+            progress={account.progress}
+            ranked={ranked(account)}
+            onBound={setAccount}
+            onUnbind={() => setAccount(unbindLeague(account.progress))}
+          />
         </div>
         <div className={`pane ${tab === 'crate' ? 'show' : ''}`}>
           <CrateScreen progress={account.progress} onEquip={equip} />
