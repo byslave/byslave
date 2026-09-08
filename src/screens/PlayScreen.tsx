@@ -220,7 +220,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     const y = br.top - wr.top + (row + 0.5) * stride
     const id = popId.current++
     setPops((list) => [...list, { id, x, y, text, kind }])
-    window.setTimeout(() => setPops((list) => list.filter((p) => p.id !== id)), 820)
+    window.setTimeout(() => setPops((list) => list.filter((p) => p.id !== id)), 1400)
   }
 
   function hoverAt(clientX: number, clientY: number, piece: Piece, lift: number) {
@@ -506,15 +506,15 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           </div>
           <BlastFx burst={burst} equipped={progress.equipped} cell={cell} gap={gap} />
         </div>
-        {pops.map((pop) => (
-          <span
-            key={pop.id}
-            className={`score-pop ${pop.kind}`}
-            style={{ left: pop.x, top: pop.y }}
-          >
-            {pop.text}
-          </span>
-        ))}
+          {pops.map((pop) => (
+            <span
+              key={pop.id}
+              className={`score-pop kind-${pop.kind}`}
+              style={{ left: pop.x, top: pop.y }}
+            >
+              {pop.text}
+            </span>
+          ))}
       </div>
 
       <p className="hint">
