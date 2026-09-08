@@ -118,9 +118,9 @@ export function matrixToPiece(matrix: number[][], color: string, id?: string): P
   }
 }
 
-export function randomPiece(rng: () => number = Math.random): Piece {
+export function randomPiece(rng: () => number = Math.random, palette: string[] = PALETTE): Piece {
   const shape = SHAPES[Math.floor(rng() * SHAPES.length)] ?? SHAPES[0]
-  const color = PALETTE[Math.floor(rng() * PALETTE.length)] ?? PALETTE[0]
+  const color = palette[Math.floor(rng() * palette.length)] ?? palette[0] ?? PALETTE[0]
   return matrixToPiece(shape, color)
 }
 

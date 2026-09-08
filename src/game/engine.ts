@@ -183,11 +183,17 @@ export function demoNearClear(): { grid: Grid; tray: Piece[] } {
   return { grid, tray }
 }
 
-export function rollTray(rng: () => number = Math.random, attempts = 12, grid?: Grid): Piece[] {
-  let best: Piece[] = [randomPiece(rng), randomPiece(rng), randomPiece(rng)]
+export function rollTray(
+  rng: () => number = Math.random,
+  attempts = 12,
+  grid?: Grid,
+  palette?: string[],
+): Piece[] {
+  const paint = palette ?? undefined
+  let best: Piece[] = [randomPiece(rng, paint), randomPiece(rng, paint), randomPiece(rng, paint)]
   if (!grid) return best
   for (let i = 0; i < attempts; i++) {
-    const tray = [randomPiece(rng), randomPiece(rng), randomPiece(rng)]
+    const tray = [randomPiece(rng, paint), randomPiece(rng, paint), randomPiece(rng, paint)]
     if (anyTrayFits(grid, tray)) return tray
     best = tray
   }

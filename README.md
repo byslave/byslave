@@ -6,7 +6,7 @@ iOS ve Android için tek kod tabanı: **React + Vite + Capacitor**.
 
 ## Ekranlar
 
-- **Oyna** — direkt başlar; 8x8, gravity, kombo, ses. Tahta boşalınca reaktör ışığı değişir.
+- **Oyna** — arcade kabin: kademe kademe tema. 800 / 2200 / 5000 / 9000 / 15000 puanda bloklar ve arka plan değişir.
 - **Sıralama** — lige girmek isteyen burada hesap bağlar (isim + PIN)
 - **Patlama Kasası** — patlama efektleri
 

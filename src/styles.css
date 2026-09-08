@@ -79,58 +79,115 @@ h2,
   transition: background 700ms ease, box-shadow 700ms ease;
 }
 
-.stage[data-mood='heat'],
-.phone[data-mood='heat'] {
-  background:
-    radial-gradient(700px 340px at 50% -12%, rgba(255, 138, 31, 0.28), transparent 58%),
-    radial-gradient(600px 400px at 90% 110%, rgba(255, 46, 200, 0.2), transparent 50%),
-    #12060a;
-  box-shadow: 0 0 0 1px rgba(255, 138, 31, 0.32), 0 30px 80px rgba(0, 0, 0, 0.55);
+.phone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    rgba(0, 0, 0, 0.08) 2px 3px
+  );
+  mix-blend-mode: multiply;
 }
 
-.stage[data-mood='overdrive'],
-.phone[data-mood='overdrive'] {
+.stage[data-mood='neon'],
+.phone[data-mood='neon'] {
   background:
-    radial-gradient(800px 380px at 40% -10%, rgba(255, 46, 200, 0.38), transparent 55%),
-    radial-gradient(520px 420px at 100% 100%, rgba(168, 85, 255, 0.28), transparent 50%),
-    #14051a;
-  box-shadow: 0 0 0 1px rgba(255, 46, 200, 0.4), 0 0 60px rgba(255, 46, 200, 0.2);
+    radial-gradient(700px 320px at 50% -8%, rgba(0, 200, 255, 0.32), transparent 58%),
+    radial-gradient(520px 380px at 90% 110%, rgba(255, 46, 200, 0.22), transparent 50%),
+    #070a16;
 }
 
-.stage[data-mood='void-0'],
-.phone[data-mood='void-0'] {
+.stage[data-mood='neon-void'],
+.phone[data-mood='neon-void'] {
   background:
-    radial-gradient(900px 420px at 50% 0%, rgba(0, 255, 210, 0.32), transparent 55%),
+    radial-gradient(900px 420px at 50% 0%, rgba(0, 255, 210, 0.34), transparent 55%),
     radial-gradient(700px 480px at 10% 100%, rgba(0, 200, 255, 0.28), transparent 50%),
     #03141a;
-  box-shadow: 0 0 0 1px rgba(0, 255, 210, 0.4), 0 0 80px rgba(0, 255, 210, 0.18);
 }
 
-.stage[data-mood='void-1'],
-.phone[data-mood='void-1'] {
+.stage[data-mood='jelly'],
+.phone[data-mood='jelly'] {
   background:
-    radial-gradient(900px 420px at 50% 0%, rgba(255, 46, 200, 0.34), transparent 55%),
-    radial-gradient(700px 480px at 90% 100%, rgba(168, 85, 255, 0.28), transparent 50%),
-    #140814;
-  box-shadow: 0 0 0 1px rgba(255, 46, 200, 0.42), 0 0 80px rgba(255, 46, 200, 0.2);
+    radial-gradient(700px 340px at 50% -10%, rgba(255, 77, 166, 0.34), transparent 56%),
+    radial-gradient(560px 400px at 10% 110%, rgba(124, 255, 178, 0.2), transparent 50%),
+    #1a0712;
 }
 
-.stage[data-mood='void-2'],
-.phone[data-mood='void-2'] {
+.stage[data-mood='jelly-void'],
+.phone[data-mood='jelly-void'] {
   background:
-    radial-gradient(900px 420px at 50% 0%, rgba(124, 255, 74, 0.28), transparent 55%),
-    radial-gradient(700px 480px at 20% 110%, rgba(0, 200, 255, 0.22), transparent 50%),
-    #061408;
-  box-shadow: 0 0 0 1px rgba(124, 255, 74, 0.38), 0 0 80px rgba(124, 255, 74, 0.16);
+    radial-gradient(900px 420px at 50% 0%, rgba(255, 138, 212, 0.4), transparent 55%),
+    #220816;
 }
 
-.stage[data-mood='void-3'],
-.phone[data-mood='void-3'] {
+.stage[data-mood='magma'],
+.phone[data-mood='magma'] {
   background:
-    radial-gradient(900px 420px at 50% 0%, rgba(255, 225, 74, 0.3), transparent 55%),
-    radial-gradient(700px 480px at 80% 110%, rgba(255, 138, 31, 0.24), transparent 50%),
-    #161004;
-  box-shadow: 0 0 0 1px rgba(255, 225, 74, 0.4), 0 0 80px rgba(255, 225, 74, 0.18);
+    radial-gradient(700px 340px at 50% -10%, rgba(255, 59, 31, 0.36), transparent 56%),
+    radial-gradient(560px 400px at 90% 110%, rgba(255, 225, 74, 0.18), transparent 50%),
+    #160606;
+}
+
+.stage[data-mood='magma-void'],
+.phone[data-mood='magma-void'] {
+  background:
+    radial-gradient(900px 420px at 50% 0%, rgba(255, 122, 24, 0.42), transparent 55%),
+    #1c0804;
+}
+
+.stage[data-mood='cosmo'],
+.phone[data-mood='cosmo'] {
+  background:
+    radial-gradient(700px 340px at 50% -10%, rgba(123, 97, 255, 0.36), transparent 56%),
+    radial-gradient(560px 400px at 90% 110%, rgba(0, 229, 255, 0.2), transparent 50%),
+    #0b0618;
+}
+
+.stage[data-mood='cosmo-void'],
+.phone[data-mood='cosmo-void'] {
+  background:
+    radial-gradient(900px 420px at 50% 0%, rgba(199, 125, 255, 0.4), transparent 55%),
+    #120820;
+}
+
+.stage[data-mood='disco'],
+.phone[data-mood='disco'] {
+  background:
+    radial-gradient(700px 340px at 30% -10%, rgba(255, 214, 10, 0.32), transparent 56%),
+    radial-gradient(560px 400px at 90% 110%, rgba(255, 0, 110, 0.24), transparent 50%),
+    #140a10;
+  animation: discoShift 4s linear infinite;
+}
+
+.stage[data-mood='disco-void'],
+.phone[data-mood='disco-void'] {
+  background:
+    radial-gradient(900px 420px at 50% 0%, rgba(131, 56, 236, 0.42), transparent 55%),
+    #1a0820;
+}
+
+.stage[data-mood='ultra'],
+.phone[data-mood='ultra'] {
+  background:
+    radial-gradient(800px 380px at 50% -8%, rgba(255, 255, 255, 0.22), transparent 55%),
+    radial-gradient(560px 400px at 80% 110%, rgba(255, 43, 214, 0.28), transparent 50%),
+    #0c0c12;
+}
+
+.stage[data-mood='ultra-void'],
+.phone[data-mood='ultra-void'] {
+  background:
+    radial-gradient(900px 420px at 50% 0%, rgba(0, 255, 240, 0.35), transparent 55%),
+    #051414;
+}
+
+@keyframes discoShift {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(25deg); }
 }
 
 .board-card.void {
@@ -252,16 +309,99 @@ h2,
   flex-shrink: 0;
 }
 
-.combo {
+.combo.ghost {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  box-shadow: none;
+  animation: none;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.kademe-hud {
+  margin-top: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 8px 10px 7px;
+  flex-shrink: 0;
+}
+
+.kademe-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.kademe-row strong {
   font-family: 'Bungee', sans-serif;
-  font-size: 15px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ffb347, #ff7a18);
-  color: #2a1400;
-  box-shadow: 0 0 22px rgba(255, 138, 31, 0.55);
-  transform: scale(1);
-  animation: pop 280ms ease;
+  font-size: 12px;
+  color: var(--yellow);
+}
+
+.kademe-row span {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--cyan);
+}
+
+.kademe-bar {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 6px 0 4px;
+  overflow: hidden;
+}
+
+.kademe-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--yellow));
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+.kademe-hud small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.kademe-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 32;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.kademe-banner-card {
+  text-align: center;
+  padding: 18px 22px;
+  border-radius: 18px;
+  border: 2px solid var(--yellow);
+  background: linear-gradient(180deg, #24180a, #120c06);
+  box-shadow: 0 0 40px rgba(255, 214, 10, 0.35);
+  animation: pop 400ms ease;
+}
+
+.kademe-banner-card small {
+  font-weight: 800;
+  color: var(--yellow);
+}
+
+.kademe-banner-card h2 {
+  margin: 6px 0 4px;
+  font-size: 22px;
+  color: #fff;
+}
+
+.kademe-banner-card p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
 }
 
 @keyframes pop {
@@ -296,17 +436,18 @@ h2,
 .cell {
   width: var(--cell);
   height: var(--cell);
-  border-radius: 8px;
+  border-radius: 5px;
   background: var(--cell-bg);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   position: relative;
 }
 
 .cell.filled {
   box-shadow:
-    0 0 10px color-mix(in srgb, var(--c) 70%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 88%, white), var(--c));
+    0 0 12px color-mix(in srgb, var(--c) 75%, transparent),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.28);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 82%, white), var(--c) 62%, color-mix(in srgb, var(--c) 70%, black));
 }
 
 .cell.preview-ok {
