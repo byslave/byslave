@@ -1,5 +1,5 @@
 import { GRID_SIZE, type Grid, type Piece, type ClearResult, type PlaceResult } from './types'
-import { randomPiece } from './pieces'
+import { matrixToPiece, randomPiece } from './pieces'
 
 export function emptyGrid(): Grid {
   return Array.from({ length: GRID_SIZE }, () => Array.from({ length: GRID_SIZE }, () => null))
@@ -100,6 +100,28 @@ export function placePiece(
     combo: nextCombo,
     scoreGain: scoreForMove(piece.cells.length, clear.lines, nextCombo),
   }
+}
+
+export function demoNearClear(): { grid: Grid; tray: Piece[] } {
+  const grid = emptyGrid()
+  for (let c = 0; c < GRID_SIZE - 1; c++) grid[GRID_SIZE - 1][c] = '#00C8FF'
+  grid[4][1] = '#A855FF'
+  grid[5][1] = '#A855FF'
+  grid[6][1] = '#A855FF'
+  grid[6][2] = '#FF8A1F'
+  grid[6][3] = '#FF8A1F'
+  const tray = [
+    matrixToPiece([[1]], '#FFE14A'),
+    matrixToPiece(
+      [
+        [1, 1],
+        [1, 1],
+      ],
+      '#7CFF4A',
+    ),
+    matrixToPiece([[1], [1], [1], [1]], '#FF2EC8'),
+  ]
+  return { grid, tray }
 }
 
 export function rollTray(rng: () => number = Math.random, attempts = 12, grid?: Grid): Piece[] {

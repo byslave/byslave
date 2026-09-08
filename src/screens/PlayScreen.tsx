@@ -12,6 +12,7 @@ import PieceView from '../components/PieceView'
 import {
   anyTrayFits,
   canPlace,
+  demoNearClear,
   emptyGrid,
   formatScore,
   placePiece,
@@ -44,9 +45,18 @@ function buzz(style: 'light' | 'medium' = 'light') {
   }
 }
 
+function bootMatch() {
+  if (new URLSearchParams(window.location.search).get('demo') === 'patlat') {
+    return demoNearClear()
+  }
+  const grid = emptyGrid()
+  return { grid, tray: rollTray(Math.random, 12, grid) }
+}
+
 export default function PlayScreen({ progress, onProgress }: Props) {
-  const [grid, setGrid] = useState<Grid>(() => emptyGrid())
-  const [tray, setTray] = useState<Array<Piece | null>>(() => rollTray())
+  const [boot] = useState(bootMatch)
+  const [grid, setGrid] = useState<Grid>(boot.grid)
+  const [tray, setTray] = useState<Array<Piece | null>>(boot.tray)
   const [score, setScore] = useState(0)
   const [combo, setCombo] = useState(0)
   const [paused, setPaused] = useState(false)

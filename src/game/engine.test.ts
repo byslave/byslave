@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyPiece, canPlace, clearCompleted, emptyGrid, placePiece, scoreForMove } from './engine'
+import { applyPiece, canPlace, clearCompleted, demoNearClear, emptyGrid, placePiece, scoreForMove } from './engine'
 import { matrixToPiece } from './pieces'
 
 const cyan = '#00C8FF'
@@ -90,5 +90,13 @@ describe('engine', () => {
 
   it('scores multi-line clears with combo multiplier', () => {
     expect(scoreForMove(1, 2, 3)).toBe(10 + 2 * 2 * 100 * 3)
+  })
+
+  it('demo board clears the bottom row with a single block', () => {
+    const { grid, tray } = demoNearClear()
+    const dot = tray[0]!
+    const result = placePiece(grid, dot, 7, 7, 0)
+    expect(result?.clear.clearedRows).toEqual([7])
+    expect(result?.combo).toBe(1)
   })
 })
