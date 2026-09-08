@@ -64,23 +64,36 @@ export default function PlayScreen({ progress, onProgress }: Props) {
   const [drag, setDrag] = useState<Drag | null>(null)
   const [burst, setBurst] = useState<Burst | null>(null)
   const [clearing, setClearing] = useState<{ rows: number[]; cols: number[] } | null>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
   const boardRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<Drag | null>(null)
+  const gridRef = useRef(grid)
+  const cellRef = useRef(36)
   const burstId = useRef(1)
   const [cell, setCell] = useState(36)
   const gap = 5
+  const lift = 40
+
+  useEffect(() => {
+    gridRef.current = grid
+  }, [grid])
+
+  useEffect(() => {
+    cellRef.current = cell
+  }, [cell])
 
   const measure = useCallback(() => {
-    const el = boardRef.current
+    const el = wrapRef.current
     if (!el) return
-    const w = el.clientWidth
-    const next = Math.floor((w - gap * 7) / 8)
-    if (next > 0) setCell(next)
+    const pad = 24
+    const avail = Math.min(el.clientWidth, el.clientHeight) - pad
+    const next = Math.floor((avail - gap * 7) / 8)
+    if (next >= 22) setCell(next)
   }, [])
 
   useEffect(() => {
     measure()
-    const el = boardRef.current
+    const el = wrapRef.current
     if (!el) return
     const ro = new ResizeObserver(measure)
     ro.observe(el)
@@ -108,13 +121,17 @@ export default function PlayScreen({ progress, onProgress }: Props) {
     const el = boardRef.current
     if (!el) return null
     const rect = el.getBoundingClientRect()
-    const stride = cell + gap
+    const size = cellRef.current
+    const stride = size + gap
     const originX = clientX - (piece.cols * stride) / 2
-    const originY = clientY - piece.rows * stride - 28
+    const originY = clientY - piece.rows * stride - lift
     const col = Math.round((originX - rect.left) / stride)
     const row = Math.round((originY - rect.top) / stride)
-    if (row < -2 || col < -2 || row > GRID_SIZE || col > GRID_SIZE) return null
-    return { row, col, valid: canPlace(grid, piece, row, col) }
+    if (row < 0 || col < 0 || row >= GRID_SIZE || col >= GRID_SIZE) {
+      if (row < -2 || col < -2 || row > GRID_SIZE + 1 || col > GRID_SIZE + 1) return null
+      return { row, col, valid: false }
+    }
+    return { row, col, valid: canPlace(gridRef.current, piece, row, col) }
   }
 
   function onDown(index: number, piece: Piece, e: PointerEvent<HTMLDivElement>) {
@@ -146,7 +163,7 @@ export default function PlayScreen({ progress, onProgress }: Props) {
     const { hover, piece, index } = current
     setDragState(null)
     if (!hover?.valid) return
-    const result = placePiece(grid, piece, hover.row, hover.col, combo)
+    const result = placePiece(gridRef.current, piece, hover.row, hover.col, combo)
     if (!result) return
 
     let nextTray = tray.map((p, i) => (i === index ? null : p))
@@ -212,8 +229,19 @@ export default function PlayScreen({ progress, onProgress }: Props) {
         {combo > 0 ? <div className="combo">KOMBO X{combo}</div> : null}
       </div>
 
-      <div className="board-card">
-        <div className="grid" ref={boardRef}>
+      <div className="board-wrap" ref={wrapRef}>
+        <div className="board-card">
+          <div
+            className="grid"
+            ref={boardRef}
+            style={{
+              width: cell * 8 + gap * 7,
+              height: cell * 8 + gap * 7,
+              gap,
+              gridTemplateColumns: `repeat(8, ${cell}px)`,
+              ['--cell' as string]: `${cell}px`,
+            }}
+          >
           {grid.flatMap((row, r) =>
             row.map((color, c) => {
               const key = `${r}:${c}`
@@ -242,8 +270,9 @@ export default function PlayScreen({ progress, onProgress }: Props) {
               )
             }),
           )}
+          </div>
+          <BlastFx burst={burst} equipped={progress.equipped} cell={cell} gap={gap} />
         </div>
-        <BlastFx burst={burst} equipped={progress.equipped} cell={cell} gap={gap} />
       </div>
 
       <p className="hint">Parçanı sürükle, satırı patlat!</p>
@@ -269,12 +298,12 @@ export default function PlayScreen({ progress, onProgress }: Props) {
         <div
           className="drag-layer"
           style={{
-            transform: `translate(${drag.x - (drag.piece.cols * (cell + 3)) / 2}px, ${
-              drag.y - drag.piece.rows * (cell + 3) - 36
+            transform: `translate(${drag.x - (drag.piece.cols * (cell + gap)) / 2}px, ${
+              drag.y - drag.piece.rows * (cell + gap) - lift
             }px)`,
           }}
         >
-          <PieceView piece={drag.piece} cell={cell} />
+          <PieceView piece={drag.piece} cell={cell} gap={gap} />
         </div>
       ) : null}
 
