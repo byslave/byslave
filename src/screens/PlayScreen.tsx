@@ -32,6 +32,7 @@ type Drag = {
   piece: Piece
   x: number
   y: number
+  lift: number
   hover: { row: number; col: number; valid: boolean } | null
 }
 
@@ -81,7 +82,6 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
   const playId = useRef(0)
   const [cell, setCell] = useState(36)
   const gap = 5
-  const lift = 40
 
   useEffect(() => {
     gridRef.current = grid
@@ -131,14 +131,16 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
     setDrag(next)
   }
 
-  function hoverAt(clientX: number, clientY: number, piece: Piece) {
+  function hoverAt(clientX: number, clientY: number, piece: Piece, lift: number) {
     const el = boardRef.current
     if (!el) return null
     const rect = el.getBoundingClientRect()
     const size = cellRef.current
     const stride = size + gap
     const originX = clientX - (piece.cols * stride) / 2
-    const originY = clientY - piece.rows * stride - lift
+    const originY = lift > 0
+      ? clientY - piece.rows * stride - lift
+      : clientY - (piece.rows * stride) / 2
     const col = Math.round((originX - rect.left) / stride)
     const row = Math.round((originY - rect.top) / stride)
     if (row < 0 || col < 0 || row >= GRID_SIZE || col >= GRID_SIZE) {
@@ -148,16 +150,30 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
     return { row, col, valid: canPlace(gridRef.current, piece, row, col) }
   }
 
+  function pickHover(clientX: number, clientY: number, piece: Piece, lift: number) {
+    const lifted = hoverAt(clientX, clientY, piece, lift)
+    const direct = hoverAt(clientX, clientY, piece, 0)
+    const value = (h: { row: number; col: number; valid: boolean } | null) => {
+      if (!h?.valid) return -1
+      const result = placePiece(gridRef.current, piece, h.row, h.col, 0)
+      if (!result) return -1
+      return result.lines * 1000 + result.placedCells
+    }
+    return value(direct) > value(lifted) ? direct : lifted
+  }
+
   function onDown(index: number, piece: Piece, e: PointerEvent<HTMLDivElement>) {
     if (paused || over || busyRef.current) return
     unlockAudio()
+    const lift = e.pointerType === 'touch' ? 56 : 0
     e.currentTarget.setPointerCapture(e.pointerId)
     setDragState({
       index,
       piece,
       x: e.clientX,
       y: e.clientY,
-      hover: hoverAt(e.clientX, e.clientY, piece),
+      lift,
+      hover: pickHover(e.clientX, e.clientY, piece, lift),
     })
   }
 
@@ -168,7 +184,7 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
       ...current,
       x: e.clientX,
       y: e.clientY,
-      hover: hoverAt(e.clientX, e.clientY, current.piece),
+      hover: pickHover(e.clientX, e.clientY, current.piece, current.lift),
     })
   }
 
@@ -368,7 +384,9 @@ export default function PlayScreen({ progress, onProgress, onLogout }: Props) {
           className="drag-layer"
           style={{
             transform: `translate(${drag.x - (drag.piece.cols * (cell + gap)) / 2}px, ${
-              drag.y - drag.piece.rows * (cell + gap) - lift
+              drag.lift > 0
+                ? drag.y - drag.piece.rows * (cell + gap) - drag.lift
+                : drag.y - (drag.piece.rows * (cell + gap)) / 2
             }px)`,
           }}
         >
