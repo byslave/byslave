@@ -24,6 +24,14 @@ describe('shop', () => {
     expect(result.progress.equippedSkin).toBe(result.drop.id)
   })
 
+  it('blocks a second open after the wallet is spent', () => {
+    const first = openMysteryBox({ ...DEFAULT, coins: BOX_COST, skins: ['neon'] }, () => 0)
+    expect(first.ok).toBe(true)
+    if (first.ok === false) return
+    const second = openMysteryBox(first.progress, () => 0)
+    expect(second.ok).toBe(false)
+  })
+
   it('refunds coins when every skin is already owned', () => {
     const skins = ['neon', 'meyve', 'jelibon', 'pixel', 'magma', 'buz', 'yildiz', 'disko'] as const
     const result = openMysteryBox({ ...DEFAULT, coins: BOX_COST, skins: [...skins] })

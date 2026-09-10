@@ -444,6 +444,20 @@ h2,
   font-size: 11px;
   font-weight: 800;
   color: var(--cyan);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coin-chip {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: 'Bungee', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--yellow);
+  text-shadow: 0 0 10px rgba(255, 225, 74, 0.45);
 }
 
 .kademe-bar {
@@ -1205,6 +1219,13 @@ h2,
 .login {
   padding: calc(28px + var(--safe-top)) 20px calc(24px + var(--safe-bottom));
   gap: 10px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.login-form {
+  display: grid;
+  gap: 10px;
 }
 
 .login-hero {
@@ -1355,6 +1376,10 @@ h2,
   color: var(--muted);
 }
 
+.mystery:disabled {
+  opacity: 0.5;
+}
+
 .mystery {
   width: 100%;
   display: grid;
@@ -1454,6 +1479,10 @@ h2,
 .cell.filled.skin-magma,
 .p-cell.filled.skin-magma {
   animation: lava-pulse 0.9s ease-in-out infinite;
+  box-shadow:
+    0 0 16px #ff4d1a,
+    inset 0 2px 0 rgba(255, 225, 74, 0.55),
+    inset 0 -4px 0 rgba(80, 8, 0, 0.55);
 }
 
 .cell.filled.skin-buz,

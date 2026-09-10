@@ -43,8 +43,14 @@ export default function App() {
   }
 
   function openBox() {
-    const result = openMysteryBox(account.progress)
-    if (result.ok) setAccount((current) => saveProgress(current, result.progress))
+    let result: ReturnType<typeof openMysteryBox> = {
+      ok: false,
+      error: 'Kutu açılamadı.',
+    }
+    setAccount((current) => {
+      result = openMysteryBox(current.progress)
+      return result.ok ? saveProgress(current, result.progress) : current
+    })
     return result
   }
 

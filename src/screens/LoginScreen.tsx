@@ -45,6 +45,13 @@ export default function LoginScreen({ progress, onBound }: Props) {
         <p>Sıralamaya e-posta ile bağlan. Skorun ve kutuların burada kalır.</p>
       </div>
 
+      <form
+        className="login-form"
+        onSubmit={(e) => {
+          e.preventDefault()
+          submit()
+        }}
+      >
       <label className="field">
         <span>E-POSTA</span>
         <input
@@ -67,7 +74,7 @@ export default function LoginScreen({ progress, onBound }: Props) {
         />
       </label>
       <label className="field">
-        <span>OYUNCU ADI</span>
+        <span>OYUNCU ADI (yeni hesap)</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -82,9 +89,10 @@ export default function LoginScreen({ progress, onBound }: Props) {
         <p className="login-hint">Yeni e-posta hesap açar. Kayıtlı e-posta giriş yapar.</p>
       )}
 
-      <button className="btn primary" onClick={submit}>
+      <button className="btn primary" type="submit">
         Lige bağlan
       </button>
+      </form>
 
       {saved.length > 0 ? (
         <div className="saved">

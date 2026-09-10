@@ -72,7 +72,11 @@ export default function CrateScreen({ progress, onEquip, onEquipSkin, onOpenBox 
         <span>Neon jeton</span>
       </div>
 
-      <button className={`mystery ${spinning ? 'spin' : ''}`} onClick={openBox}>
+      <button
+        className={`mystery ${spinning ? 'spin' : ''}`}
+        onClick={openBox}
+        disabled={spinning || progress.coins < BOX_COST}
+      >
         <div className="mystery-box" aria-hidden>
           <b>?</b>
         </div>

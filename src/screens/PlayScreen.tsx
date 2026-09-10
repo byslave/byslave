@@ -247,7 +247,6 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     trayTimer.current = window.setTimeout(() => setTrayPop(false), 420)
     emptyRef.current = true
     sfxTap()
-    onProgress({ gamesPlayed: progress.gamesPlayed + 1 })
   }
 
   function setDragState(next: Drag | null) {
@@ -369,6 +368,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
       setOver(true)
       setContinueLeft(9)
       sfxOver()
+      onProgress({ gamesPlayed: progress.gamesPlayed + 1 })
     }
   }
 
@@ -553,6 +553,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
         <div className="kademe-row">
           <strong>KADEME {stage.level}</strong>
           <span>{stage.name}</span>
+          <b className="coin-chip">⚡{progress.coins}</b>
         </div>
         <div className="kademe-bar">
           <i style={{ width: `${Math.round(stageProgress(score, stage) * 100)}%` }} />
@@ -561,7 +562,6 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           {upcoming
             ? `${formatScore(Math.max(0, upcoming.minScore - score))} puan → ${upcoming.name}`
             : 'MAX KADEME'}
-          {' · '}⚡ {progress.coins}
         </small>
       </div>
 
