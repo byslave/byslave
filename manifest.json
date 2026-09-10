@@ -1,0 +1,17 @@
+{
+  "name": "NEONPATLAT",
+  "short_name": "NEONPATLAT",
+  "description": "Neon arcade puzzle — sürükle, patlat, kutu aç.",
+  "display": "standalone",
+  "background_color": "#070A16",
+  "theme_color": "#070A16",
+  "orientation": "portrait",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
