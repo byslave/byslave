@@ -4,9 +4,11 @@ import {
   applyPiece,
   canPlace,
   clearCompleted,
+  demoFullClear,
   demoNearClear,
   emptyGrid,
   gridEmpty,
+  occ,
   placePiece,
   scoreForMove,
 } from './engine'
@@ -19,14 +21,14 @@ const purple = '#A855FF'
 function fillRow(grid: ReturnType<typeof emptyGrid>, row: number, skipCol?: number) {
   for (let c = 0; c < 8; c++) {
     if (c === skipCol) continue
-    grid[row][c] = cyan
+    grid[row][c] = occ(cyan)
   }
 }
 
 function fillCol(grid: ReturnType<typeof emptyGrid>, col: number, skipRow?: number) {
   for (let r = 0; r < 8; r++) {
     if (r === skipRow) continue
-    grid[r][col] = cyan
+    grid[r][col] = occ(cyan)
   }
 }
 
@@ -43,8 +45,9 @@ describe('engine', () => {
     const grid = emptyGrid()
     expect(canPlace(grid, piece, 0, 0)).toBe(true)
     const next = applyPiece(grid, piece, 0, 0)
-    expect(next[0][0]).toBe(cyan)
-    expect(next[1][1]).toBe(cyan)
+    expect(next[0][0]?.color).toBe(cyan)
+    expect(next[1][1]?.color).toBe(cyan)
+    expect(next[0][0]?.skin).toBe('neon')
     expect(canPlace(next, piece, 0, 0)).toBe(false)
   })
 
@@ -103,7 +106,7 @@ describe('engine', () => {
   it('treats a fresh board as empty', () => {
     expect(gridEmpty(emptyGrid())).toBe(true)
     const grid = emptyGrid()
-    grid[0][0] = cyan
+    grid[0][0] = occ(cyan)
     expect(gridEmpty(grid)).toBe(false)
   })
 
@@ -113,11 +116,11 @@ describe('engine', () => {
 
   it('packs floating blocks to the bottom of each column', () => {
     const grid = emptyGrid()
-    grid[1][3] = purple
-    grid[2][3] = cyan
+    grid[1][3] = occ(purple)
+    grid[2][3] = occ(cyan)
     const { grid: packed, moves } = applyGravity(grid)
-    expect(packed[6][3]).toBe(purple)
-    expect(packed[7][3]).toBe(cyan)
+    expect(packed[6][3]?.color).toBe(purple)
+    expect(packed[7][3]?.color).toBe(cyan)
     expect(packed[1][3]).toBe(null)
     expect(moves.some((m) => m.fromR === 2 && m.toR === 7)).toBe(true)
   })
@@ -128,20 +131,27 @@ describe('engine', () => {
     const result = placePiece(grid, dot, 7, 7, 0)
     expect(result?.events[0]?.type).toBe('clear')
     expect(result?.combo).toBe(1)
-    expect(result?.grid[7][1]).toBe('#A855FF')
+    expect(result?.grid[7][1]?.color).toBe('#A855FF')
     expect(result?.grid[4][1]).toBe(null)
   })
 
   it('chains a second blast when fallen blocks refill a row', () => {
     const grid = emptyGrid()
     fillRow(grid, 7, 7)
-    for (let c = 0; c < 8; c++) grid[c % 2 === 0 ? 2 : 3][c] = purple
+    for (let c = 0; c < 8; c++) grid[c % 2 === 0 ? 2 : 3][c] = occ(purple)
     const dot = matrixToPiece([[1]], cyan, 'dot')
     const result = placePiece(grid, dot, 7, 7, 0)
     expect(result?.lines).toBe(2)
     expect(result?.combo).toBe(2)
     expect(result?.events.filter((e) => e.type === 'clear')).toHaveLength(2)
     expect(result?.grid[7].every((c) => c === null)).toBe(true)
+  })
+
+  it('empties the board from the full-clear demo', () => {
+    const { grid, tray, score } = demoFullClear()
+    expect(score).toBe(1480)
+    const result = placePiece(grid, tray[0]!, 7, 7, 0)
+    expect(gridEmpty(result!.grid)).toBe(true)
   })
 })
 

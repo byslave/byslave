@@ -14,6 +14,7 @@ import {
   anyTrayFits,
   canPlace,
   canPlaceAnywhere,
+  demoFullClear,
   demoNearClear,
   emptyGrid,
   formatScore,
@@ -23,16 +24,15 @@ import {
 } from '../game/engine'
 import { GRID_SIZE, type Grid, type Piece, type PlaceResult, type Progress } from '../game/types'
 import {
+  nextMapOnPerfectClear,
   nextStage,
-  remapGrid,
   remapPiece,
-  stageForScore,
   stageProgress,
   STAGES,
   type ArcadeStage,
 } from '../game/stages'
 import { clearStamp } from '../game/juice'
-import { coinsFromGain, fruitForColor } from '../game/shop'
+import { coinsFromGain, colorsForSkin, fruitForColor } from '../game/shop'
 
 type Props = {
   progress: Progress
@@ -72,8 +72,11 @@ function wait(ms: number) {
 
 function bootMatch() {
   const demo = new URLSearchParams(window.location.search).get('demo')
+  if (demo === 'harita') {
+    return demoFullClear()
+  }
   if (demo === 'patlat' || demo === 'kademe') {
-    return { ...demoNearClear(), score: demo === 'kademe' ? 760 : 0 }
+    return { ...demoNearClear(), score: demo === 'kademe' ? 1400 : 0 }
   }
   const grid = emptyGrid()
   return { grid, tray: rollTray(Math.random, 12, grid, STAGES[0]!.palette), score: 0 }
@@ -91,7 +94,8 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   const [burst, setBurst] = useState<Burst | null>(null)
   const [clearing, setClearing] = useState<{ rows: number[]; cols: number[] } | null>(null)
   const [falling, setFalling] = useState<Record<string, number> | null>(null)
-  const [banner, setBanner] = useState<ArcadeStage | null>(null)
+  const [banner, setBanner] = useState<string | null>(null)
+  const [mapStage, setMapStage] = useState<ArcadeStage>(STAGES[0]!)
   const [shake, setShake] = useState(0)
   const [flash, setFlash] = useState(false)
   const [pops, setPops] = useState<ScorePop[]>([])
@@ -108,9 +112,9 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   const [shownScore, setShownScore] = useState(boot.score)
   const [continueLeft, setContinueLeft] = useState<number | null>(null)
   const [trayPop, setTrayPop] = useState(false)
-  const stage = stageForScore(score)
-  const upcoming = nextStage(stage)
+  const upcoming = nextStage(mapStage)
   const emptyRef = useRef(gridEmpty(boot.grid))
+  const mapRef = useRef(mapStage)
   const wrapRef = useRef<HTMLDivElement>(null)
   const boardRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<Drag | null>(null)
@@ -141,8 +145,26 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   }, [])
 
   useEffect(() => {
+    mapRef.current = mapStage
+  }, [mapStage])
+
+  useEffect(() => {
     gridRef.current = grid
   }, [grid])
+
+  useEffect(() => {
+    setTray((current) =>
+      current.map((piece) => {
+        if (!piece || piece.skin === progress.equippedSkin) return piece
+        const palette = colorsForSkin(progress.equippedSkin, mapRef.current.palette)
+        return {
+          ...piece,
+          skin: progress.equippedSkin,
+          color: palette.includes(piece.color) ? piece.color : palette[0]!,
+        }
+      }),
+    )
+  }, [progress.equippedSkin])
 
   useEffect(() => {
     cellRef.current = cell
@@ -197,8 +219,8 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     const empty = gridEmpty(grid)
     if (empty && !emptyRef.current) sfxLogin()
     emptyRef.current = empty
-    onMood(empty ? `${stage.id}-void` : stage.id)
-  }, [grid, stage.id, onMood])
+    onMood(empty ? `${mapStage.id}-void` : mapStage.id)
+  }, [grid, mapStage.id, onMood])
 
   const measure = useCallback(() => {
     const el = wrapRef.current
@@ -223,7 +245,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     busyRef.current = false
     const nextGrid = emptyGrid()
     setGrid(nextGrid)
-    setTray(rollTray(Math.random, 12, nextGrid, STAGES[0]!.palette))
+    setTray(rollTray(Math.random, 12, nextGrid, STAGES[0]!.palette, progress.skins, progress.equippedSkin))
     setScore(0)
     setCombo(0)
     setOver(false)
@@ -232,6 +254,8 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     setClearing(null)
     setDragState(null)
     setBanner(null)
+    setMapStage(STAGES[0]!)
+    mapRef.current = STAGES[0]!
     setShake(0)
     setFlash(false)
     setPops([])
@@ -358,7 +382,14 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   function settleTray(finalGrid: Grid, nextTray: Array<Piece | null>, palette: string[]) {
     let trayNext = nextTray
     if (trayNext.every((p) => p === null)) {
-      trayNext = rollTray(Math.random, 12, finalGrid, palette)
+      trayNext = rollTray(
+        Math.random,
+        12,
+        finalGrid,
+        palette,
+        progress.skins,
+        progress.equippedSkin,
+      )
       setTrayPop(true)
       window.clearTimeout(trayTimer.current)
       trayTimer.current = window.setTimeout(() => setTrayPop(false), 420)
@@ -372,14 +403,10 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     }
   }
 
-  function promote(from: ArcadeStage, to: ArcadeStage, board: Grid, nextTray: Array<Piece | null>) {
-    const gridNext = remapGrid(board, from.palette, to.palette)
-    const trayNext = nextTray.map((piece) => (piece ? remapPiece(piece, from.palette, to.palette) : piece))
-    setBanner(to)
-    punch(3)
+  function showMapShift(to: ArcadeStage) {
+    setBanner(to.name)
     sfxLogin()
-    window.setTimeout(() => setBanner(null), 1700)
-    return { grid: gridNext, tray: trayNext }
+    window.setTimeout(() => setBanner(null), 1600)
   }
 
   async function playBlast(result: PlaceResult, nextTray: Array<Piece | null>, nextScore: number) {
@@ -434,20 +461,23 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     }
 
     if (!live()) return
-    const from = stageForScore(score)
-    const to = stageForScore(nextScore)
-    let board = result.grid
+    const board = result.grid
     let trayNext = nextTray
-    if (to.level > from.level) {
-      const promoted = promote(from, to, board, trayNext)
-      board = promoted.grid
-      trayNext = promoted.tray
+    const currentMap = mapRef.current
+    if (gridEmpty(board)) {
+      const to = nextMapOnPerfectClear(currentMap, nextScore)
+      if (to) {
+        trayNext = trayNext.map((piece) => (piece ? remapPiece(piece, currentMap.palette, to.palette) : piece))
+        mapRef.current = to
+        setMapStage(to)
+        showMapShift(to)
+      }
     }
     setGrid(board)
     setScore(nextScore)
     bumpScore()
     setCombo(result.events.length === 0 ? 0 : result.combo)
-    settleTray(board, trayNext, to.palette)
+    settleTray(board, trayNext, mapRef.current.palette)
     busyRef.current = false
   }
 
@@ -551,17 +581,21 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
 
       <div className={`kademe-hud ${banner ? 'levelup' : ''}`}>
         <div className="kademe-row">
-          <strong>KADEME {stage.level}</strong>
-          <span>{stage.name}</span>
+          <strong>KADEME {mapStage.level}</strong>
+          <span>{mapStage.name}</span>
           <b className="coin-chip">⚡{progress.coins}</b>
         </div>
         <div className="kademe-bar">
-          <i style={{ width: `${Math.round(stageProgress(score, stage) * 100)}%` }} />
+          <i style={{ width: `${Math.round(stageProgress(score, mapStage) * 100)}%` }} />
         </div>
-        <small>
-          {upcoming
-            ? `${formatScore(Math.max(0, upcoming.minScore - score))} puan → ${upcoming.name}`
-            : 'MAX KADEME'}
+        <small className={banner ? 'map-shift' : ''}>
+          {banner
+            ? `Harita değişti · ${banner}`
+            : upcoming && score >= upcoming.minScore
+              ? `Tahtayı tertemizle → ${upcoming.name}`
+              : upcoming
+                ? `${formatScore(Math.max(0, upcoming.minScore - score))} puan → ${upcoming.name}`
+                : 'MAX KADEME'}
         </small>
       </div>
 
@@ -571,7 +605,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
             KOMBO X{combo}
           </div>
         ) : (
-          <div className="combo ghost">{stage.tagline}</div>
+          <div className="combo ghost">{mapStage.tagline}</div>
         )}
       </div>
 
@@ -589,19 +623,23 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
             }}
           >
             {grid.flatMap((row, r) =>
-              row.map((color, c) => {
+              row.map((cell, c) => {
                 const key = `${r}:${c}`
                 const previewing = preview.has(key)
                 const fall = falling?.[key]
                 const isClear =
                   clearing && (clearing.rows.includes(r) || clearing.cols.includes(c))
                 const willBlast = blastHint.rows.has(r) || blastHint.cols.has(c)
-                const near = !color && (almost.rows.has(r) || almost.cols.has(c))
+                const near = !cell && (almost.rows.has(r) || almost.cols.has(c))
+                const show = previewing
+                  ? { color: drag?.piece.color ?? '#00C8FF', skin: drag?.piece.skin ?? 'neon' }
+                  : cell
+                const skin = show?.skin
                 const cls = [
                   'cell',
-                  color ? 'filled' : '',
-                  color ? `skin-${progress.equippedSkin}` : '',
-                  color && fresh.has(key) ? 'fresh' : '',
+                  cell ? 'filled' : '',
+                  skin ? `skin-${skin}` : '',
+                  cell && fresh.has(key) ? 'fresh' : '',
                   isClear ? 'clearing' : '',
                   fall ? 'drop' : '',
                   willBlast ? 'will-blast' : '',
@@ -616,13 +654,11 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
                     key={key}
                     className={cls}
                     data-fruit={
-                      color && progress.equippedSkin === 'meyve'
-                        ? fruitForColor(previewing ? drag?.piece.color ?? color : color)
-                        : undefined
+                      show?.skin === 'meyve' ? fruitForColor(show.color) : undefined
                     }
                     style={
                       {
-                        '--c': previewing ? drag?.piece.color : color ?? 'transparent',
+                        '--c': show?.color ?? 'transparent',
                         '--fall': fall ?? 1,
                       } as CSSProperties
                     }
@@ -677,9 +713,11 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
 
       <p className="hint">
         {gridEmpty(grid)
-          ? 'Reaktör temiz — ışık değişti!'
+          ? upcoming && score >= upcoming.minScore
+            ? 'Temiz reaktör — bir patlatma daha, harita değişir!'
+            : 'Reaktör temiz.'
           : upcoming
-            ? 'Bloklar düşer — kademe atla!'
+            ? 'Tüm tahtayı temizle, harita değişsin.'
             : 'Ultra kademe — patlatmaya devam!'}
       </p>
 
@@ -697,7 +735,6 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
               <PieceView
                 piece={piece}
                 cell={18}
-                skin={progress.equippedSkin}
                 className={drag?.index === i ? 'dragging' : ''}
               />
             ) : null}
@@ -716,17 +753,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
             }px)`,
           }}
         >
-          <PieceView piece={drag.piece} cell={cell} gap={gap} skin={progress.equippedSkin} />
-        </div>
-      ) : null}
-
-      {banner ? (
-        <div className="kademe-banner">
-          <div className="kademe-banner-card">
-            <small>KADEME {banner.level}</small>
-            <h2>{banner.name}</h2>
-            <p>Bloklar ve kabin değişti</p>
-          </div>
+          <PieceView piece={drag.piece} cell={cell} gap={gap} />
         </div>
       ) : null}
 

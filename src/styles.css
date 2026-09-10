@@ -518,6 +518,11 @@ h2,
   font-weight: 800;
 }
 
+.kademe-hud small.map-shift {
+  color: var(--yellow);
+  text-shadow: 0 0 10px rgba(255, 225, 74, 0.45);
+}
+
 .kademe-banner {
   position: absolute;
   inset: 0;
@@ -1459,9 +1464,43 @@ h2,
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 0.72em;
+  font-size: 0.9em;
   line-height: 1;
   pointer-events: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+
+.cell.filled.skin-meyve,
+.p-cell.filled.skin-meyve {
+  background: radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--c) 70%, white), var(--c) 62%, #3a1018) !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    0 0 10px color-mix(in srgb, var(--c) 55%, transparent) !important;
+}
+
+.cell.filled.skin-altin,
+.p-cell.filled.skin-altin {
+  background: linear-gradient(145deg, #fff4b8, #e0b422 46%, #8a6408) !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -3px 0 rgba(80, 50, 0, 0.45),
+    0 0 12px rgba(224, 180, 34, 0.7) !important;
+}
+
+.cell.filled.skin-gumus,
+.p-cell.filled.skin-gumus {
+  background: linear-gradient(145deg, #ffffff, #c5ced8 48%, #6b7684) !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -3px 0 rgba(40, 48, 58, 0.4),
+    0 0 10px rgba(180, 190, 205, 0.55) !important;
+}
+
+.cell.filled.skin-rgb,
+.p-cell.filled.skin-rgb {
+  background: linear-gradient(135deg, #ff2d55, #00c8ff 50%, #7cff4a) !important;
+  animation: disco-block 1.4s linear infinite;
+  box-shadow: 0 0 12px #00c8ff, inset 0 2px 0 rgba(255, 255, 255, 0.4) !important;
 }
 
 .cell.filled.skin-jelibon,
@@ -1503,6 +1542,9 @@ h2,
 }
 
 .skin-preview.skin-meyve { background: radial-gradient(circle at 30% 30%, #ff7aa2, #4a1020); }
+.skin-preview.skin-altin { background: linear-gradient(145deg, #fff4b8, #8a6408); }
+.skin-preview.skin-gumus { background: linear-gradient(145deg, #fff, #6b7684); }
+.skin-preview.skin-rgb { background: linear-gradient(135deg, #ff2d55, #00c8ff, #7cff4a); }
 .skin-preview.skin-jelibon { background: radial-gradient(circle at 50% 40%, #ff9ad4, #3a1040); }
 .skin-preview.skin-pixel { background: repeating-linear-gradient(45deg, #1b3, #1b3 6px, #163 6px, #163 12px); }
 .skin-preview.skin-magma { background: radial-gradient(circle at 50% 80%, #ff4d1a, #1a0808); }
@@ -1685,6 +1727,9 @@ h2,
 @media (max-height: 670px) {
   .kademe-hud small {
     display: none;
+  }
+  .kademe-hud small.map-shift {
+    display: block;
   }
   .kademe-row span {
     font-size: 10px;
@@ -1915,6 +1960,8 @@ h2,
   .p-cell.filled.skin-yildiz,
   .cell.filled.skin-disko,
   .p-cell.filled.skin-disko,
+  .cell.filled.skin-rgb,
+  .p-cell.filled.skin-rgb,
   .mystery.spin .mystery-box {
     animation: none !important;
   }

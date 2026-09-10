@@ -33,12 +33,31 @@ describe('shop', () => {
   })
 
   it('refunds coins when every skin is already owned', () => {
-    const skins = ['neon', 'meyve', 'jelibon', 'pixel', 'magma', 'buz', 'yildiz', 'disko'] as const
+    const skins = [
+      'neon',
+      'meyve',
+      'altin',
+      'gumus',
+      'rgb',
+      'jelibon',
+      'pixel',
+      'magma',
+      'buz',
+      'yildiz',
+      'disko',
+    ] as const
     const result = openMysteryBox({ ...DEFAULT, coins: BOX_COST, skins: [...skins] })
     expect(result.ok).toBe(true)
     if (result.ok === false) return
     expect(result.duplicate).toBe(true)
     expect(result.progress.coins).toBe(DUPLICATE_REFUND)
     expect(result.progress.skins).toHaveLength(skins.length)
+  })
+
+  it('drops a collectible type such as gold or fruit', () => {
+    const result = openMysteryBox({ ...DEFAULT, coins: BOX_COST, skins: ['neon'] }, () => 0)
+    expect(result.ok).toBe(true)
+    if (result.ok === false) return
+    expect(result.drop.id).not.toBe('neon')
   })
 })

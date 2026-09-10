@@ -64,7 +64,7 @@ export default function CrateScreen({ progress, onEquip, onEquipSkin, onOpenBox 
     <section className="screen crate-screen">
       <div className="crate-head">
         <h1>GİZEMLİ KUTU</h1>
-        <p>Skorun Neon jeton olur. Kutu aç, yeni blok stili düşür.</p>
+        <p>Skorun Neon jeton olur. Kutu aç, altın / gümüş / meyve / RGB blok düşür.</p>
       </div>
 
       <div className="wallet">
@@ -82,7 +82,7 @@ export default function CrateScreen({ progress, onEquip, onEquipSkin, onOpenBox 
         </div>
         <div>
           <h3>KUTUYU AÇ</h3>
-          <p>{BOX_COST}⚡ · meyve, jelibon, hareketli bloklar</p>
+          <p>{BOX_COST}⚡ · altın, gümüş, meyve, RGB</p>
         </div>
       </button>
       {error ? <p className="login-error">{error}</p> : null}

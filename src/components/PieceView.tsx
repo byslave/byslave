@@ -6,10 +6,9 @@ type Props = {
   cell: number
   gap?: number
   className?: string
-  skin?: BlockSkinId
 }
 
-export default function PieceView({ piece, cell, gap = 3, className, skin = 'neon' }: Props) {
+export default function PieceView({ piece, cell, gap = 3, className }: Props) {
   return (
     <div
       className={`piece ${className ?? ''}`}
@@ -22,6 +21,7 @@ export default function PieceView({ piece, cell, gap = 3, className, skin = 'neo
         const r = Math.floor(i / piece.cols)
         const c = i % piece.cols
         const on = piece.cells.some(([pr, pc]) => pr === r && pc === c)
+        const skin: BlockSkinId = piece.skin
         return (
           <div
             key={i}
@@ -30,8 +30,7 @@ export default function PieceView({ piece, cell, gap = 3, className, skin = 'neo
             style={{
               width: cell,
               height: cell,
-              background: on ? piece.color : 'transparent',
-              boxShadow: on ? `0 0 8px ${piece.color}aa` : 'none',
+              ['--c' as string]: on ? piece.color : 'transparent',
             }}
           />
         )

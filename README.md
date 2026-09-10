@@ -6,9 +6,9 @@ iOS ve Android: **React + Vite + Capacitor**.
 
 ## Ekranlar
 
-- **Oyna** — 8×8 tahta, yerçekimi zinciri, kademe kabinleri (800 / 2200 / 5000 / 9000 / 15000).
+- **Oyna** — 8×8 tahta, yerçekimi zinciri, kademe kabinleri (1500 / 4000 / 9000 / 16000 / 28000). Harita ancak tahta tamamen temizlenince değişir.
 - **Sıralama** — e-posta + şifre ile lig hesabı (cihazda saklanır).
-- **Gizemli Kutu** — patlatınca ⚡ Neon jeton; 80⚡ kutudan meyve, jelibon, hareketli blok stilleri.
+- **Gizemli Kutu** — patlatınca ⚡ Neon jeton; 80⚡ kutudan altın, gümüş, meyve, RGB ve diğer blok türleri.
 
 Oyun misafir olarak açılır. Lig sadece Sıralama’da bağlanır.
 

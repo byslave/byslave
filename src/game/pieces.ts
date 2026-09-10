@@ -1,4 +1,4 @@
-import type { BlastSet, Piece } from './types'
+import type { BlastSet, BlockSkinId, Piece } from './types'
 
 export const PALETTE = [
   '#00C8FF',
@@ -102,7 +102,12 @@ const SHAPES: number[][][] = [
 
 let pieceSeq = 0
 
-export function matrixToPiece(matrix: number[][], color: string, id?: string): Piece {
+export function matrixToPiece(
+  matrix: number[][],
+  color: string,
+  id?: string,
+  skin: BlockSkinId = 'neon',
+): Piece {
   const cells: Array<[number, number]> = []
   for (let r = 0; r < matrix.length; r++) {
     for (let c = 0; c < matrix[r].length; c++) {
@@ -112,16 +117,21 @@ export function matrixToPiece(matrix: number[][], color: string, id?: string): P
   return {
     id: id ?? `p-${++pieceSeq}`,
     color,
+    skin,
     cells,
     rows: matrix.length,
     cols: matrix[0]?.length ?? 0,
   }
 }
 
-export function randomPiece(rng: () => number = Math.random, palette: string[] = PALETTE): Piece {
+export function randomPiece(
+  rng: () => number = Math.random,
+  palette: string[] = PALETTE,
+  skin: BlockSkinId = 'neon',
+): Piece {
   const shape = SHAPES[Math.floor(rng() * SHAPES.length)] ?? SHAPES[0]
   const color = palette[Math.floor(rng() * palette.length)] ?? palette[0] ?? PALETTE[0]
-  return matrixToPiece(shape, color)
+  return matrixToPiece(shape, color, undefined, skin)
 }
 
 export const BLAST_SETS: BlastSet[] = [

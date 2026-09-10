@@ -1,5 +1,10 @@
-import { GRID_SIZE, type BlastEvent, type FallMove, type Grid, type Piece, type ClearResult, type PlaceResult } from './types'
+import { colorsForSkin, rollBlockSkin } from './shop'
+import { GRID_SIZE, type BlastEvent, type BlockSkinId, type FallMove, type Grid, type Occupied, type Piece, type ClearResult, type PlaceResult } from './types'
 import { matrixToPiece, randomPiece } from './pieces'
+
+export function occ(color: string, skin: BlockSkinId = 'neon'): Occupied {
+  return { color, skin }
+}
 
 export function emptyGrid(): Grid {
   return Array.from({ length: GRID_SIZE }, () => Array.from({ length: GRID_SIZE }, () => null))
@@ -35,7 +40,7 @@ export function anyTrayFits(grid: Grid, tray: Array<Piece | null>): boolean {
 export function applyPiece(grid: Grid, piece: Piece, row: number, col: number): Grid {
   const next = cloneGrid(grid)
   for (const [pr, pc] of piece.cells) {
-    next[row + pr][col + pc] = piece.color
+    next[row + pr][col + pc] = occ(piece.color, piece.skin)
   }
   return next
 }
@@ -78,16 +83,22 @@ export function applyGravity(grid: Grid): { grid: Grid; moves: FallMove[] } {
   const next = emptyGrid()
   const moves: FallMove[] = []
   for (let c = 0; c < GRID_SIZE; c++) {
-    const stack: Array<{ r: number; color: string }> = []
+    const stack: Array<{ r: number; cell: Occupied }> = []
     for (let r = GRID_SIZE - 1; r >= 0; r--) {
-      const color = grid[r][c]
-      if (color) stack.push({ r, color })
+      const cell = grid[r][c]
+      if (cell) stack.push({ r, cell })
     }
     let dest = GRID_SIZE - 1
-    for (const cell of stack) {
-      next[dest][c] = cell.color
-      if (cell.r !== dest) {
-        moves.push({ fromR: cell.r, fromC: c, toR: dest, toC: c, color: cell.color })
+    for (const item of stack) {
+      next[dest][c] = item.cell
+      if (item.r !== dest) {
+        moves.push({
+          fromR: item.r,
+          fromC: c,
+          toR: dest,
+          toC: c,
+          color: item.cell.color,
+        })
       }
       dest -= 1
     }
@@ -163,12 +174,12 @@ export function placePiece(
 
 export function demoNearClear(): { grid: Grid; tray: Piece[] } {
   const grid = emptyGrid()
-  for (let c = 0; c < GRID_SIZE - 1; c++) grid[GRID_SIZE - 1][c] = '#00C8FF'
-  grid[4][1] = '#A855FF'
-  grid[5][1] = '#A855FF'
-  grid[6][1] = '#A855FF'
-  grid[6][2] = '#FF8A1F'
-  grid[6][3] = '#FF8A1F'
+  for (let c = 0; c < GRID_SIZE - 1; c++) grid[GRID_SIZE - 1][c] = occ('#00C8FF')
+  grid[4][1] = occ('#A855FF')
+  grid[5][1] = occ('#A855FF')
+  grid[6][1] = occ('#A855FF')
+  grid[6][2] = occ('#FF8A1F')
+  grid[6][3] = occ('#FF8A1F')
   const tray = [
     matrixToPiece([[1]], '#FFE14A'),
     matrixToPiece(
@@ -183,17 +194,47 @@ export function demoNearClear(): { grid: Grid; tray: Piece[] } {
   return { grid, tray }
 }
 
+export function demoFullClear(): { grid: Grid; tray: Piece[]; score: number } {
+  const grid = emptyGrid()
+  for (let c = 0; c < GRID_SIZE - 1; c++) grid[GRID_SIZE - 1][c] = occ('#00C8FF')
+  return {
+    grid,
+    tray: [matrixToPiece([[1]], '#FFE14A'), matrixToPiece([[1, 1]], '#7CFF4A'), matrixToPiece([[1], [1]], '#FF2EC8')],
+    score: 1480,
+  }
+}
+
+function makePiece(
+  rng: () => number,
+  palette: string[] | undefined,
+  skins: BlockSkinId[],
+  equipped: BlockSkinId,
+): Piece {
+  const skin = rollBlockSkin(skins, equipped, rng)
+  const paint = colorsForSkin(skin, palette ?? ['#00C8FF', '#FF2EC8', '#FF8A1F', '#7CFF4A', '#FFE14A', '#A855FF', '#FF5C8A'])
+  return randomPiece(rng, paint, skin)
+}
+
 export function rollTray(
   rng: () => number = Math.random,
   attempts = 12,
   grid?: Grid,
   palette?: string[],
+  skins: BlockSkinId[] = ['neon'],
+  equipped: BlockSkinId = 'neon',
 ): Piece[] {
-  const paint = palette ?? undefined
-  let best: Piece[] = [randomPiece(rng, paint), randomPiece(rng, paint), randomPiece(rng, paint)]
+  let best: Piece[] = [
+    makePiece(rng, palette, skins, equipped),
+    makePiece(rng, palette, skins, equipped),
+    makePiece(rng, palette, skins, equipped),
+  ]
   if (!grid) return best
   for (let i = 0; i < attempts; i++) {
-    const tray = [randomPiece(rng, paint), randomPiece(rng, paint), randomPiece(rng, paint)]
+    const tray = [
+      makePiece(rng, palette, skins, equipped),
+      makePiece(rng, palette, skins, equipped),
+      makePiece(rng, palette, skins, equipped),
+    ]
     if (anyTrayFits(grid, tray)) return tray
     best = tray
   }

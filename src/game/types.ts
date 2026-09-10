@@ -1,11 +1,17 @@
 export const GRID_SIZE = 8
 
-export type CellColor = string | null
-export type Grid = CellColor[][]
+export type Occupied = {
+  color: string
+  skin: BlockSkinId
+}
+
+export type Cell = Occupied | null
+export type Grid = Cell[][]
 
 export type Piece = {
   id: string
   color: string
+  skin: BlockSkinId
   cells: Array<[number, number]>
   rows: number
   cols: number
@@ -75,6 +81,9 @@ export type BlastSet = {
 export type BlockSkinId =
   | 'neon'
   | 'meyve'
+  | 'altin'
+  | 'gumus'
+  | 'rgb'
   | 'jelibon'
   | 'pixel'
   | 'magma'

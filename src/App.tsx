@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import BottomNav from './components/BottomNav'
 import CrateScreen from './screens/CrateScreen'
 import LeaderboardScreen from './screens/LeaderboardScreen'
@@ -17,8 +17,13 @@ import type { BlastSetId, BlockSkinId, Progress, TabId } from './game/types'
 
 export default function App() {
   const [account, setAccount] = useState<Account>(() => ensureLocalProfile())
+  const accountRef = useRef(account)
   const [tab, setTab] = useState<TabId>('play')
   const [mood, setMood] = useState('calm')
+
+  useEffect(() => {
+    accountRef.current = account
+  }, [account])
 
   useEffect(() => {
     setMuted(account.progress.muted)
@@ -43,14 +48,13 @@ export default function App() {
   }
 
   function openBox() {
-    let result: ReturnType<typeof openMysteryBox> = {
-      ok: false,
-      error: 'Kutu açılamadı.',
+    const current = accountRef.current
+    const result = openMysteryBox(current.progress)
+    if (result.ok) {
+      const next = saveProgress(current, result.progress)
+      accountRef.current = next
+      setAccount(next)
     }
-    setAccount((current) => {
-      result = openMysteryBox(current.progress)
-      return result.ok ? saveProgress(current, result.progress) : current
-    })
     return result
   }
 
