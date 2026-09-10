@@ -281,7 +281,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     setStamp(text)
     setStampTick((n) => n + 1)
     window.clearTimeout(stampTimer.current)
-    stampTimer.current = window.setTimeout(() => setStamp(null), 720)
+    stampTimer.current = window.setTimeout(() => setStamp(null), 1100)
   }
 
   function spawnPop(text: string, kind: ScorePop['kind'], row: number, col: number) {
