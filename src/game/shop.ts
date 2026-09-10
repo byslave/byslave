@@ -164,9 +164,10 @@ export function openMysteryBox(progress: Progress, rng: () => number = Math.rand
     }
   }
 
+  const featured: BlockSkinId[] = ['meyve', 'altin', 'gumus', 'rgb']
   const bag: BlockSkin[] = []
   for (const skin of pool) {
-    const copies = WEIGHT[skin.rarity]
+    const copies = WEIGHT[skin.rarity] + (featured.includes(skin.id) ? 3 : 0)
     for (let i = 0; i < copies; i++) bag.push(skin)
   }
   const drop = bag[Math.floor(rng() * bag.length)] ?? pool[0]!

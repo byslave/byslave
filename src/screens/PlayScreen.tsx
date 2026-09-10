@@ -406,7 +406,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   function showMapShift(to: ArcadeStage) {
     setBanner(to.name)
     sfxLogin()
-    window.setTimeout(() => setBanner(null), 1600)
+    window.setTimeout(() => setBanner(null), 3200)
   }
 
   async function playBlast(result: PlaceResult, nextTray: Array<Piece | null>, nextScore: number) {
