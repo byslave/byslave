@@ -32,6 +32,7 @@ import {
   type ArcadeStage,
 } from '../game/stages'
 import { clearStamp } from '../game/juice'
+import { coinsFromGain, fruitForColor } from '../game/shop'
 
 type Props = {
   progress: Progress
@@ -466,6 +467,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     onProgress({
       best: Math.max(progress.best, nextScore),
       maxCombo: Math.max(progress.maxCombo, result.combo),
+      coins: progress.coins + coinsFromGain(result.scoreGain),
     })
     void playBlast(result, nextTray, nextScore)
   }
@@ -559,6 +561,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           {upcoming
             ? `${formatScore(Math.max(0, upcoming.minScore - score))} puan → ${upcoming.name}`
             : 'MAX KADEME'}
+          {' · '}⚡ {progress.coins}
         </small>
       </div>
 
@@ -573,7 +576,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
       </div>
 
       <div className="board-wrap" ref={wrapRef}>
-        <div className={`board-card ${gridEmpty(grid) ? 'void' : ''} ${combo >= 2 ? 'hot' : ''} ${blastHint.hot ? 'armed' : ''}`}>
+        <div className={`board-card ${gridEmpty(grid) ? 'void' : ''} ${combo >= 2 ? 'hot' : ''} ${blastHint.hot ? 'armed' : ''}`} data-skin={progress.equippedSkin}>
           <div
             className="grid"
             ref={boardRef}
@@ -597,6 +600,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
                 const cls = [
                   'cell',
                   color ? 'filled' : '',
+                  color ? `skin-${progress.equippedSkin}` : '',
                   color && fresh.has(key) ? 'fresh' : '',
                   isClear ? 'clearing' : '',
                   fall ? 'drop' : '',
@@ -611,6 +615,11 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
                   <div
                     key={key}
                     className={cls}
+                    data-fruit={
+                      color && progress.equippedSkin === 'meyve'
+                        ? fruitForColor(previewing ? drag?.piece.color ?? color : color)
+                        : undefined
+                    }
                     style={
                       {
                         '--c': previewing ? drag?.piece.color : color ?? 'transparent',
@@ -685,7 +694,12 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
             onPointerCancel={() => setDragState(null)}
           >
             {piece ? (
-              <PieceView piece={piece} cell={18} className={drag?.index === i ? 'dragging' : ''} />
+              <PieceView
+                piece={piece}
+                cell={18}
+                skin={progress.equippedSkin}
+                className={drag?.index === i ? 'dragging' : ''}
+              />
             ) : null}
           </div>
         ))}
@@ -702,7 +716,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
             }px)`,
           }}
         >
-          <PieceView piece={drag.piece} cell={cell} gap={gap} />
+          <PieceView piece={drag.piece} cell={cell} gap={gap} skin={progress.equippedSkin} />
         </div>
       ) : null}
 

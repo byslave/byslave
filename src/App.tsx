@@ -11,8 +11,9 @@ import {
   type Account,
 } from './game/auth'
 import { setMuted, unlockAudio } from './game/audio'
-import { freshlyUnlocked } from './game/progress'
-import type { BlastSetId, Progress, TabId } from './game/types'
+import { freshlyUnlocked, normalizeProgress } from './game/progress'
+import { openMysteryBox } from './game/shop'
+import type { BlastSetId, BlockSkinId, Progress, TabId } from './game/types'
 
 export default function App() {
   const [account, setAccount] = useState<Account>(() => ensureLocalProfile())
@@ -25,7 +26,7 @@ export default function App() {
 
   function patch(partial: Partial<Progress>) {
     setAccount((current) => {
-      const next = { ...current.progress, ...partial }
+      const next = normalizeProgress({ ...current.progress, ...partial })
       const progress = { ...next, unlocked: freshlyUnlocked(next) }
       return saveProgress(current, progress)
     })
@@ -34,6 +35,17 @@ export default function App() {
   function equip(id: BlastSetId) {
     if (!account.progress.unlocked.includes(id)) return
     patch({ equipped: id })
+  }
+
+  function equipSkin(id: BlockSkinId) {
+    if (!account.progress.skins.includes(id)) return
+    patch({ equippedSkin: id })
+  }
+
+  function openBox() {
+    const result = openMysteryBox(account.progress)
+    if (result.ok) setAccount((current) => saveProgress(current, result.progress))
+    return result
   }
 
   return (
@@ -51,7 +63,12 @@ export default function App() {
           />
         </div>
         <div className={`pane ${tab === 'crate' ? 'show' : ''}`}>
-          <CrateScreen progress={account.progress} onEquip={equip} />
+          <CrateScreen
+            progress={account.progress}
+            onEquip={equip}
+            onEquipSkin={equipSkin}
+            onOpenBox={openBox}
+          />
         </div>
         <BottomNav tab={tab} onChange={setTab} />
       </div>

@@ -72,6 +72,25 @@ export type BlastSet = {
   kind: 'rain' | 'jelly' | 'cubes' | 'lightning' | 'magma' | 'aurora'
 }
 
+export type BlockSkinId =
+  | 'neon'
+  | 'meyve'
+  | 'jelibon'
+  | 'pixel'
+  | 'magma'
+  | 'buz'
+  | 'yildiz'
+  | 'disko'
+
+export type BlockSkin = {
+  id: BlockSkinId
+  name: string
+  tagline: string
+  rarity: 'common' | 'rare' | 'epic'
+  emoji: string
+  motion: boolean
+}
+
 export type Progress = {
   best: number
   maxCombo: number
@@ -80,4 +99,7 @@ export type Progress = {
   equipped: BlastSetId
   unlocked: BlastSetId[]
   muted: boolean
+  coins: number
+  skins: BlockSkinId[]
+  equippedSkin: BlockSkinId
 }

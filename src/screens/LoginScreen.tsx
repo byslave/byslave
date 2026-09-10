@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  bindLeague,
+  bindEmail,
   listAccounts,
   resumeRanked,
   type Account,
@@ -14,14 +14,15 @@ type Props = {
 }
 
 export default function LoginScreen({ progress, onBound }: Props) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [name, setName] = useState('')
-  const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const saved = listAccounts().filter((a) => !a.guest)
 
   function submit() {
     unlockAudio()
-    const result = bindLeague(name, pin, progress)
+    const result = bindEmail(email, password, name, progress)
     if (result.ok === false) {
       setError(result.error)
       sfxTap()
@@ -41,9 +42,30 @@ export default function LoginScreen({ progress, onBound }: Props) {
           <span />
         </div>
         <h1>REAKTÖR LİGİ</h1>
-        <p>Sıralamaya girmek için hesabını bağla. Skorun burada kalır.</p>
+        <p>Sıralamaya e-posta ile bağlan. Skorun ve kutuların burada kalır.</p>
       </div>
 
+      <label className="field">
+        <span>E-POSTA</span>
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="nova@neonpatlat.com"
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+        />
+      </label>
+      <label className="field">
+        <span>ŞİFRE</span>
+        <input
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="en az 4 karakter"
+          type="password"
+          autoComplete="current-password"
+        />
+      </label>
       <label className="field">
         <span>OYUNCU ADI</span>
         <input
@@ -54,20 +76,10 @@ export default function LoginScreen({ progress, onBound }: Props) {
           maxLength={16}
         />
       </label>
-      <label className="field">
-        <span>4 HANELİ PIN</span>
-        <input
-          value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-          placeholder="••••"
-          inputMode="numeric"
-          autoComplete="off"
-        />
-      </label>
       {error ? (
         <p className="login-error">{error}</p>
       ) : (
-        <p className="login-hint">Yeni isim lig hesabı açar, kayıtlı isim giriş yapar.</p>
+        <p className="login-hint">Yeni e-posta hesap açar. Kayıtlı e-posta giriş yapar.</p>
       )}
 
       <button className="btn primary" onClick={submit}>
@@ -93,6 +105,7 @@ export default function LoginScreen({ progress, onBound }: Props) {
                 }}
               >
                 {account.name}
+                {account.email ? <small> {account.email}</small> : null}
               </button>
             ))}
           </div>

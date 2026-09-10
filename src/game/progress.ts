@@ -1,5 +1,5 @@
 import { BLAST_SETS } from './pieces'
-import type { BlastSetId, Progress } from './types'
+import type { BlockSkinId, BlastSetId, Progress } from './types'
 
 const KEY = 'neonpatlat-progress-v1'
 
@@ -11,20 +11,36 @@ export const DEFAULT: Progress = {
   equipped: 'neon-yagmuru',
   unlocked: ['neon-yagmuru', 'kozmik-kupler', 'disko-simsegi'],
   muted: false,
+  coins: 80,
+  skins: ['neon'],
+  equippedSkin: 'neon',
+}
+
+export function normalizeProgress(raw: Partial<Progress> | Progress = {}): Progress {
+  const unlocked = raw.unlocked?.length ? raw.unlocked : [...DEFAULT.unlocked]
+  const skins = Array.from(new Set(raw.skins?.length ? raw.skins : [...DEFAULT.skins])) as BlockSkinId[]
+  if (!skins.includes('neon')) skins.unshift('neon')
+  const equippedSkin = skins.includes(raw.equippedSkin as BlockSkinId)
+    ? (raw.equippedSkin as BlockSkinId)
+    : 'neon'
+  return {
+    ...DEFAULT,
+    ...raw,
+    unlocked,
+    skins,
+    equippedSkin,
+    coins: Math.max(0, Math.floor(raw.coins ?? DEFAULT.coins)),
+    muted: raw.muted ?? false,
+  }
 }
 
 export function loadProgress(): Progress {
   try {
     const raw = localStorage.getItem(KEY)
-    if (!raw) return { ...DEFAULT, unlocked: [...DEFAULT.unlocked] }
-    const parsed = JSON.parse(raw) as Partial<Progress>
-    return {
-      ...DEFAULT,
-      ...parsed,
-      unlocked: parsed.unlocked?.length ? parsed.unlocked : [...DEFAULT.unlocked],
-    }
+    if (!raw) return normalizeProgress()
+    return normalizeProgress(JSON.parse(raw) as Partial<Progress>)
   } catch {
-    return { ...DEFAULT, unlocked: [...DEFAULT.unlocked] }
+    return normalizeProgress()
   }
 }
 

@@ -1,4 +1,4 @@
-import { DEFAULT, loadProgress as loadLegacyProgress } from './progress'
+import { DEFAULT, loadProgress as loadLegacyProgress, normalizeProgress } from './progress'
 import type { Progress } from './types'
 
 const STORE = 'neonpatlat-accounts-v1'
@@ -6,6 +6,7 @@ const STORE = 'neonpatlat-accounts-v1'
 export type Account = {
   id: string
   name: string
+  email: string | null
   pinHash: string | null
   guest: boolean
   progress: Progress
@@ -39,9 +40,10 @@ function read(): Store {
         const migrated: Account = {
           id: crypto.randomUUID(),
           name: legacy.playerName || 'Deniz',
+          email: null,
           pinHash: null,
           guest: true,
-          progress: { ...legacy, muted: legacy.muted ?? false },
+          progress: normalizeProgress({ ...legacy, muted: legacy.muted ?? false }),
         }
         const store = { accounts: [migrated], sessionId: migrated.id }
         write(store)
@@ -51,7 +53,11 @@ function read(): Store {
     }
     const parsed = JSON.parse(raw) as Store
     return {
-      accounts: parsed.accounts ?? [],
+      accounts: (parsed.accounts ?? []).map((account) => ({
+        ...account,
+        email: account.email ?? null,
+        progress: normalizeProgress(account.progress),
+      })),
       sessionId: parsed.sessionId ?? null,
     }
   } catch {
@@ -86,25 +92,27 @@ export function persistAccount(account: Account): Account {
 export function saveProgress(account: Account, progress: Progress): Account {
   return persistAccount({
     ...account,
-    progress,
+    progress: normalizeProgress(progress),
     name: account.guest ? account.name : progress.playerName,
   })
 }
 
 export function ranked(account: Account | null): boolean {
-  return !!account && !account.guest && !!account.pinHash
+  return !!account && !account.guest && (!!account.email || !!account.pinHash)
 }
 
 export function mergeProgress(base: Progress, incoming: Progress, name: string): Progress {
-  return {
+  return normalizeProgress({
     ...base,
     ...incoming,
     playerName: name,
     best: Math.max(base.best, incoming.best),
     maxCombo: Math.max(base.maxCombo, incoming.maxCombo),
     gamesPlayed: Math.max(base.gamesPlayed, incoming.gamesPlayed),
+    coins: Math.max(base.coins, incoming.coins),
     unlocked: Array.from(new Set([...base.unlocked, ...incoming.unlocked])),
-  }
+    skins: Array.from(new Set([...base.skins, ...incoming.skins])),
+  })
 }
 
 export function ensureLocalProfile(): Account {
@@ -112,6 +120,47 @@ export function ensureLocalProfile(): Account {
 }
 
 export type AuthResult = { ok: true; account: Account } | { ok: false; error: string }
+
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
+}
+
+export function validEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalizeEmail(email))
+}
+
+export function bindEmail(email: string, password: string, name: string, local: Progress): AuthResult {
+  const mail = normalizeEmail(email)
+  if (!validEmail(mail)) return { ok: false, error: 'Geçerli bir e-posta gir.' }
+  if (password.length < 4) return { ok: false, error: 'Şifre en az 4 karakter olsun.' }
+
+  const store = read()
+  const existing = store.accounts.find((a) => a.email === mail && !a.guest)
+  const pinHash = hashPin(mail, password)
+
+  if (existing) {
+    if (existing.pinHash !== pinHash) return { ok: false, error: 'Şifre hatalı.' }
+    const account = persistAccount({
+      ...existing,
+      progress: mergeProgress(existing.progress, local, existing.name),
+    })
+    return { ok: true, account }
+  }
+
+  const trimmed = name.trim()
+  if (trimmed.length < 2) return { ok: false, error: 'Oyuncu adı en az 2 karakter olsun.' }
+
+  const account: Account = {
+    id: crypto.randomUUID(),
+    name: trimmed,
+    email: mail,
+    pinHash,
+    guest: false,
+    progress: normalizeProgress({ ...local, playerName: trimmed }),
+  }
+  persistAccount(account)
+  return { ok: true, account }
+}
 
 export function bindLeague(name: string, pin: string, local: Progress): AuthResult {
   const trimmed = name.trim()
@@ -134,9 +183,10 @@ export function bindLeague(name: string, pin: string, local: Progress): AuthResu
   const account: Account = {
     id: crypto.randomUUID(),
     name: trimmed,
+    email: null,
     pinHash,
     guest: false,
-    progress: { ...local, playerName: trimmed },
+    progress: normalizeProgress({ ...local, playerName: trimmed }),
   }
   persistAccount(account)
   return { ok: true, account }
@@ -175,9 +225,10 @@ export function enterGuest(name = 'Misafir'): Account {
   const account: Account = {
     id: crypto.randomUUID(),
     name,
+    email: null,
     pinHash: null,
     guest: true,
-    progress: { ...DEFAULT, playerName: name, unlocked: [...DEFAULT.unlocked] },
+    progress: normalizeProgress({ ...DEFAULT, playerName: name, unlocked: [...DEFAULT.unlocked] }),
   }
   persistAccount(account)
   return account

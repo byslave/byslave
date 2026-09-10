@@ -36,7 +36,7 @@ export default function BottomNav({ tab, onChange }: Props) {
           <path d="M3 8 7 3h10l4 5" />
           <path d="M12 8v13" />
         </svg>
-        Patlama Kasası
+        Gizemli Kutu
       </button>
     </nav>
   )
