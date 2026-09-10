@@ -281,7 +281,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     setStamp(text)
     setStampTick((n) => n + 1)
     window.clearTimeout(stampTimer.current)
-    stampTimer.current = window.setTimeout(() => setStamp(null), 1100)
+    stampTimer.current = window.setTimeout(() => setStamp(null), 1200)
   }
 
   function spawnPop(text: string, kind: ScorePop['kind'], row: number, col: number) {
@@ -659,6 +659,11 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
             {pop.text}
           </span>
         ))}
+        {stamp ? (
+          <div key={stampTick} className={`stamp ${stamp === 'PERFECT' ? 'perfect' : ''}`}>
+            {stamp}
+          </div>
+        ) : null}
       </div>
 
       <p className="hint">
@@ -708,12 +713,6 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
             <h2>{banner.name}</h2>
             <p>Bloklar ve kabin değişti</p>
           </div>
-        </div>
-      ) : null}
-
-      {stamp ? (
-        <div key={stampTick} className={`stamp ${stamp === 'PERFECT' ? 'perfect' : ''}`}>
-          {stamp}
         </div>
       ) : null}
 

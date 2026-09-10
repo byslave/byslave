@@ -1588,10 +1588,11 @@ h2,
   place-items: center;
   pointer-events: none;
   font-family: 'Bungee', sans-serif;
-  font-size: clamp(36px, 12vw, 54px);
+  font-size: 42px;
+  letter-spacing: 0.04em;
   color: #fff;
   text-shadow: 0 0 18px var(--cyan), 0 0 32px var(--magenta), 0 4px 0 #041018;
-  animation: stamp-slam 1s cubic-bezier(0.15, 1.6, 0.3, 1) forwards;
+  animation: stamp-slam 1.15s cubic-bezier(0.15, 1.6, 0.3, 1) forwards;
 }
 
 .stamp.perfect {
