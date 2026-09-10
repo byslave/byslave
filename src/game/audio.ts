@@ -40,6 +40,27 @@ function tone(freq: number, duration: number, type: OscillatorType, gain = 0.08,
   osc.stop(ac.currentTime + duration + 0.02)
 }
 
+function noise(duration: number, gain = 0.05, freq = 1400) {
+  const ac = audio()
+  if (!ac) return
+  const frames = Math.max(1, Math.floor(ac.sampleRate * duration))
+  const buffer = ac.createBuffer(1, frames, ac.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+  const src = ac.createBufferSource()
+  const filter = ac.createBiquadFilter()
+  const g = ac.createGain()
+  src.buffer = buffer
+  filter.type = 'bandpass'
+  filter.frequency.setValueAtTime(freq, ac.currentTime)
+  g.gain.setValueAtTime(gain, ac.currentTime)
+  g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + duration)
+  src.connect(filter)
+  filter.connect(g)
+  g.connect(ac.destination)
+  src.start()
+}
+
 export function sfxTap(): void {
   tone(520, 0.05, 'square', 0.04)
 }
@@ -54,8 +75,31 @@ export function sfxFall(): void {
 
 export function sfxClear(combo: number): void {
   const base = 320 + Math.min(combo, 8) * 55
+  noise(0.12, 0.045 + Math.min(combo, 5) * 0.008, 1100 + combo * 80)
   tone(base, 0.16, 'square', 0.07, 140)
   window.setTimeout(() => tone(base * 1.5, 0.18, 'triangle', 0.05, 80), 40)
+}
+
+export function sfxReady(): void {
+  tone(196, 0.08, 'square', 0.05)
+  window.setTimeout(() => tone(330, 0.16, 'square', 0.06), 90)
+}
+
+export function sfxGo(): void {
+  tone(523, 0.1, 'square', 0.07)
+  window.setTimeout(() => tone(784, 0.18, 'triangle', 0.06, 40), 70)
+}
+
+export function sfxPerfect(): void {
+  noise(0.18, 0.06, 1800)
+  tone(523, 0.12, 'square', 0.07)
+  window.setTimeout(() => tone(659, 0.12, 'square', 0.07), 80)
+  window.setTimeout(() => tone(784, 0.14, 'triangle', 0.06), 160)
+  window.setTimeout(() => tone(1046, 0.22, 'triangle', 0.05, 80), 240)
+}
+
+export function sfxTick(): void {
+  tone(880, 0.05, 'square', 0.035)
 }
 
 export function sfxCombo(combo: number): void {

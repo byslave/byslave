@@ -9,10 +9,11 @@ import {
 } from 'react'
 import BlastFx, { type Burst } from '../components/BlastFx'
 import PieceView from '../components/PieceView'
-import { sfxClear, sfxCombo, sfxFall, sfxLogin, sfxOver, sfxPlace, sfxTap, unlockAudio } from '../game/audio'
+import { sfxClear, sfxCombo, sfxFall, sfxGo, sfxLogin, sfxOver, sfxPerfect, sfxPlace, sfxReady, sfxTap, sfxTick, unlockAudio } from '../game/audio'
 import {
   anyTrayFits,
   canPlace,
+  canPlaceAnywhere,
   demoNearClear,
   emptyGrid,
   formatScore,
@@ -30,6 +31,7 @@ import {
   STAGES,
   type ArcadeStage,
 } from '../game/stages'
+import { clearStamp } from '../game/juice'
 
 type Props = {
   progress: Progress
@@ -95,6 +97,16 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   const [fresh, setFresh] = useState<Set<string>>(() => new Set())
   const [scoreBump, setScoreBump] = useState(false)
   const [comboTick, setComboTick] = useState(0)
+  const [stamp, setStamp] = useState<string | null>(null)
+  const [stampTick, setStampTick] = useState(0)
+  const [intro, setIntro] = useState<'ready' | 'go' | null>(() =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo')
+      ? null
+      : 'ready',
+  )
+  const [shownScore, setShownScore] = useState(boot.score)
+  const [continueLeft, setContinueLeft] = useState<number | null>(null)
+  const [trayPop, setTrayPop] = useState(false)
   const stage = stageForScore(score)
   const upcoming = nextStage(stage)
   const emptyRef = useRef(gridEmpty(boot.grid))
@@ -111,6 +123,9 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   const flashTimer = useRef(0)
   const freshTimer = useRef(0)
   const bumpTimer = useRef(0)
+  const stampTimer = useRef(0)
+  const trayTimer = useRef(0)
+  const shownRef = useRef(boot.score)
   const [cell, setCell] = useState(36)
   const gap = 5
 
@@ -119,8 +134,8 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
       document.body.classList.remove('is-dragging')
       window.clearTimeout(shakeTimer.current)
       window.clearTimeout(flashTimer.current)
-      window.clearTimeout(freshTimer.current)
-      window.clearTimeout(bumpTimer.current)
+      window.clearTimeout(stampTimer.current)
+      window.clearTimeout(trayTimer.current)
     }
   }, [])
 
@@ -131,6 +146,51 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   useEffect(() => {
     cellRef.current = cell
   }, [cell])
+
+  useEffect(() => {
+    if (!intro) return
+    if (intro === 'ready') {
+      sfxReady()
+      const t = window.setTimeout(() => setIntro('go'), 620)
+      return () => window.clearTimeout(t)
+    }
+    sfxGo()
+    const t = window.setTimeout(() => setIntro(null), 520)
+    return () => window.clearTimeout(t)
+  }, [intro])
+
+  useEffect(() => {
+    const from = shownRef.current
+    const to = score
+    if (from === to) return
+    const t0 = performance.now()
+    const dur = Math.min(480, 140 + Math.abs(to - from) * 0.05)
+    let raf = 0
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / dur)
+      const next = Math.round(from + (to - from) * p)
+      shownRef.current = next
+      setShownScore(next)
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [score])
+
+  useEffect(() => {
+    if (!over) return
+    const id = window.setInterval(() => {
+      setContinueLeft((n) => {
+        if (n == null || n <= 1) {
+          window.clearInterval(id)
+          return 0
+        }
+        if (n <= 4) sfxTick()
+        return n - 1
+      })
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [over])
 
   useEffect(() => {
     const empty = gridEmpty(grid)
@@ -176,6 +236,14 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     setPops([])
     setFresh(new Set())
     setScoreBump(false)
+    setStamp(null)
+    setIntro('ready')
+    shownRef.current = 0
+    setShownScore(0)
+    setContinueLeft(null)
+    setTrayPop(true)
+    window.clearTimeout(trayTimer.current)
+    trayTimer.current = window.setTimeout(() => setTrayPop(false), 420)
     emptyRef.current = true
     sfxTap()
     onProgress({ gamesPlayed: progress.gamesPlayed + 1 })
@@ -207,6 +275,13 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     setFresh(keys)
     window.clearTimeout(freshTimer.current)
     freshTimer.current = window.setTimeout(() => setFresh(new Set()), 280)
+  }
+
+  function showStamp(text: string) {
+    setStamp(text)
+    setStampTick((n) => n + 1)
+    window.clearTimeout(stampTimer.current)
+    stampTimer.current = window.setTimeout(() => setStamp(null), 720)
   }
 
   function spawnPop(text: string, kind: ScorePop['kind'], row: number, col: number) {
@@ -255,7 +330,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   }
 
   function onDown(index: number, piece: Piece, e: PointerEvent<HTMLDivElement>) {
-    if (paused || over || busyRef.current) return
+    if (paused || over || busyRef.current || intro) return
     unlockAudio()
     const lift = e.pointerType === 'touch' ? 56 : 0
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -284,10 +359,14 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     let trayNext = nextTray
     if (trayNext.every((p) => p === null)) {
       trayNext = rollTray(Math.random, 12, finalGrid, palette)
+      setTrayPop(true)
+      window.clearTimeout(trayTimer.current)
+      trayTimer.current = window.setTimeout(() => setTrayPop(false), 420)
     }
     setTray(trayNext)
     if (!anyTrayFits(finalGrid, trayNext)) {
       setOver(true)
+      setContinueLeft(9)
       sfxOver()
     }
   }
@@ -329,10 +408,13 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           const popC = ev.cols[0] ?? 3
           spawnPop(`+${pts}`, 'pts', popR, popC)
           if (ev.combo >= 2) spawnPop(`KOMBO x${ev.combo}`, 'combo', Math.min(popR + 1, 7), popC)
-          punch(Math.min(4, Math.max(1, ev.combo)))
+          const perfect = gridEmpty(ev.grid)
+          showStamp(clearStamp(ev.lines, perfect))
+          punch(Math.min(4, Math.max(1, perfect ? 4 : ev.combo)))
           sfxClear(ev.combo)
-          if (ev.combo >= 3) sfxCombo(ev.combo)
-          buzz(ev.combo >= 3 ? 'heavy' : 'medium')
+          if (perfect) sfxPerfect()
+          else if (ev.combo >= 3) sfxCombo(ev.combo)
+          buzz(perfect || ev.combo >= 3 ? 'heavy' : 'medium')
           await wait(220)
           if (!live()) return
           setGrid(ev.grid)
@@ -397,6 +479,35 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     return map
   }, [drag])
 
+  const blastHint = useMemo(() => {
+    const rows = new Set<number>()
+    const cols = new Set<number>()
+    if (!drag?.hover?.valid) return { rows, cols, hot: false }
+    const result = placePiece(grid, drag.piece, drag.hover.row, drag.hover.col, combo)
+    const ev = result?.events.find((e) => e.type === 'clear')
+    if (ev && ev.type === 'clear') {
+      for (const r of ev.rows) rows.add(r)
+      for (const c of ev.cols) cols.add(c)
+    }
+    return { rows, cols, hot: rows.size + cols.size > 0 }
+  }, [drag, combo, grid])
+
+  const almost = useMemo(() => {
+    const rows = new Set<number>()
+    const cols = new Set<number>()
+    for (let r = 0; r < GRID_SIZE; r++) {
+      let n = 0
+      for (let c = 0; c < GRID_SIZE; c++) if (grid[r][c]) n += 1
+      if (n === GRID_SIZE - 1) rows.add(r)
+    }
+    for (let c = 0; c < GRID_SIZE; c++) {
+      let n = 0
+      for (let r = 0; r < GRID_SIZE; r++) if (grid[r][c]) n += 1
+      if (n === GRID_SIZE - 1) cols.add(c)
+    }
+    return { rows, cols }
+  }, [grid])
+
   return (
     <section
       className={[
@@ -405,6 +516,9 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
         drag ? 'dragging' : '',
         shake ? `shake-${shake}` : '',
         flash ? 'flashing' : '',
+        combo >= 2 ? 'heating' : '',
+        blastHint.hot ? 'armed' : '',
+        intro ? 'introing' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -412,7 +526,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
       <header className="topbar">
         <div className={`stat ${scoreBump ? 'bump' : ''}`}>
           <label>SKOR</label>
-          <strong>{formatScore(score)}</strong>
+          <strong>{formatScore(shownScore)}</strong>
         </div>
         <div className="stat best">
           <label>EN İYİ</label>
@@ -459,7 +573,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
       </div>
 
       <div className="board-wrap" ref={wrapRef}>
-        <div className={`board-card ${gridEmpty(grid) ? 'void' : ''} ${combo >= 2 ? 'hot' : ''}`}>
+        <div className={`board-card ${gridEmpty(grid) ? 'void' : ''} ${combo >= 2 ? 'hot' : ''} ${blastHint.hot ? 'armed' : ''}`}>
           <div
             className="grid"
             ref={boardRef}
@@ -478,12 +592,16 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
                 const fall = falling?.[key]
                 const isClear =
                   clearing && (clearing.rows.includes(r) || clearing.cols.includes(c))
+                const willBlast = blastHint.rows.has(r) || blastHint.cols.has(c)
+                const near = !color && (almost.rows.has(r) || almost.cols.has(c))
                 const cls = [
                   'cell',
                   color ? 'filled' : '',
                   color && fresh.has(key) ? 'fresh' : '',
                   isClear ? 'clearing' : '',
                   fall ? 'drop' : '',
+                  willBlast ? 'will-blast' : '',
+                  near && !willBlast ? 'almost' : '',
                   previewing && drag?.hover?.valid ? 'preview-ok' : '',
                   previewing && drag && !drag.hover?.valid ? 'preview-bad' : '',
                 ]
@@ -505,16 +623,42 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
             )}
           </div>
           <BlastFx burst={burst} equipped={progress.equipped} cell={cell} gap={gap} />
+          {clearing
+            ? clearing.rows.map((r) => (
+                <i
+                  key={`lr${r}`}
+                  className="laser-h"
+                  style={{
+                    top: 12 + r * (cell + gap) + cell / 2,
+                    left: 12,
+                    width: cell * 8 + gap * 7,
+                  }}
+                />
+              ))
+            : null}
+          {clearing
+            ? clearing.cols.map((c) => (
+                <i
+                  key={`lc${c}`}
+                  className="laser-v"
+                  style={{
+                    left: 12 + c * (cell + gap) + cell / 2,
+                    top: 12,
+                    height: cell * 8 + gap * 7,
+                  }}
+                />
+              ))
+            : null}
         </div>
-          {pops.map((pop) => (
-            <span
-              key={pop.id}
-              className={`score-pop kind-${pop.kind}`}
-              style={{ left: pop.x, top: pop.y }}
-            >
-              {pop.text}
-            </span>
-          ))}
+        {pops.map((pop) => (
+          <span
+            key={pop.id}
+            className={`score-pop kind-${pop.kind}`}
+            style={{ left: pop.x, top: pop.y }}
+          >
+            {pop.text}
+          </span>
+        ))}
       </div>
 
       <p className="hint">
@@ -529,7 +673,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
         {tray.map((piece, i) => (
           <div
             key={piece?.id ?? `empty-${i}`}
-            className={`slot ${piece ? '' : 'empty'}`}
+            className={`slot ${piece ? '' : 'empty'} ${piece && !canPlaceAnywhere(grid, piece) ? 'stuck' : ''} ${trayPop && piece ? 'refill' : ''}`}
             onPointerDown={(e) => piece && onDown(i, piece, e)}
             onPointerMove={onMove}
             onPointerUp={onUp}
@@ -544,7 +688,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
 
       {drag ? (
         <div
-          className="drag-layer"
+          className={`drag-layer ${blastHint.hot ? 'armed' : ''}`}
           style={{
             transform: `translate(${drag.x - (drag.piece.cols * (cell + gap)) / 2}px, ${
               drag.lift > 0
@@ -564,6 +708,18 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
             <h2>{banner.name}</h2>
             <p>Bloklar ve kabin değişti</p>
           </div>
+        </div>
+      ) : null}
+
+      {stamp ? (
+        <div key={stampTick} className={`stamp ${stamp === 'PERFECT' ? 'perfect' : ''}`}>
+          {stamp}
+        </div>
+      ) : null}
+
+      {intro ? (
+        <div className="intro" aria-hidden>
+          <strong className={intro}>{intro === 'ready' ? 'READY' : 'GO!'}</strong>
         </div>
       ) : null}
 
@@ -593,15 +749,29 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
       ) : null}
 
       {over ? (
-        <div className="overlay">
+        <div className="overlay arcade-over">
           <div className="modal">
-            <h2>TAHTA KİLİTLENDİ</h2>
-            <p>
-              Skor {formatScore(score)} · En iyi {formatScore(progress.best)}
-            </p>
+            {continueLeft && continueLeft > 0 ? (
+              <>
+                <h2>DEVAM?</h2>
+                <div key={continueLeft} className="continue-count">
+                  {continueLeft}
+                </div>
+                <p>
+                  Skor {formatScore(score)} · En iyi {formatScore(progress.best)}
+                </p>
+              </>
+            ) : (
+              <>
+                <h2>GAME OVER</h2>
+                <p>
+                  Skor {formatScore(score)} · En iyi {formatScore(progress.best)}
+                </p>
+              </>
+            )}
             <div className="actions">
               <button className="btn primary" onClick={restart}>
-                Tekrar patlat
+                {continueLeft && continueLeft > 0 ? 'Devam et' : 'Tekrar patlat'}
               </button>
             </div>
           </div>
