@@ -924,7 +924,7 @@ h2,
 
 .nav {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
   padding: 8px 10px calc(12px + var(--safe-bottom));
   background: linear-gradient(180deg, rgba(10, 14, 28, 0.4), var(--nav));

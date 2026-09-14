@@ -15,9 +15,9 @@ void import('@capacitor/status-bar')
       await StatusBar.setStyle({ style: Style.Dark })
       await StatusBar.setBackgroundColor({ color: '#070A16' })
     } catch {
-      /* tarayıcı */
+      /* browser */
     }
   })
   .catch(() => {
-    /* tarayıcı */
+    /* browser */
   })

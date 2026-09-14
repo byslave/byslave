@@ -57,7 +57,7 @@ export type PlaceResult = {
   combo: number
 }
 
-export type TabId = 'play' | 'ranks' | 'crate'
+export type TabId = 'play' | 'ranks'
 
 export type BlastSetId =
   | 'neon-yagmuru'

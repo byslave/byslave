@@ -1,14 +1,14 @@
 {
-  "name": "NEONPATLAT",
-  "short_name": "NEONPATLAT",
-  "description": "Neon arcade puzzle — sürükle, patlat, kutu aç.",
+  "name": "BLOCK PATLAT",
+  "short_name": "BLOCK PATLAT",
+  "description": "Neon arcade puzzle — drag, blast, combo.",
   "display": "standalone",
   "background_color": "#070A16",
   "theme_color": "#070A16",
   "orientation": "portrait",
   "start_url": "./",
   "scope": "./",
-  "lang": "tr",
+  "lang": "en",
   "icons": [
     {
       "src": "/favicon.svg",

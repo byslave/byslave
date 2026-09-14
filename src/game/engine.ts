@@ -225,7 +225,7 @@ export function rollTray(
 }
 
 export function formatScore(n: number): string {
-  return n.toLocaleString('tr-TR')
+  return n.toLocaleString('en-US')
 }
 
 export function gridEmpty(grid: Grid): boolean {

@@ -41,8 +41,8 @@ export default function LoginScreen({ progress, onBound }: Props) {
           <span />
           <span />
         </div>
-        <h1>REAKTÖR LİGİ</h1>
-        <p>Sıralamaya e-posta ile bağlan. Hesap bu telefonda kalır, sunucuya gitmez.</p>
+        <h1>REACTOR LEAGUE</h1>
+        <p>Sign in with email to see ranks. The account stays on this device — nothing is sent to a server.</p>
       </div>
 
       <form
@@ -53,28 +53,28 @@ export default function LoginScreen({ progress, onBound }: Props) {
         }}
       >
       <label className="field">
-        <span>E-POSTA</span>
+        <span>EMAIL</span>
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="nova@neonpatlat.com"
+          placeholder="nova@blockpatlat.com"
           type="email"
           autoComplete="email"
           inputMode="email"
         />
       </label>
       <label className="field">
-        <span>ŞİFRE</span>
+        <span>PASSWORD</span>
         <input
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="en az 4 karakter"
+          placeholder="at least 4 characters"
           type="password"
           autoComplete="current-password"
         />
       </label>
       <label className="field">
-        <span>OYUNCU ADI (yeni hesap)</span>
+        <span>PLAYER NAME (new account)</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -86,20 +86,20 @@ export default function LoginScreen({ progress, onBound }: Props) {
       {error ? (
         <p className="login-error">{error}</p>
       ) : (
-        <p className="login-hint">Yeni e-posta hesap açar. Kayıtlı e-posta giriş yapar.</p>
+        <p className="login-hint">A new email creates an account. A saved email signs you in.</p>
       )}
 
       <button className="btn primary" type="submit">
-        Lige bağlan
+        Join the league
       </button>
-      <a className="login-privacy" href="./gizlilik.html">
-        Gizlilik
+      <a className="login-privacy" href="./privacy.html">
+        Privacy
       </a>
       </form>
 
       {saved.length > 0 ? (
         <div className="saved">
-          <div className="saved-label">Kayıtlı lig profilleri</div>
+          <div className="saved-label">Saved league profiles</div>
           <div className="saved-row">
             {saved.map((account) => (
               <button

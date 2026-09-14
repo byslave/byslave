@@ -39,7 +39,7 @@ function read(): Store {
       if (legacy.best > 0 || legacy.gamesPlayed > 0 || legacy.playerName !== DEFAULT.playerName) {
         const migrated: Account = {
           id: crypto.randomUUID(),
-          name: legacy.playerName || 'Deniz',
+          name: legacy.playerName || 'Guest',
           email: null,
           pinHash: null,
           guest: true,
@@ -131,15 +131,15 @@ export function validEmail(email: string): boolean {
 
 export function bindEmail(email: string, password: string, name: string, local: Progress): AuthResult {
   const mail = normalizeEmail(email)
-  if (!validEmail(mail)) return { ok: false, error: 'Geçerli bir e-posta gir.' }
-  if (password.length < 4) return { ok: false, error: 'Şifre en az 4 karakter olsun.' }
+  if (!validEmail(mail)) return { ok: false, error: 'Enter a valid email.' }
+  if (password.length < 4) return { ok: false, error: 'Password must be at least 4 characters.' }
 
   const store = read()
   const existing = store.accounts.find((a) => a.email === mail && !a.guest)
   const pinHash = hashPin(mail, password)
 
   if (existing) {
-    if (existing.pinHash !== pinHash) return { ok: false, error: 'Şifre hatalı.' }
+    if (existing.pinHash !== pinHash) return { ok: false, error: 'Wrong password.' }
     const account = persistAccount({
       ...existing,
       progress: mergeProgress(existing.progress, local, existing.name),
@@ -148,7 +148,7 @@ export function bindEmail(email: string, password: string, name: string, local: 
   }
 
   const trimmed = name.trim()
-  if (trimmed.length < 2) return { ok: false, error: 'Oyuncu adı en az 2 karakter olsun.' }
+  if (trimmed.length < 2) return { ok: false, error: 'Player name must be at least 2 characters.' }
 
   const account: Account = {
     id: crypto.randomUUID(),
@@ -164,15 +164,15 @@ export function bindEmail(email: string, password: string, name: string, local: 
 
 export function bindLeague(name: string, pin: string, local: Progress): AuthResult {
   const trimmed = name.trim()
-  if (trimmed.length < 2) return { ok: false, error: 'İsim en az 2 karakter olsun.' }
-  if (!/^\d{4}$/.test(pin)) return { ok: false, error: 'PIN 4 haneli olmalı.' }
+  if (trimmed.length < 2) return { ok: false, error: 'Name must be at least 2 characters.' }
+  if (!/^\d{4}$/.test(pin)) return { ok: false, error: 'PIN must be 4 digits.' }
 
   const store = read()
   const existing = store.accounts.find((a) => a.name.toLowerCase() === trimmed.toLowerCase() && !a.guest)
   const pinHash = hashPin(trimmed, pin)
 
   if (existing) {
-    if (existing.pinHash !== pinHash) return { ok: false, error: 'PIN hatalı.' }
+    if (existing.pinHash !== pinHash) return { ok: false, error: 'Wrong PIN.' }
     const account = persistAccount({
       ...existing,
       progress: mergeProgress(existing.progress, local, existing.name),
@@ -214,7 +214,7 @@ export function unbindLeague(local: Progress): Account {
   return enterGuest()
 }
 
-export function enterGuest(name = 'Misafir'): Account {
+export function enterGuest(name = 'Guest'): Account {
   const store = read()
   const existing = store.accounts.find((a) => a.guest)
   if (existing) {

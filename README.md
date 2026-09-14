@@ -1,20 +1,19 @@
-# NEONPATLAT
+# BLOCK PATLAT
 
-Block Blast tarzı neon arcade puzzle. Parçayı sürükle, satır ve sütunu patlat, komboyu büyüt, gizemli kutu aç.
+Block Blast–style neon arcade puzzle. Drag a piece, blast a row or column, grow the combo.
 
-iOS ve Android: **React + Vite + Capacitor**. Uygulama kimliği: `com.byslave.neonpatlat`.
+iOS and Android: **React + Vite + Capacitor**. App id: `com.byslave.neonpatlat`. Visible name: **BLOCK PATLAT**.
 
-## Ekranlar
+## Screens
 
-- **Oyna** — 8×8 tahta, yerçekimi zinciri, kademe kabinleri (1500 / 4000 / 9000 / 16000 / 28000). Harita ancak tahta tamamen temizlenince değişir.
-- **Sıralama** — e-posta + şifre ile lig (yalnızca bu cihazda). Dünya listesindeki diğer isimler sahne yarışçılarıdır.
-- **Gizemli Kutu** — patlatınca ⚡; 80⚡ kutudan patlama seti. Bloklar kombin 5x’te alev alır, 10x’te ekranı yakar.
+- **Play** — 8×8 board, gravity chains, stage cabinets (1500 / 4000 / 9000 / 16000 / 28000). The map changes only after a full board clear. Combos 5x+ heat the cubes; 10x ignites the screen and rumbles the device.
+- **Ranks** — email + password league (this device only). Other world-list names are stage racers.
 
-Oyun misafir olarak açılır. Lig sadece Sıralama’da bağlanır.
+The game opens as Guest. League bind happens only on Ranks.
 
-Gizlilik metni: `public/gizlilik.html` (Play Console’a `https://byslave.github.io/byslave/gizlilik.html` konabilir).
+Privacy: `public/privacy.html` (Play Console can use `https://byslave.github.io/byslave/privacy.html`).
 
-## Geliştirme
+## Develop
 
 ```bash
 npm install
@@ -33,4 +32,4 @@ npm run cap:sync
 npx cap open android
 ```
 
-Android Studio’dan **Build → Generate Signed Bundle / APK → Android App Bundle**. Play Console’a AAB yükle. Paket adı değişmez: `com.byslave.neonpatlat`.
+In Android Studio: **Build → Generate Signed Bundle / APK → Android App Bundle**. Upload the AAB. Package name stays `com.byslave.neonpatlat`.

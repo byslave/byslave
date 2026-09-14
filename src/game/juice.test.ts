@@ -7,7 +7,7 @@ describe('clearStamp', () => {
   })
 
   it('names multi-line blasts', () => {
-    expect(clearStamp(1, false)).toBe('PATLAT!')
+    expect(clearStamp(1, false)).toBe('BLAST!')
     expect(clearStamp(2, false)).toBe('DOUBLE')
     expect(clearStamp(3, false)).toBe('TRIPLE')
     expect(clearStamp(4, false)).toBe('QUAD')

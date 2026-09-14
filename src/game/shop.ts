@@ -14,7 +14,7 @@ export type BoxResult =
 
 export function openMysteryBox(progress: Progress, rng: () => number = Math.random): BoxResult {
   if (progress.coins < BOX_COST) {
-    return { ok: false, error: `Kutu ${BOX_COST}⚡ ister. Biraz daha patlat.` }
+    return { ok: false, error: `The box needs ${BOX_COST}⚡. Blast a bit more.` }
   }
 
   const owned = new Set(progress.unlocked)

@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import BottomNav from './components/BottomNav'
-import CrateScreen from './screens/CrateScreen'
 import LeaderboardScreen from './screens/LeaderboardScreen'
 import PlayScreen from './screens/PlayScreen'
 import {
@@ -12,18 +11,12 @@ import {
 } from './game/auth'
 import { setMuted, unlockAudio } from './game/audio'
 import { freshlyUnlocked, normalizeProgress } from './game/progress'
-import { openMysteryBox } from './game/shop'
-import type { BlastSetId, Progress, TabId } from './game/types'
+import type { Progress, TabId } from './game/types'
 
 export default function App() {
   const [account, setAccount] = useState<Account>(() => ensureLocalProfile())
-  const accountRef = useRef(account)
   const [tab, setTab] = useState<TabId>('play')
   const [mood, setMood] = useState('calm')
-
-  useEffect(() => {
-    accountRef.current = account
-  }, [account])
 
   useEffect(() => {
     const boot = document.getElementById('boot')
@@ -45,22 +38,6 @@ export default function App() {
     })
   }
 
-  function equip(id: BlastSetId) {
-    if (!account.progress.unlocked.includes(id)) return
-    patch({ equipped: id })
-  }
-
-  function openBox() {
-    const current = accountRef.current
-    const result = openMysteryBox(current.progress)
-    if (result.ok) {
-      const next = saveProgress(current, result.progress)
-      accountRef.current = next
-      setAccount(next)
-    }
-    return result
-  }
-
   return (
     <div className="stage" data-mood={mood} onPointerDown={unlockAudio}>
       <div className="phone" data-mood={mood}>
@@ -73,13 +50,6 @@ export default function App() {
             ranked={ranked(account)}
             onBound={setAccount}
             onUnbind={() => setAccount(unbindLeague(account.progress))}
-          />
-        </div>
-        <div className={`pane ${tab === 'crate' ? 'show' : ''}`}>
-          <CrateScreen
-            progress={account.progress}
-            onEquip={equip}
-            onOpenBox={openBox}
           />
         </div>
         <BottomNav tab={tab} onChange={setTab} />

@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.byslave.neonpatlat',
-  appName: 'NEONPATLAT',
+  appName: 'BLOCK PATLAT',
   webDir: 'dist',
   backgroundColor: '#070A16',
   ios: {

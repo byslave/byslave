@@ -33,16 +33,16 @@ export default function LeaderboardScreen({ progress, ranked, onBound, onUnbind 
   return (
     <section className="screen">
       <div className="league">
-        <h1>REAKTÖR LİGİ</h1>
-        <div className="sub">Bu cihaz · sıfırlanma {reset.label}</div>
+        <h1>REACTOR LEAGUE</h1>
+        <div className="sub">This device · resets {reset.label}</div>
       </div>
 
       <div className="tabs">
         <button className={`tab ${tab === 'friends' ? 'on' : ''}`} onClick={() => setTab('friends')}>
-          Arkadaşlar
+          Friends
         </button>
         <button className={`tab ${tab === 'world' ? 'on' : ''}`} onClick={() => setTab('world')}>
-          Dünya
+          World
         </button>
       </div>
 
@@ -54,27 +54,27 @@ export default function LeaderboardScreen({ progress, ranked, onBound, onUnbind 
           <h3>
             #{rank} {progress.playerName.toUpperCase()}
           </h3>
-          <div className="badge">NEON RÜTBE</div>
+          <div className="badge">NEON RANK</div>
           <p className="climb">
             {above
-              ? `${formatScore(need)} puan daha · #${rank - 1} ${above.name}`
-              : 'Lig zirvesindesin'}
+              ? `${formatScore(need)} more pts · #${rank - 1} ${above.name}`
+              : 'You are at the top'}
           </p>
         </div>
       </div>
 
       <div className="list-head">
-        <span>Yarışçılar</span>
-        <span className="live">CİHAZ</span>
+        <span>Racers</span>
+        <span className="live">DEVICE</span>
       </div>
-      <p className="board-note">Listenin geri kalanı sahne yarışçıları. Skorun bu telefonda.</p>
+      <p className="board-note">Other names are stage racers. Your score stays on this phone.</p>
       <div className="ranks">
         {rows.map((row, i) => (
           <div className={`rank ${row.you ? 'you' : ''}`} key={row.name}>
             <div className="pos">#{i + 1}</div>
             <div>
-              <div className="name">{row.you ? `${row.name} (sen)` : row.name}</div>
-              <div className="meta">KOMBO x{Math.max(row.combo, 0)}</div>
+              <div className="name">{row.you ? `${row.name} (you)` : row.name}</div>
+              <div className="meta">COMBO x{Math.max(row.combo, 0)}</div>
             </div>
             <div className="pts">{formatScore(row.score)}</div>
           </div>
@@ -87,7 +87,7 @@ export default function LeaderboardScreen({ progress, ranked, onBound, onUnbind 
           onUnbind()
         }}
       >
-        Lig hesabını ayır
+        Unlink league account
       </button>
     </section>
   )

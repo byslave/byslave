@@ -32,7 +32,7 @@ import {
   STAGES,
   type ArcadeStage,
 } from '../game/stages'
-import { coinsFromGain } from '../game/shop'
+import { hapticBlast, hapticPlace } from '../game/haptics'
 import { clearStamp, heatTier } from '../game/juice'
 
 type Props = {
@@ -51,21 +51,6 @@ type Drag = {
 }
 
 type ScorePop = { id: number; x: number; y: number; text: string; kind: 'pts' | 'combo' }
-
-function buzz(style: 'light' | 'medium' | 'heavy' = 'light') {
-  try {
-    void import('@capacitor/haptics').then(({ Haptics, ImpactStyle }) => {
-      const map = {
-        light: ImpactStyle.Light,
-        medium: ImpactStyle.Medium,
-        heavy: ImpactStyle.Heavy,
-      }
-      void Haptics.impact({ style: map[style] })
-    })
-  } catch {
-    /* web */
-  }
-}
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms))
@@ -430,7 +415,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     busyRef.current = true
     setGrid(result.placedGrid)
     sfxPlace()
-    buzz('light')
+    hapticPlace()
 
     if (result.events.length > 0) {
       await wait(48)
@@ -450,21 +435,21 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           const popR = ev.rows[0] ?? 3
           const popC = ev.cols[0] ?? 3
           spawnPop(`+${pts}`, 'pts', popR, popC)
-          if (ev.combo >= 2) spawnPop(`KOMBO x${ev.combo}`, 'combo', Math.min(popR + 1, 7), popC)
+          if (ev.combo >= 2) spawnPop(`COMBO x${ev.combo}`, 'combo', Math.min(popR + 1, 7), popC)
           const perfect = gridEmpty(ev.grid)
           if (ev.combo >= 10) {
-            showStamp(perfect ? 'PERFECT' : `ALEV x${ev.combo}`)
+            showStamp(perfect ? 'PERFECT' : `INFERNO x${ev.combo}`)
             sfxInferno()
             if (perfect) sfxPerfect()
             punch(4)
           } else {
             showStamp(clearStamp(ev.lines, perfect))
-            punch(Math.min(4, Math.max(1, perfect ? 4 : ev.combo)))
+            punch(Math.min(4, Math.max(1, perfect ? 4 : ev.combo >= 5 ? 3 : ev.combo)))
             sfxClear(ev.combo)
             if (perfect) sfxPerfect()
             else if (ev.combo >= 5) sfxCombo(ev.combo)
           }
-          buzz(perfect || ev.combo >= 5 ? 'heavy' : 'medium')
+          hapticBlast(ev.combo, perfect)
           await wait(150)
           if (!live()) return
           setGrid(ev.grid)
@@ -523,7 +508,6 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     onProgress({
       best: Math.max(progress.best, nextScore),
       maxCombo: Math.max(progress.maxCombo, result.combo),
-      coins: progress.coins + coinsFromGain(result.scoreGain),
     })
     void playBlast(result, nextTray, nextScore)
   }
@@ -586,16 +570,16 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     >
       <header className="topbar">
         <div className={`stat ${scoreBump ? 'bump' : ''}`}>
-          <label>SKOR</label>
+          <label>SCORE</label>
           <strong>{formatScore(shownScore)}</strong>
         </div>
         <div className="stat best">
-          <label>EN İYİ</label>
+          <label>BEST</label>
           <strong>{formatScore(progress.best)}</strong>
         </div>
         <button
           className="icon-btn"
-          aria-label="Duraklat"
+          aria-label="Pause"
           onClick={() => {
             sfxTap()
             setPaused(true)
@@ -610,28 +594,27 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
 
       <div className={`kademe-hud ${banner ? 'levelup' : ''}`}>
         <div className="kademe-row">
-          <strong>KADEME {mapStage.level}</strong>
+          <strong>STAGE {mapStage.level}</strong>
           <span>{mapStage.name}</span>
-          <b className="coin-chip">⚡{progress.coins}</b>
         </div>
         <div className="kademe-bar">
           <i style={{ width: `${Math.round(stageProgress(score, mapStage) * 100)}%` }} />
         </div>
         <small className={banner ? 'map-shift' : ''}>
           {banner
-            ? `Harita değişti · ${banner}`
+            ? `Map changed · ${banner}`
             : upcoming && score >= upcoming.minScore
-              ? `Tahtayı tertemizle → ${upcoming.name}`
+              ? `Clear the board → ${upcoming.name}`
               : upcoming
-                ? `${formatScore(Math.max(0, upcoming.minScore - score))} puan → ${upcoming.name}`
-                : 'MAX KADEME'}
+                ? `${formatScore(Math.max(0, upcoming.minScore - score))} pts → ${upcoming.name}`
+                : 'MAX STAGE'}
         </small>
       </div>
 
       <div className="combo-wrap">
         {combo > 0 ? (
           <div key={comboTick} className={`combo punch ${heat === 'none' ? '' : heat}`}>
-            KOMBO X{combo}
+            COMBO X{combo}
           </div>
         ) : (
           <div className="combo ghost">{mapStage.tagline}</div>
@@ -729,7 +712,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           </span>
         ))}
         {stamp ? (
-          <div key={stampTick} className={`stamp ${stamp === 'PERFECT' ? 'perfect' : ''} ${stamp.startsWith('ALEV') ? 'fire' : ''}`}>
+          <div key={stampTick} className={`stamp ${stamp === 'PERFECT' ? 'perfect' : ''} ${stamp.startsWith('INFERNO') ? 'fire' : ''}`}>
             {stamp}
           </div>
         ) : null}
@@ -748,15 +731,15 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
       <p className="hint">
         {gridEmpty(grid)
           ? upcoming && score >= upcoming.minScore
-            ? 'Temiz reaktör — bir patlatma daha, harita değişir!'
-            : 'Reaktör temiz.'
+            ? 'Board clear — one more blast and the map shifts!'
+            : 'Board is clear.'
           : heat === 'inferno'
-            ? '10x ALEV — ekran yanıyor!'
+            ? '10x INFERNO — the screen is on fire!'
             : heat !== 'none'
-              ? 'Alev büyüyor — 10x’te patlar!'
+              ? 'Heat rising — 10x ignites the board!'
               : upcoming
-                ? 'Tüm tahtayı temizle, harita değişsin.'
-                : 'Ultra kademe — patlatmaya devam!'}
+                ? 'Clear the whole board to change the map.'
+                : 'Ultra stage — keep blasting!'}
       </p>
 
       <div className="tray">
@@ -803,26 +786,26 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
       {paused ? (
         <div className="overlay">
           <div className="modal">
-            <h2>DURAKLATILDI</h2>
-            <p>Reaktör çekirdeği bekliyor.</p>
+            <h2>PAUSED</h2>
+            <p>Reactor core on standby.</p>
             <div className="actions">
               <button className="btn primary" onClick={() => setPaused(false)}>
-                Devam et
+                Resume
               </button>
               <button
                 className="btn ghost"
                 onClick={() => onProgress({ muted: !progress.muted })}
               >
-                {progress.muted ? 'Sesi aç' : 'Sesi kapat'}
+                {progress.muted ? 'Sound on' : 'Sound off'}
               </button>
               <button className="btn ghost" onClick={restart}>
-                Yeniden başla
+                Restart
               </button>
-              <a className="btn ghost" href="./gizlilik.html">
-                Gizlilik
+              <a className="btn ghost" href="./privacy.html">
+                Privacy
               </a>
             </div>
-            <p className="legal-note">NEONPATLAT 1.0.0 · com.byslave.neonpatlat</p>
+            <p className="legal-note">BLOCK PATLAT 1.0.0 · com.byslave.neonpatlat</p>
           </div>
         </div>
       ) : null}
@@ -832,25 +815,25 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           <div className="modal">
             {continueLeft && continueLeft > 0 ? (
               <>
-                <h2>DEVAM?</h2>
+                <h2>CONTINUE?</h2>
                 <div key={continueLeft} className="continue-count">
                   {continueLeft}
                 </div>
                 <p>
-                  Skor {formatScore(score)} · En iyi {formatScore(progress.best)}
+                  Score {formatScore(score)} · Best {formatScore(progress.best)}
                 </p>
               </>
             ) : (
               <>
                 <h2>GAME OVER</h2>
                 <p>
-                  Skor {formatScore(score)} · En iyi {formatScore(progress.best)}
+                  Score {formatScore(score)} · Best {formatScore(progress.best)}
                 </p>
               </>
             )}
             <div className="actions">
               <button className="btn primary" onClick={restart}>
-                {continueLeft && continueLeft > 0 ? 'Devam et' : 'Tekrar patlat'}
+                {continueLeft && continueLeft > 0 ? 'Continue' : 'Blast again'}
               </button>
             </div>
           </div>

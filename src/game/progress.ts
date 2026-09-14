@@ -7,7 +7,7 @@ export const DEFAULT: Progress = {
   best: 0,
   maxCombo: 0,
   gamesPlayed: 0,
-  playerName: 'Misafir',
+  playerName: 'Guest',
   equipped: 'neon-yagmuru',
   unlocked: ['neon-yagmuru', 'kozmik-kupler', 'disko-simsegi'],
   muted: false,
@@ -18,9 +18,11 @@ export const DEFAULT: Progress = {
 
 export function normalizeProgress(raw: Partial<Progress> | Progress = {}): Progress {
   const unlocked = raw.unlocked?.length ? raw.unlocked : [...DEFAULT.unlocked]
+  const name = raw.playerName?.trim()
   return {
     ...DEFAULT,
     ...raw,
+    playerName: !name || name === 'Misafir' ? 'Guest' : name,
     unlocked,
     skins: ['neon'],
     equippedSkin: 'neon',
@@ -71,7 +73,7 @@ const WORLD: RankEntry[] = [
   { name: 'Sena', score: 54120, combo: 8 },
   { name: 'Volt', score: 49800, combo: 7 },
   { name: 'Ece', score: 45210, combo: 7 },
-  { name: 'Rüzgar', score: 41002, combo: 6 },
+  { name: 'Gale', score: 41002, combo: 6 },
   { name: 'Mira', score: 37650, combo: 6 },
   { name: 'Can', score: 33990, combo: 5 },
   { name: 'Ada', score: 30120, combo: 5 },
@@ -117,5 +119,5 @@ export function weekResetLabel(now = new Date()): { label: string; ms: number } 
   const ms = Math.max(0, next.getTime() - now.getTime())
   const days = Math.floor(ms / 86400000)
   const hours = Math.floor((ms % 86400000) / 3600000)
-  return { label: `${days}g ${hours}s`, ms }
+  return { label: `${days}d ${hours}h`, ms }
 }

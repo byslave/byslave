@@ -3,7 +3,7 @@ export function clearStamp(lines: number, perfect: boolean): string {
   if (lines >= 4) return 'QUAD'
   if (lines >= 3) return 'TRIPLE'
   if (lines >= 2) return 'DOUBLE'
-  return 'PATLAT!'
+  return 'BLAST!'
 }
 
 export type HeatTier = 'none' | 'ember' | 'flame' | 'inferno'
