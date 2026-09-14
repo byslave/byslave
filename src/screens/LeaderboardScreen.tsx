@@ -33,8 +33,8 @@ export default function LeaderboardScreen({ progress, ranked, onBound, onUnbind 
   return (
     <section className="screen">
       <div className="league">
-        <h1>REAKTÖR LİGİ HAFTALIK YARIŞ</h1>
-        <div className="sub">Sıfırlanmaya {reset.label}</div>
+        <h1>REAKTÖR LİGİ</h1>
+        <div className="sub">Bu cihaz · sıfırlanma {reset.label}</div>
       </div>
 
       <div className="tabs">
@@ -65,8 +65,9 @@ export default function LeaderboardScreen({ progress, ranked, onBound, onUnbind 
 
       <div className="list-head">
         <span>Yarışçılar</span>
-        <span className="live">CANLI</span>
+        <span className="live">CİHAZ</span>
       </div>
+      <p className="board-note">Listenin geri kalanı sahne yarışçıları. Skorun bu telefonda.</p>
       <div className="ranks">
         {rows.map((row, i) => (
           <div className={`rank ${row.you ? 'you' : ''}`} key={row.name}>

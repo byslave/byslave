@@ -26,6 +26,14 @@ export default function App() {
   }, [account])
 
   useEffect(() => {
+    const boot = document.getElementById('boot')
+    if (!boot) return
+    boot.classList.add('out')
+    const t = window.setTimeout(() => boot.remove(), 400)
+    return () => window.clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
     setMuted(account.progress.muted)
   }, [account.progress.muted])
 

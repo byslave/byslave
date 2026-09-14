@@ -2,15 +2,17 @@
 
 Block Blast tarzı neon arcade puzzle. Parçayı sürükle, satır ve sütunu patlat, komboyu büyüt, gizemli kutu aç.
 
-iOS ve Android: **React + Vite + Capacitor**.
+iOS ve Android: **React + Vite + Capacitor**. Uygulama kimliği: `com.byslave.neonpatlat`.
 
 ## Ekranlar
 
 - **Oyna** — 8×8 tahta, yerçekimi zinciri, kademe kabinleri (1500 / 4000 / 9000 / 16000 / 28000). Harita ancak tahta tamamen temizlenince değişir.
-- **Sıralama** — e-posta + şifre ile lig hesabı (cihazda saklanır).
+- **Sıralama** — e-posta + şifre ile lig (yalnızca bu cihazda). Dünya listesindeki diğer isimler sahne yarışçılarıdır.
 - **Gizemli Kutu** — patlatınca ⚡ Neon jeton; 80⚡ kutudan altın, gümüş, meyve, RGB ve diğer blok türleri.
 
 Oyun misafir olarak açılır. Lig sadece Sıralama’da bağlanır.
+
+Gizlilik metni: `public/gizlilik.html` (Play Console’a `https://byslave.github.io/byslave/gizlilik.html` konabilir).
 
 ## Geliştirme
 
@@ -22,15 +24,13 @@ npm run lint
 npm run build
 ```
 
-## iOS / Android
+## Google Play
 
 ```bash
-npm i -D @capacitor/ios @capacitor/android
-npx cap add ios
+npm i -D @capacitor/android
 npx cap add android
 npm run cap:sync
-npm run ios
-npm run android
+npx cap open android
 ```
 
-Uygulama kimliği: `com.byslave.neonpatlat`
+Android Studio’dan **Build → Generate Signed Bundle / APK → Android App Bundle**. Play Console’a AAB yükle. Paket adı değişmez: `com.byslave.neonpatlat`.

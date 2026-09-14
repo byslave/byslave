@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NEONPATLAT</string>
+    <string name="title_activity_main">NEONPATLAT</string>
+    <string name="package_name">com.byslave.neonpatlat</string>
+    <string name="custom_url_scheme">com.byslave.neonpatlat</string>
+</resources>

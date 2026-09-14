@@ -42,7 +42,7 @@ export default function LoginScreen({ progress, onBound }: Props) {
           <span />
         </div>
         <h1>REAKTÖR LİGİ</h1>
-        <p>Sıralamaya e-posta ile bağlan. Skorun ve kutuların burada kalır.</p>
+        <p>Sıralamaya e-posta ile bağlan. Hesap bu telefonda kalır, sunucuya gitmez.</p>
       </div>
 
       <form
@@ -92,6 +92,9 @@ export default function LoginScreen({ progress, onBound }: Props) {
       <button className="btn primary" type="submit">
         Lige bağlan
       </button>
+      <a className="login-privacy" href="./gizlilik.html">
+        Gizlilik
+      </a>
       </form>
 
       {saved.length > 0 ? (

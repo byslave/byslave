@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -118,6 +119,8 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const boardRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<Drag | null>(null)
+  const dragLayerRef = useRef<HTMLDivElement>(null)
+  const moveRaf = useRef(0)
   const gridRef = useRef(grid)
   const cellRef = useRef(36)
   const burstId = useRef(1)
@@ -141,6 +144,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
       window.clearTimeout(flashTimer.current)
       window.clearTimeout(stampTimer.current)
       window.clearTimeout(trayTimer.current)
+      if (moveRaf.current) cancelAnimationFrame(moveRaf.current)
     }
   }, [])
 
@@ -170,15 +174,19 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     cellRef.current = cell
   }, [cell])
 
+  useLayoutEffect(() => {
+    if (drag) paintDragLayer(drag)
+  }, [drag])
+
   useEffect(() => {
     if (!intro) return
     if (intro === 'ready') {
       sfxReady()
-      const t = window.setTimeout(() => setIntro('go'), 620)
+      const t = window.setTimeout(() => setIntro('go'), 420)
       return () => window.clearTimeout(t)
     }
     sfxGo()
-    const t = window.setTimeout(() => setIntro(null), 520)
+    const t = window.setTimeout(() => setIntro(null), 380)
     return () => window.clearTimeout(t)
   }, [intro])
 
@@ -273,10 +281,23 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     sfxTap()
   }
 
+  function dragOffset(piece: Piece, x: number, y: number, lift: number, size: number) {
+    const stride = size + gap
+    const left = x - (piece.cols * stride) / 2
+    const top = lift > 0 ? y - piece.rows * stride - lift : y - (piece.rows * stride) / 2
+    return `translate3d(${left}px, ${top}px, 0)`
+  }
+
+  function paintDragLayer(next: Drag) {
+    const el = dragLayerRef.current
+    if (el) el.style.transform = dragOffset(next.piece, next.x, next.y, next.lift, cellRef.current)
+  }
+
   function setDragState(next: Drag | null) {
     dragRef.current = next
     setDrag(next)
     document.body.classList.toggle('is-dragging', next !== null)
+    if (next) paintDragLayer(next)
   }
 
   function punch(intensity: number) {
@@ -284,8 +305,8 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     setFlash(true)
     window.clearTimeout(shakeTimer.current)
     window.clearTimeout(flashTimer.current)
-    shakeTimer.current = window.setTimeout(() => setShake(0), 360)
-    flashTimer.current = window.setTimeout(() => setFlash(false), 150)
+    shakeTimer.current = window.setTimeout(() => setShake(0), 280)
+    flashTimer.current = window.setTimeout(() => setFlash(false), 110)
   }
 
   function bumpScore() {
@@ -356,6 +377,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   function onDown(index: number, piece: Piece, e: PointerEvent<HTMLDivElement>) {
     if (paused || over || busyRef.current || intro) return
     unlockAudio()
+    e.preventDefault()
     const lift = e.pointerType === 'touch' ? 56 : 0
     e.currentTarget.setPointerCapture(e.pointerId)
     setDragState({
@@ -371,11 +393,22 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   function onMove(e: PointerEvent<HTMLDivElement>) {
     const current = dragRef.current
     if (!current) return
-    setDragState({
-      ...current,
-      x: e.clientX,
-      y: e.clientY,
-      hover: pickHover(e.clientX, e.clientY, current.piece, current.lift),
+    const nextPos = { ...current, x: e.clientX, y: e.clientY }
+    dragRef.current = nextPos
+    paintDragLayer(nextPos)
+    if (moveRaf.current) return
+    moveRaf.current = requestAnimationFrame(() => {
+      moveRaf.current = 0
+      const live = dragRef.current
+      if (!live) return
+      const hover = pickHover(live.x, live.y, live.piece, live.lift)
+      const changed =
+        live.hover?.row !== hover?.row ||
+        live.hover?.col !== hover?.col ||
+        live.hover?.valid !== hover?.valid
+      const next = { ...live, hover }
+      dragRef.current = next
+      if (changed) setDrag(next)
     })
   }
 
@@ -418,7 +451,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     buzz('light')
 
     if (result.events.length > 0) {
-      await wait(80)
+      await wait(48)
       for (const ev of result.events) {
         if (!live()) return
         if (ev.type === 'clear') {
@@ -443,7 +476,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           if (perfect) sfxPerfect()
           else if (ev.combo >= 3) sfxCombo(ev.combo)
           buzz(perfect || ev.combo >= 3 ? 'heavy' : 'medium')
-          await wait(220)
+          await wait(150)
           if (!live()) return
           setGrid(ev.grid)
           setClearing(null)
@@ -453,7 +486,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           setFalling(drop)
           setGrid(ev.grid)
           sfxFall()
-          await wait(200)
+          await wait(130)
           if (!live()) return
           setFalling(null)
         }
@@ -482,6 +515,10 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   }
 
   function onUp() {
+    if (moveRaf.current) {
+      cancelAnimationFrame(moveRaf.current)
+      moveRaf.current = 0
+    }
     const current = dragRef.current
     if (!current) return
     const { hover, piece, index } = current
@@ -744,13 +781,10 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
 
       {drag ? (
         <div
+          ref={dragLayerRef}
           className={`drag-layer ${blastHint.hot ? 'armed' : ''}`}
           style={{
-            transform: `translate(${drag.x - (drag.piece.cols * (cell + gap)) / 2}px, ${
-              drag.lift > 0
-                ? drag.y - drag.piece.rows * (cell + gap) - drag.lift
-                : drag.y - (drag.piece.rows * (cell + gap)) / 2
-            }px)`,
+            transform: dragOffset(drag.piece, drag.x, drag.y, drag.lift, cell),
           }}
         >
           <PieceView piece={drag.piece} cell={cell} gap={gap} />
@@ -783,7 +817,11 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
               <button className="btn ghost" onClick={restart}>
                 Yeniden başla
               </button>
+              <a className="btn ghost" href="./gizlilik.html">
+                Gizlilik
+              </a>
             </div>
+            <p className="legal-note">NEONPATLAT 1.0.0 · com.byslave.neonpatlat</p>
           </div>
         </div>
       ) : null}

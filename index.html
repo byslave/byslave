@@ -5,6 +5,7 @@
     <title>NEONPATLAT</title>
     <meta name="description" content="Parçayı sürükle, satırı patlat, gizemli kutu aç. Neon arcade puzzle." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
@@ -22,8 +23,42 @@
       href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito+Sans:wght@400;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <style>
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        display: grid;
+        place-items: center;
+        background: #070a16;
+        transition: opacity 0.35s ease;
+      }
+      #boot.out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #boot b {
+        display: grid;
+        grid-template-columns: 22px 22px;
+        gap: 6px;
+      }
+      #boot i {
+        width: 22px;
+        height: 22px;
+        border-radius: 2px;
+        display: block;
+      }
+    </style>
   </head>
   <body>
+    <div id="boot" aria-hidden="true">
+      <b>
+        <i style="background:#00C8FF;box-shadow:0 0 12px #00C8FF"></i>
+        <i style="background:#FF2EC8;box-shadow:0 0 12px #FF2EC8"></i>
+        <i style="background:#FFE14A;box-shadow:0 0 12px #FFE14A"></i>
+        <i style="background:#7CFF4A;box-shadow:0 0 12px #7CFF4A"></i>
+      </b>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -57,7 +57,7 @@ export default function CrateScreen({ progress, onEquip, onEquipSkin, onOpenBox 
       setSpinning(false)
       setReveal(result)
       sfxLogin()
-    }, 720)
+    }, 480)
   }
 
   return (
