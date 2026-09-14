@@ -382,11 +382,18 @@ h2,
   animation: combo-punch 0.42s cubic-bezier(0.15, 1.7, 0.35, 1);
 }
 
-.combo.hot {
-  color: #fff;
-  background: linear-gradient(180deg, #ff4d6a, #ff2ec8);
-  box-shadow: 0 0 26px rgba(255, 46, 200, 0.65), 0 4px 0 #8a1060;
+.combo.ember {
+  color: #041018;
+  background: linear-gradient(180deg, #ffe14a, #ff8a1f);
+  box-shadow: 0 0 22px rgba(255, 138, 31, 0.55), 0 4px 0 #c45a00;
   animation: combo-punch 0.42s cubic-bezier(0.15, 1.7, 0.35, 1), combo-glow 0.7s ease-in-out infinite;
+}
+
+.combo.flame {
+  color: #fff;
+  background: linear-gradient(180deg, #ff8a1f, #ff4d00);
+  box-shadow: 0 0 26px rgba(255, 77, 0, 0.7), 0 4px 0 #8a2000;
+  animation: combo-punch 0.42s cubic-bezier(0.15, 1.7, 0.35, 1), combo-glow 0.55s ease-in-out infinite;
 }
 
 .combo.inferno {
@@ -673,6 +680,12 @@ h2,
 
 .play[data-heat='ember'] .cell.filled,
 .play[data-heat='ember'] .p-cell.filled {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c) 55%, #ffe14a),
+    color-mix(in srgb, var(--c) 45%, #ff8a1f) 70%,
+    #5a1200
+  ) !important;
   box-shadow:
     0 0 14px rgba(255, 122, 24, 0.7),
     inset 0 2px 0 rgba(255, 225, 74, 0.45),
@@ -684,6 +697,7 @@ h2,
 .play[data-heat='flame'] .p-cell.filled,
 .play[data-heat='inferno'] .cell.filled,
 .play[data-heat='inferno'] .p-cell.filled {
+  background: linear-gradient(180deg, #fff3a0, #ff8a1f 38%, #ff4d00 72%, #4a0800) !important;
   box-shadow:
     0 0 18px rgba(255, 77, 0, 0.85),
     0 0 28px rgba(255, 225, 74, 0.4),
@@ -730,8 +744,8 @@ h2,
 
 .inferno-burst i {
   position: absolute;
-  width: 42px;
-  height: 42px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   background: radial-gradient(circle, #fff6a8 0%, #ff4d00 42%, transparent 70%);
   animation: fireball 0.9s ease-out infinite;
@@ -2081,6 +2095,8 @@ a.btn {
   .play.shake-4,
   .combo.punch,
   .combo.hot,
+  .combo.ember,
+  .combo.flame,
   .combo.inferno,
   .play.heat-inferno,
   .inferno-burst i,

@@ -630,7 +630,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
 
       <div className="combo-wrap">
         {combo > 0 ? (
-          <div key={comboTick} className={`combo punch ${heat === 'inferno' ? 'inferno' : heat !== 'none' ? 'hot' : ''}`}>
+          <div key={comboTick} className={`combo punch ${heat === 'none' ? '' : heat}`}>
             KOMBO X{combo}
           </div>
         ) : (
