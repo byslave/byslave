@@ -119,3 +119,11 @@ export function sfxLogin(): void {
   window.setTimeout(() => tone(523, 0.12, 'triangle', 0.06), 80)
   window.setTimeout(() => tone(659, 0.16, 'triangle', 0.05), 160)
 }
+
+export function sfxInferno(): void {
+  noise(0.28, 0.08, 420)
+  tone(140, 0.22, 'sawtooth', 0.08, -80)
+  window.setTimeout(() => noise(0.2, 0.06, 900), 70)
+  window.setTimeout(() => tone(90, 0.32, 'triangle', 0.07, -30), 90)
+  window.setTimeout(() => tone(520, 0.16, 'square', 0.05, 180), 140)
+}

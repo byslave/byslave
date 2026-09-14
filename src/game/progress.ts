@@ -1,6 +1,5 @@
 import { BLAST_SETS } from './pieces'
-import { isSkinId } from './shop'
-import type { BlockSkinId, BlastSetId, Progress } from './types'
+import type { BlastSetId, Progress } from './types'
 
 const KEY = 'neonpatlat-progress-v1'
 
@@ -19,19 +18,12 @@ export const DEFAULT: Progress = {
 
 export function normalizeProgress(raw: Partial<Progress> | Progress = {}): Progress {
   const unlocked = raw.unlocked?.length ? raw.unlocked : [...DEFAULT.unlocked]
-  const skins = Array.from(
-    new Set((raw.skins?.length ? raw.skins : [...DEFAULT.skins]).filter(isSkinId)),
-  ) as BlockSkinId[]
-  if (!skins.includes('neon')) skins.unshift('neon')
-  const equippedSkin = isSkinId(raw.equippedSkin ?? '') && skins.includes(raw.equippedSkin as BlockSkinId)
-    ? (raw.equippedSkin as BlockSkinId)
-    : 'neon'
   return {
     ...DEFAULT,
     ...raw,
     unlocked,
-    skins,
-    equippedSkin,
+    skins: ['neon'],
+    equippedSkin: 'neon',
     coins: Math.max(0, Math.floor(raw.coins ?? DEFAULT.coins)),
     muted: raw.muted ?? false,
   }

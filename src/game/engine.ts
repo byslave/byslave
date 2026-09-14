@@ -1,4 +1,3 @@
-import { colorsForSkin, rollBlockSkin } from './shop'
 import { GRID_SIZE, type BlastEvent, type BlockSkinId, type FallMove, type Grid, type Occupied, type Piece, type ClearResult, type PlaceResult } from './types'
 import { matrixToPiece, randomPiece } from './pieces'
 
@@ -204,15 +203,9 @@ export function demoFullClear(): { grid: Grid; tray: Piece[]; score: number } {
   }
 }
 
-function makePiece(
-  rng: () => number,
-  palette: string[] | undefined,
-  skins: BlockSkinId[],
-  equipped: BlockSkinId,
-): Piece {
-  const skin = rollBlockSkin(skins, equipped, rng)
-  const paint = colorsForSkin(skin, palette ?? ['#00C8FF', '#FF2EC8', '#FF8A1F', '#7CFF4A', '#FFE14A', '#A855FF', '#FF5C8A'])
-  return randomPiece(rng, paint, skin)
+function makePiece(rng: () => number, palette: string[] | undefined): Piece {
+  const paint = palette ?? ['#00C8FF', '#FF2EC8', '#FF8A1F', '#7CFF4A', '#FFE14A', '#A855FF', '#FF5C8A']
+  return randomPiece(rng, paint, 'neon')
 }
 
 export function rollTray(
@@ -220,21 +213,11 @@ export function rollTray(
   attempts = 12,
   grid?: Grid,
   palette?: string[],
-  skins: BlockSkinId[] = ['neon'],
-  equipped: BlockSkinId = 'neon',
 ): Piece[] {
-  let best: Piece[] = [
-    makePiece(rng, palette, skins, equipped),
-    makePiece(rng, palette, skins, equipped),
-    makePiece(rng, palette, skins, equipped),
-  ]
+  let best: Piece[] = [makePiece(rng, palette), makePiece(rng, palette), makePiece(rng, palette)]
   if (!grid) return best
   for (let i = 0; i < attempts; i++) {
-    const tray = [
-      makePiece(rng, palette, skins, equipped),
-      makePiece(rng, palette, skins, equipped),
-      makePiece(rng, palette, skins, equipped),
-    ]
+    const tray = [makePiece(rng, palette), makePiece(rng, palette), makePiece(rng, palette)]
     if (anyTrayFits(grid, tray)) return tray
     best = tray
   }

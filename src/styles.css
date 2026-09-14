@@ -389,6 +389,13 @@ h2,
   animation: combo-punch 0.42s cubic-bezier(0.15, 1.7, 0.35, 1), combo-glow 0.7s ease-in-out infinite;
 }
 
+.combo.inferno {
+  color: #fff;
+  background: linear-gradient(180deg, #ffe14a, #ff4d00 55%, #7a0000);
+  box-shadow: 0 0 28px rgba(255, 77, 0, 0.8), 0 4px 0 #5a1000;
+  animation: combo-punch 0.42s cubic-bezier(0.15, 1.7, 0.35, 1), combo-glow 0.45s ease-in-out infinite;
+}
+
 .combo.ghost {
   background: rgba(255, 255, 255, 0.06);
   color: var(--muted);
@@ -650,7 +657,6 @@ h2,
   background: var(--cell-bg);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   position: relative;
-  contain: layout style;
 }
 
 .cell.filled {
@@ -663,6 +669,110 @@ h2,
 
 .cell.filled.fresh {
   animation: cell-pop 0.24s cubic-bezier(0.2, 1.5, 0.3, 1);
+}
+
+.play[data-heat='ember'] .cell.filled,
+.play[data-heat='ember'] .p-cell.filled {
+  box-shadow:
+    0 0 14px rgba(255, 122, 24, 0.7),
+    inset 0 2px 0 rgba(255, 225, 74, 0.45),
+    inset 0 -5px 8px rgba(255, 60, 0, 0.45);
+  animation: ember-flicker 0.9s ease-in-out infinite;
+}
+
+.play[data-heat='flame'] .cell.filled,
+.play[data-heat='flame'] .p-cell.filled,
+.play[data-heat='inferno'] .cell.filled,
+.play[data-heat='inferno'] .p-cell.filled {
+  box-shadow:
+    0 0 18px rgba(255, 77, 0, 0.85),
+    0 0 28px rgba(255, 225, 74, 0.4),
+    inset 0 2px 0 rgba(255, 240, 180, 0.55),
+    inset 0 -6px 10px rgba(180, 20, 0, 0.55);
+  animation: flame-lick 0.35s ease-in-out infinite;
+}
+
+.play[data-heat='flame'] .cell.filled::after,
+.play[data-heat='inferno'] .cell.filled::after,
+.play[data-heat='flame'] .p-cell.filled::after,
+.play[data-heat='inferno'] .p-cell.filled::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 55%;
+  height: 70%;
+  border-radius: 40% 40% 20% 20%;
+  background: linear-gradient(180deg, #fff6a8, #ff8a1f 45%, transparent);
+  opacity: 0.85;
+  pointer-events: none;
+  animation: flame-rise 0.28s ease-in-out infinite;
+}
+
+.play[data-heat='inferno'] .cell.filled::after,
+.play[data-heat='inferno'] .p-cell.filled::after {
+  height: 90%;
+  opacity: 1;
+  filter: saturate(1.3);
+}
+
+.play.heat-inferno {
+  animation: inferno-shake 0.12s linear infinite;
+}
+
+.inferno-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+  overflow: hidden;
+}
+
+.inferno-burst i {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff6a8 0%, #ff4d00 42%, transparent 70%);
+  animation: fireball 0.9s ease-out infinite;
+}
+
+.inferno-burst i:nth-child(1) { left: 8%; top: 12%; animation-delay: 0s; }
+.inferno-burst i:nth-child(2) { left: 72%; top: 18%; animation-delay: 0.12s; }
+.inferno-burst i:nth-child(3) { left: 40%; top: 48%; animation-delay: 0.22s; }
+.inferno-burst i:nth-child(4) { left: 18%; top: 68%; animation-delay: 0.08s; }
+.inferno-burst i:nth-child(5) { left: 80%; top: 62%; animation-delay: 0.3s; }
+.inferno-burst i:nth-child(6) { left: 52%; top: 8%; animation-delay: 0.18s; }
+
+.stamp.fire {
+  color: #ff4d00;
+  text-shadow: 0 0 18px #ffe14a, 0 0 32px #ff4d00;
+}
+
+@keyframes ember-flicker {
+  50% { filter: brightness(1.18) saturate(1.15); }
+}
+
+@keyframes flame-lick {
+  0%, 100% { filter: brightness(1.05) saturate(1.1); }
+  50% { filter: brightness(1.35) saturate(1.4); }
+}
+
+@keyframes flame-rise {
+  0%, 100% { transform: translateY(4%) scaleY(0.92); opacity: 0.7; }
+  50% { transform: translateY(-18%) scaleY(1.12); opacity: 1; }
+}
+
+@keyframes fireball {
+  0% { transform: scale(0.2); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: scale(2.4) translateY(-28px); opacity: 0; }
+}
+
+@keyframes inferno-shake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-1px, 1px); }
+  75% { transform: translate(1px, -1px); }
 }
 
 @keyframes cell-pop {
@@ -1971,6 +2081,15 @@ a.btn {
   .play.shake-4,
   .combo.punch,
   .combo.hot,
+  .combo.inferno,
+  .play.heat-inferno,
+  .inferno-burst i,
+  .play[data-heat='ember'] .cell.filled,
+  .play[data-heat='ember'] .p-cell.filled,
+  .play[data-heat='flame'] .cell.filled,
+  .play[data-heat='flame'] .p-cell.filled,
+  .play[data-heat='inferno'] .cell.filled,
+  .play[data-heat='inferno'] .p-cell.filled,
   .slot:not(.empty) .piece,
   .board-card.hot,
   .board-card.void,

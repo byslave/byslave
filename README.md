@@ -8,7 +8,7 @@ iOS ve Android: **React + Vite + Capacitor**. Uygulama kimliği: `com.byslave.ne
 
 - **Oyna** — 8×8 tahta, yerçekimi zinciri, kademe kabinleri (1500 / 4000 / 9000 / 16000 / 28000). Harita ancak tahta tamamen temizlenince değişir.
 - **Sıralama** — e-posta + şifre ile lig (yalnızca bu cihazda). Dünya listesindeki diğer isimler sahne yarışçılarıdır.
-- **Gizemli Kutu** — patlatınca ⚡ Neon jeton; 80⚡ kutudan altın, gümüş, meyve, RGB ve diğer blok türleri.
+- **Gizemli Kutu** — patlatınca ⚡; 80⚡ kutudan patlama seti. Bloklar kombin 5x’te alev alır, 10x’te ekranı yakar.
 
 Oyun misafir olarak açılır. Lig sadece Sıralama’da bağlanır.
 

@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { BLAST_SETS, getBlastSet } from '../game/pieces'
-import { BLOCK_SKINS, BOX_COST, getSkin, type BoxResult } from '../game/shop'
-import type { BlastSetId, BlockSkinId, Progress } from '../game/types'
+import { BOX_COST, type BoxResult } from '../game/shop'
+import type { BlastSetId, Progress } from '../game/types'
 import { sfxLogin, sfxOver, sfxTap, unlockAudio } from '../game/audio'
 
 type Props = {
   progress: Progress
   onEquip: (id: BlastSetId) => void
-  onEquipSkin: (id: BlockSkinId) => void
   onOpenBox: () => BoxResult
 }
 
@@ -31,15 +30,13 @@ function Art({ kind }: { kind: string }) {
   )
 }
 
-export default function CrateScreen({ progress, onEquip, onEquipSkin, onOpenBox }: Props) {
+export default function CrateScreen({ progress, onEquip, onOpenBox }: Props) {
   const featured = getBlastSet(progress.equipped)
   const [flash, setFlash] = useState(false)
   const [spinning, setSpinning] = useState(false)
   const [reveal, setReveal] = useState<Extract<BoxResult, { ok: true }> | null>(null)
   const [error, setError] = useState('')
   const opened = progress.unlocked.length
-  const ownedSkins = progress.skins.length
-  const currentSkin = getSkin(progress.equippedSkin)
 
   function openBox() {
     unlockAudio()
@@ -64,7 +61,7 @@ export default function CrateScreen({ progress, onEquip, onEquipSkin, onOpenBox 
     <section className="screen crate-screen">
       <div className="crate-head">
         <h1>GİZEMLİ KUTU</h1>
-        <p>Skorun Neon jeton olur. Kutu aç, altın / gümüş / meyve / RGB blok düşür.</p>
+        <p>Jetonla patlama seti düşür. Bloklar kombona göre alev alır.</p>
       </div>
 
       <div className="wallet">
@@ -82,35 +79,10 @@ export default function CrateScreen({ progress, onEquip, onEquipSkin, onOpenBox 
         </div>
         <div>
           <h3>KUTUYU AÇ</h3>
-          <p>{BOX_COST}⚡ · altın, gümüş, meyve, RGB</p>
+          <p>{BOX_COST}⚡ · rastgele patlama seti</p>
         </div>
       </button>
       {error ? <p className="login-error">{error}</p> : null}
-
-      <div className="sets-title">
-        <span>BLOK STİLLERİ</span>
-        <span>
-          {ownedSkins}/{BLOCK_SKINS.length} · {currentSkin.emoji} {currentSkin.name}
-        </span>
-      </div>
-      <div className="sets skins">
-        {BLOCK_SKINS.map((skin) => {
-          const unlocked = progress.skins.includes(skin.id)
-          const on = progress.equippedSkin === skin.id
-          return (
-            <button
-              key={skin.id}
-              className={`set ${on ? 'on' : ''} ${unlocked ? '' : 'locked'}`}
-              onClick={() => unlocked && onEquipSkin(skin.id)}
-            >
-              {!unlocked ? <span className="lock">🔒</span> : on ? <span className="lock">✓</span> : null}
-              <div className={`skin-preview skin-${skin.id}`}>{skin.emoji}</div>
-              <h4>{skin.name}</h4>
-              <span>{unlocked ? skin.tagline : `${skin.rarity.toUpperCase()} kutu düşüşü`}</span>
-            </button>
-          )
-        })}
-      </div>
 
       <div className="featured">
         <div className={`preview-art ${flash ? 'clearing' : ''}`}>
@@ -163,8 +135,7 @@ export default function CrateScreen({ progress, onEquip, onEquipSkin, onOpenBox 
       {reveal ? (
         <div className="overlay">
           <div className="modal">
-            <p className="reveal-emoji">{reveal.drop.emoji}</p>
-            <h2>{reveal.duplicate ? 'TEKRAR' : 'YENİ BLOK'}</h2>
+            <h2>{reveal.duplicate ? 'TEKRAR' : 'YENİ SET'}</h2>
             <p>
               {reveal.duplicate
                 ? `${reveal.drop.name} zaten sende · +35⚡ iade`

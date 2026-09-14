@@ -13,7 +13,7 @@ import {
 import { setMuted, unlockAudio } from './game/audio'
 import { freshlyUnlocked, normalizeProgress } from './game/progress'
 import { openMysteryBox } from './game/shop'
-import type { BlastSetId, BlockSkinId, Progress, TabId } from './game/types'
+import type { BlastSetId, Progress, TabId } from './game/types'
 
 export default function App() {
   const [account, setAccount] = useState<Account>(() => ensureLocalProfile())
@@ -50,11 +50,6 @@ export default function App() {
     patch({ equipped: id })
   }
 
-  function equipSkin(id: BlockSkinId) {
-    if (!account.progress.skins.includes(id)) return
-    patch({ equippedSkin: id })
-  }
-
   function openBox() {
     const current = accountRef.current
     const result = openMysteryBox(current.progress)
@@ -84,7 +79,6 @@ export default function App() {
           <CrateScreen
             progress={account.progress}
             onEquip={equip}
-            onEquipSkin={equipSkin}
             onOpenBox={openBox}
           />
         </div>

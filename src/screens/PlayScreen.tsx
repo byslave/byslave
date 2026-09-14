@@ -10,7 +10,7 @@ import {
 } from 'react'
 import BlastFx, { type Burst } from '../components/BlastFx'
 import PieceView from '../components/PieceView'
-import { sfxClear, sfxCombo, sfxFall, sfxGo, sfxLogin, sfxOver, sfxPerfect, sfxPlace, sfxReady, sfxTap, sfxTick, unlockAudio } from '../game/audio'
+import { sfxClear, sfxCombo, sfxFall, sfxGo, sfxInferno, sfxLogin, sfxOver, sfxPerfect, sfxPlace, sfxReady, sfxTap, sfxTick, unlockAudio } from '../game/audio'
 import {
   anyTrayFits,
   canPlace,
@@ -32,8 +32,8 @@ import {
   STAGES,
   type ArcadeStage,
 } from '../game/stages'
-import { clearStamp } from '../game/juice'
-import { coinsFromGain, colorsForSkin, fruitForColor } from '../game/shop'
+import { coinsFromGain } from '../game/shop'
+import { clearStamp, heatTier } from '../game/juice'
 
 type Props = {
   progress: Progress
@@ -73,14 +73,17 @@ function wait(ms: number) {
 
 function bootMatch() {
   const demo = new URLSearchParams(window.location.search).get('demo')
+  if (demo === 'ates') {
+    return { ...demoNearClear(), score: 0, combo: 9 }
+  }
   if (demo === 'harita') {
-    return demoFullClear()
+    return { ...demoFullClear(), combo: 0 }
   }
   if (demo === 'patlat' || demo === 'kademe') {
-    return { ...demoNearClear(), score: demo === 'kademe' ? 1400 : 0 }
+    return { ...demoNearClear(), score: demo === 'kademe' ? 1400 : 0, combo: 0 }
   }
   const grid = emptyGrid()
-  return { grid, tray: rollTray(Math.random, 12, grid, STAGES[0]!.palette), score: 0 }
+  return { grid, tray: rollTray(Math.random, 12, grid, STAGES[0]!.palette), score: 0, combo: 0 }
 }
 
 export default function PlayScreen({ progress, onProgress, onMood }: Props) {
@@ -88,7 +91,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   const [grid, setGrid] = useState<Grid>(boot.grid)
   const [tray, setTray] = useState<Array<Piece | null>>(boot.tray)
   const [score, setScore] = useState(boot.score)
-  const [combo, setCombo] = useState(0)
+  const [combo, setCombo] = useState(boot.combo)
   const [paused, setPaused] = useState(false)
   const [over, setOver] = useState(false)
   const [drag, setDrag] = useState<Drag | null>(null)
@@ -155,20 +158,6 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   useEffect(() => {
     gridRef.current = grid
   }, [grid])
-
-  useEffect(() => {
-    setTray((current) =>
-      current.map((piece) => {
-        if (!piece || piece.skin === progress.equippedSkin) return piece
-        const palette = colorsForSkin(progress.equippedSkin, mapRef.current.palette)
-        return {
-          ...piece,
-          skin: progress.equippedSkin,
-          color: palette.includes(piece.color) ? piece.color : palette[0]!,
-        }
-      }),
-    )
-  }, [progress.equippedSkin])
 
   useEffect(() => {
     cellRef.current = cell
@@ -253,7 +242,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     busyRef.current = false
     const nextGrid = emptyGrid()
     setGrid(nextGrid)
-    setTray(rollTray(Math.random, 12, nextGrid, STAGES[0]!.palette, progress.skins, progress.equippedSkin))
+    setTray(rollTray(Math.random, 12, nextGrid, STAGES[0]!.palette))
     setScore(0)
     setCombo(0)
     setOver(false)
@@ -415,14 +404,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
   function settleTray(finalGrid: Grid, nextTray: Array<Piece | null>, palette: string[]) {
     let trayNext = nextTray
     if (trayNext.every((p) => p === null)) {
-      trayNext = rollTray(
-        Math.random,
-        12,
-        finalGrid,
-        palette,
-        progress.skins,
-        progress.equippedSkin,
-      )
+      trayNext = rollTray(Math.random, 12, finalGrid, palette)
       setTrayPop(true)
       window.clearTimeout(trayTimer.current)
       trayTimer.current = window.setTimeout(() => setTrayPop(false), 420)
@@ -470,12 +452,19 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           spawnPop(`+${pts}`, 'pts', popR, popC)
           if (ev.combo >= 2) spawnPop(`KOMBO x${ev.combo}`, 'combo', Math.min(popR + 1, 7), popC)
           const perfect = gridEmpty(ev.grid)
-          showStamp(clearStamp(ev.lines, perfect))
-          punch(Math.min(4, Math.max(1, perfect ? 4 : ev.combo)))
-          sfxClear(ev.combo)
-          if (perfect) sfxPerfect()
-          else if (ev.combo >= 3) sfxCombo(ev.combo)
-          buzz(perfect || ev.combo >= 3 ? 'heavy' : 'medium')
+          if (ev.combo >= 10) {
+            showStamp(perfect ? 'PERFECT' : `ALEV x${ev.combo}`)
+            sfxInferno()
+            if (perfect) sfxPerfect()
+            punch(4)
+          } else {
+            showStamp(clearStamp(ev.lines, perfect))
+            punch(Math.min(4, Math.max(1, perfect ? 4 : ev.combo)))
+            sfxClear(ev.combo)
+            if (perfect) sfxPerfect()
+            else if (ev.combo >= 5) sfxCombo(ev.combo)
+          }
+          buzz(perfect || ev.combo >= 5 ? 'heavy' : 'medium')
           await wait(150)
           if (!live()) return
           setGrid(ev.grid)
@@ -577,6 +566,8 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
     return { rows, cols }
   }, [grid])
 
+  const heat = heatTier(combo)
+
   return (
     <section
       className={[
@@ -585,12 +576,13 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
         drag ? 'dragging' : '',
         shake ? `shake-${shake}` : '',
         flash ? 'flashing' : '',
-        combo >= 2 ? 'heating' : '',
+        heat !== 'none' ? `heat-${heat}` : '',
         blastHint.hot ? 'armed' : '',
         intro ? 'introing' : '',
       ]
         .filter(Boolean)
         .join(' ')}
+      data-heat={heat}
     >
       <header className="topbar">
         <div className={`stat ${scoreBump ? 'bump' : ''}`}>
@@ -638,7 +630,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
 
       <div className="combo-wrap">
         {combo > 0 ? (
-          <div key={comboTick} className={`combo punch ${combo >= 3 ? 'hot' : ''}`}>
+          <div key={comboTick} className={`combo punch ${heat === 'inferno' ? 'inferno' : heat !== 'none' ? 'hot' : ''}`}>
             KOMBO X{combo}
           </div>
         ) : (
@@ -647,7 +639,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
       </div>
 
       <div className="board-wrap" ref={wrapRef}>
-        <div className={`board-card ${gridEmpty(grid) ? 'void' : ''} ${combo >= 2 ? 'hot' : ''} ${blastHint.hot ? 'armed' : ''}`} data-skin={progress.equippedSkin}>
+        <div className={`board-card ${gridEmpty(grid) ? 'void' : ''} ${heat !== 'none' ? 'hot' : ''} ${heat === 'inferno' ? 'inferno' : ''} ${blastHint.hot ? 'armed' : ''}`}>
           <div
             className="grid"
             ref={boardRef}
@@ -669,13 +661,11 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
                 const willBlast = blastHint.rows.has(r) || blastHint.cols.has(c)
                 const near = !cell && (almost.rows.has(r) || almost.cols.has(c))
                 const show = previewing
-                  ? { color: drag?.piece.color ?? '#00C8FF', skin: drag?.piece.skin ?? 'neon' }
+                  ? { color: drag?.piece.color ?? '#00C8FF' }
                   : cell
-                const skin = show?.skin
                 const cls = [
                   'cell',
                   cell ? 'filled' : '',
-                  skin ? `skin-${skin}` : '',
                   cell && fresh.has(key) ? 'fresh' : '',
                   isClear ? 'clearing' : '',
                   fall ? 'drop' : '',
@@ -690,9 +680,6 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
                   <div
                     key={key}
                     className={cls}
-                    data-fruit={
-                      show?.skin === 'meyve' ? fruitForColor(show.color) : undefined
-                    }
                     style={
                       {
                         '--c': show?.color ?? 'transparent',
@@ -704,7 +691,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
               }),
             )}
           </div>
-          <BlastFx burst={burst} equipped={progress.equipped} cell={cell} gap={gap} />
+          <BlastFx burst={burst} equipped={progress.equipped} cell={cell} gap={gap} heat={heat} />
           {clearing
             ? clearing.rows.map((r) => (
                 <i
@@ -742,8 +729,18 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           </span>
         ))}
         {stamp ? (
-          <div key={stampTick} className={`stamp ${stamp === 'PERFECT' ? 'perfect' : ''}`}>
+          <div key={stampTick} className={`stamp ${stamp === 'PERFECT' ? 'perfect' : ''} ${stamp.startsWith('ALEV') ? 'fire' : ''}`}>
             {stamp}
+          </div>
+        ) : null}
+        {heat === 'inferno' ? (
+          <div className="inferno-burst" aria-hidden>
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
           </div>
         ) : null}
       </div>

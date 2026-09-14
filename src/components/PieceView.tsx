@@ -1,5 +1,4 @@
-import type { BlockSkinId, Piece } from '../game/types'
-import { fruitForColor } from '../game/shop'
+import type { Piece } from '../game/types'
 
 type Props = {
   piece: Piece
@@ -21,12 +20,10 @@ export default function PieceView({ piece, cell, gap = 3, className }: Props) {
         const r = Math.floor(i / piece.cols)
         const c = i % piece.cols
         const on = piece.cells.some(([pr, pc]) => pr === r && pc === c)
-        const skin: BlockSkinId = piece.skin
         return (
           <div
             key={i}
-            className={`p-cell ${on ? `filled skin-${skin}` : ''}`}
-            data-fruit={on && skin === 'meyve' ? fruitForColor(piece.color) : undefined}
+            className={`p-cell ${on ? 'filled' : ''}`}
             style={{
               width: cell,
               height: cell,

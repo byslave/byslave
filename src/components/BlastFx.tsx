@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { getBlastSet } from '../game/pieces'
 import type { BlastSetId } from '../game/types'
+import type { HeatTier } from '../game/juice'
 
 export type Burst = {
   id: number
@@ -26,9 +27,10 @@ type Props = {
   equipped: BlastSetId
   cell: number
   gap: number
+  heat?: HeatTier
 }
 
-export default function BlastFx({ burst, equipped, cell, gap }: Props) {
+export default function BlastFx({ burst, equipped, cell, gap, heat = 'none' }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const particles = useRef<Particle[]>([])
   const raf = useRef<number>(0)
@@ -49,29 +51,48 @@ export default function BlastFx({ burst, equipped, cell, gap }: Props) {
       for (let r = 0; r < 8; r++) cells.push([r, c])
     }
 
-    const count = (set.kind === 'lightning' ? 10 : 14) + Math.min(burst.combo, 6) * 4
+    const fire = heat === 'inferno' || burst.combo >= 10
+    const fireColors = ['#FF4D00', '#FFE14A', '#FF2EC8', '#FF8A1F', '#FFFFFF']
+    const count = (set.kind === 'lightning' ? 10 : 14) + Math.min(burst.combo, 10) * 4 + (fire ? 18 : 0)
     for (const [r, c] of cells) {
       const cx = c * stride + cell / 2
       const cy = r * stride + cell / 2
       for (let i = 0; i < count; i++) {
-        const color = set.colors[i % set.colors.length]
+        const color = fire ? fireColors[i % fireColors.length] : set.colors[i % set.colors.length]
         const angle = Math.random() * Math.PI * 2
-        const speed = 1.2 + Math.random() * 3.4 + burst.combo * 0.35
+        const speed = 1.2 + Math.random() * 3.4 + burst.combo * 0.35 + (fire ? 2.2 : 0)
         spawn.push({
           x: cx,
           y: cy,
           vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - (set.kind === 'rain' ? 2 : 0.4),
+          vy: Math.sin(angle) * speed - (set.kind === 'rain' ? 2 : 0.4) - (fire ? 1.4 : 0),
           life: 1,
-          max: 36 + Math.random() * 24,
-          size: set.kind === 'cubes' ? 5 + Math.random() * 5 : 2 + Math.random() * 3,
+          max: 36 + Math.random() * 24 + (fire ? 18 : 0),
+          size: fire ? 4 + Math.random() * 7 : set.kind === 'cubes' ? 5 + Math.random() * 5 : 2 + Math.random() * 3,
           color,
-          kind: set.kind,
+          kind: fire ? 'cubes' : set.kind,
+        })
+      }
+    }
+    if (fire) {
+      for (let i = 0; i < 40; i++) {
+        const angle = Math.random() * Math.PI * 2
+        const speed = 3 + Math.random() * 6
+        spawn.push({
+          x: 360,
+          y: 360,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 2,
+          life: 1,
+          max: 50 + Math.random() * 30,
+          size: 6 + Math.random() * 10,
+          color: fireColors[i % fireColors.length]!,
+          kind: 'cubes',
         })
       }
     }
     particles.current.push(...spawn)
-  }, [burst, equipped, cell, gap])
+  }, [burst, equipped, cell, gap, heat])
 
   useEffect(() => {
     const canvas = canvasRef.current
