@@ -750,9 +750,13 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
           ? upcoming && score >= upcoming.minScore
             ? 'Temiz reaktör — bir patlatma daha, harita değişir!'
             : 'Reaktör temiz.'
-          : upcoming
-            ? 'Tüm tahtayı temizle, harita değişsin.'
-            : 'Ultra kademe — patlatmaya devam!'}
+          : heat === 'inferno'
+            ? '10x ALEV — ekran yanıyor!'
+            : heat !== 'none'
+              ? 'Alev büyüyor — 10x’te patlar!'
+              : upcoming
+                ? 'Tüm tahtayı temizle, harita değişsin.'
+                : 'Ultra kademe — patlatmaya devam!'}
       </p>
 
       <div className="tray">
