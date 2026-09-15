@@ -16,6 +16,7 @@ Future coding sessions must follow these rules.
 - Systems talk through `EventBus` + typed `GameEvents`. Do not reach across systems.
 - Content lives in `content/**/*.json`. Prefer editing JSON over rewriting logic.
 - New stats, items, enemies, quests, and dialogue should be content changes first.
+- Pixel art is a file + `content/assets/manifest.json` swap. Do not paint new tiles or heroes in TypeScript (`docs/ASSETS.md`).
 
 ## Development loop
 

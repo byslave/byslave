@@ -2,7 +2,7 @@
 
 Single-player medieval fantasy RPG for mobile, built so a small indie team (or one developer with AI assistance) can ship a polished prototype without rewriting the game every phase.
 
-**Current milestone:** pixel Oakvale town, visible 2D race×class sprites, and D&D d20 combat.
+**Current milestone:** Kenney-pixel Oakvale, 20 race×class sprites from a real tilesheet, and D&D d20 combat.
 
 ## Why this stack
 
@@ -24,7 +24,9 @@ npm test
 npm run dev
 ```
 
-Open the local URL on a phone or in a desktop browser. Pick a race and class (the portrait is the in-world sprite), walk the town, and fight the wolf by the well with **Attack** / J — that rolls a d20.
+Open the local URL on a phone or in a desktop browser. Pick a race and class (the portrait is the Kenney sprite used in town), walk Oakvale, and fight the beast by the well with **Attack** / J — that rolls a d20.
+
+Art is swapped through `content/assets/manifest.json`. See [the art pipeline](docs/ASSETS.md). Prototype tiles are Kenney Tiny Town + Tiny Dungeon (CC0).
 
 ## Project map
 
@@ -46,8 +48,9 @@ Start here:
 4. [Dependencies](docs/DEPENDENCIES.md)
 5. [Roadmap](docs/ROADMAP.md)
 6. [Content bible](docs/CONTENT.md)
-7. [Balance](docs/BALANCE.md)
-8. [Mobile UI](docs/MOBILE_UX.md)
+7. [Art pipeline](docs/ASSETS.md)
+8. [Balance](docs/BALANCE.md)
+9. [Mobile UI](docs/MOBILE_UX.md)
 
 ## What this first version is
 
@@ -55,7 +58,7 @@ A **foundation**, not the finished RPG.
 
 - The world, story, classes, enemies, and quests are specified as data.
 - Combat, inventory, quests, and saves have domain APIs and tests.
-- Phase 1 is playable: pixel town, 20 race×class sprites, d20 wolf fight.
+- Phase 1 is playable: Kenney town tiles, 20 race×class sprites, d20 well fight.
 - Later locations, quests, and shops stay in data until their phase.
 
 ## Hard constraints

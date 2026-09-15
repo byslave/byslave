@@ -1,5 +1,7 @@
 import "./shell.css";
 import { VirtualJoystick } from "../input/VirtualJoystick";
+import { assetManifest, lookupHero } from "@/content/assetManifest";
+import { drawSpritePreview, loadSheetImage } from "../pixel/atlas";
 import { paintHero } from "../pixel/sprites";
 import type { GameSession } from "@/application/GameSession";
 
@@ -25,7 +27,7 @@ export function mountShell(): Shell {
     <section class="screen" id="title-screen">
       <div class="kicker">Northmarch</div>
       <h1>The Blackthorn Curse</h1>
-      <p class="blurb">A 2D pixel D&amp;D town. Walk Oakvale, pick a race and class you can see, and fight the gate wolf with d20 rolls.</p>
+      <p class="blurb">A Kenney-pixel D&amp;D town. Walk Oakvale, pick a race and class you can see, and fight the beast by the well with d20 rolls.</p>
       <div class="stack">
         <button class="btn primary" id="btn-new">New Game</button>
         <button class="btn" id="btn-continue" disabled>Continue</button>
@@ -35,7 +37,7 @@ export function mountShell(): Shell {
       <div class="kicker">Character</div>
       <h2>Choose your adventurer</h2>
       <canvas id="hero-preview" class="hero-preview" width="32" height="32"></canvas>
-      <p class="blurb" id="create-copy">Each race and class has its own pixel sprite.</p>
+      <p class="blurb" id="create-copy">Each race×class uses a real 16×16 sprite. Tint marks the race; the pose marks the class.</p>
       <div class="kicker">Race</div>
       <div class="choices" id="race-choices"></div>
       <div class="kicker">Class</div>
@@ -55,7 +57,7 @@ export function mountShell(): Shell {
       <div class="tracker" id="tracker">Walk the square. A wolf hunts near the well. J / Attack rolls a d20.</div>
       <div class="dice-log" id="dice-log"></div>
       <div class="hint" id="hint"></div>
-      <div class="phase">PIXEL TOWN · D&D DICE</div>
+      <div class="phase">KENNEY TILES · D&D DICE</div>
       <div class="actions">
         <button disabled>A1</button>
         <button disabled>A2</button>
@@ -102,12 +104,24 @@ export function mountShell(): Shell {
   const classBox = root.querySelector("#class-choices") as HTMLElement;
   const preview = root.querySelector("#hero-preview") as HTMLCanvasElement;
 
+  const dungeonUrl = assetManifest.sheets.dungeon.url;
+  let previewToken = 0;
+
   const paintPreview = () => {
-    const sprite = paintHero(raceId, classId, "down", 0);
     const ctx = preview.getContext("2d")!;
     ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, 32, 32);
-    ctx.drawImage(sprite, 0, 0);
+    const spec = lookupHero(raceId, classId);
+    const token = ++previewToken;
+    loadSheetImage(dungeonUrl)
+      .then((sheet) => {
+        if (token !== previewToken) return;
+        drawSpritePreview(ctx, sheet, spec, 32);
+      })
+      .catch(() => {
+        if (token !== previewToken) return;
+        ctx.clearRect(0, 0, 32, 32);
+        ctx.drawImage(paintHero(raceId, classId, "down", 0), 0, 0);
+      });
   };
 
   const paint = () => {

@@ -4,7 +4,7 @@
 
 Ship a small, polished, **playable** single-player action RPG on phones. The code must stay modular so later phases add systems instead of rewriting them.
 
-The first slice is not “the whole game.” It is a stable skeleton plus a playable pixel town: catalogs, typed models, d20 combat, and a 2D sprite for every race×class.
+The first slice is not “the whole game.” It is a stable skeleton plus a playable Kenney-pixel town: catalogs, typed models, d20 combat, and a tilesheet sprite for every race×class. Art is a manifest swap (`docs/ASSETS.md`), not pixels painted in TypeScript.
 
 ## Constraints that drive the design
 
@@ -33,7 +33,7 @@ Dependencies only point downward.
 ```
 ┌─────────────────────────────────────────┐
 │ Presentation                            │
-│ Phaser scenes, sprites, HUD, joystick   │
+│ Phaser scenes, Kenney sheets, HUD, stick │
 └───────────────────┬─────────────────────┘
                     ▼
 ┌─────────────────────────────────────────┐

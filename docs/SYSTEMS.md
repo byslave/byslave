@@ -28,7 +28,7 @@ Buffs are `{ stat, op: add|mul, value, sourceId, expiresAt? }`. Equipment is jus
 
 This is a **D&D dice** game, not real-time hack-and-slash.
 
-On the current pixel town, walking into the gate wolf starts a turn:
+On the current Kenney town, walking into the well-beast starts a turn:
 
 1. Player taps Attack (or J) → `d20 + proficiency + ability mod` vs target AC
 2. Nat 1 always misses, nat 20 crits (damage dice rolled twice)
@@ -36,7 +36,7 @@ On the current pixel town, walking into the gate wolf starts a turn:
 4. Enemy rolls the same way against player AC (`10 + DEX mod + class AC bonus`)
 5. Emit `combat.hit` / `combat.killed`
 
-Town walking stays analog (Archero-style stick + visible 2D sprite). Combat is frozen turns with visible dice text.
+Town walking stays analog (stick + Kenney 16×16 sprite). Combat is frozen turns with visible dice text.
 
 Presentation never decides the roll. `src/domain/combat/dice.ts` does.
 

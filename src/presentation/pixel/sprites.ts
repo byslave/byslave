@@ -1,3 +1,4 @@
+/** Fallback painter if a Kenney sheet fails to load. Do not add new art here — edit content/assets/manifest.json. */
 export type Facing = "down" | "up" | "left" | "right";
 
 const SIZE = 32;

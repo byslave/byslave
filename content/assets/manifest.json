@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "credit": "Kenney.nl — Tiny Town + Tiny Dungeon (CC0). Attribution optional; we credit them anyway.",
+  "sheets": {
+    "town": {
+      "key": "kenney-town",
+      "url": "assets/kenney/tiny-town.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "columns": 12
+    },
+    "dungeon": {
+      "key": "kenney-dungeon",
+      "url": "assets/kenney/tiny-dungeon.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "columns": 12
+    }
+  },
+  "tiles": {
+    "grass": [0, 1, 2, 3],
+    "path": 13,
+    "gate": 13,
+    "tree": [5, 17],
+    "border": [6, 7],
+    "well": 68,
+    "stone": { "roofL": 48, "roofM": 49, "roofR": 50, "wall": 60, "window": 61, "door": 62 },
+    "wood": { "roofL": 52, "roofM": 53, "roofR": 54, "wall": 64, "window": 65, "door": 66 }
+  },
+  "heroes": {
+    "human_warrior": { "sheet": "dungeon", "frame": 96, "tint": "#ffffff" },
+    "human_rogue": { "sheet": "dungeon", "frame": 98, "tint": "#ffffff" },
+    "human_mage": { "sheet": "dungeon", "frame": 84, "tint": "#ffffff" },
+    "human_ranger": { "sheet": "dungeon", "frame": 112, "tint": "#ffffff" },
+    "human_paladin": { "sheet": "dungeon", "frame": 88, "tint": "#ffffff" },
+    "elf_warrior": { "sheet": "dungeon", "frame": 99, "tint": "#d4f0e0" },
+    "elf_rogue": { "sheet": "dungeon", "frame": 99, "tint": "#c8ead8" },
+    "elf_mage": { "sheet": "dungeon", "frame": 111, "tint": "#d8f0ff" },
+    "elf_ranger": { "sheet": "dungeon", "frame": 112, "tint": "#c8f0d4" },
+    "elf_paladin": { "sheet": "dungeon", "frame": 88, "tint": "#d8f0e8" },
+    "dwarf_warrior": { "sheet": "dungeon", "frame": 97, "tint": "#f0c090" },
+    "dwarf_rogue": { "sheet": "dungeon", "frame": 100, "tint": "#e8b888" },
+    "dwarf_mage": { "sheet": "dungeon", "frame": 87, "tint": "#f0c8a0" },
+    "dwarf_ranger": { "sheet": "dungeon", "frame": 100, "tint": "#e0b070" },
+    "dwarf_paladin": { "sheet": "dungeon", "frame": 97, "tint": "#f4d8a8" },
+    "orc_warrior": { "sheet": "dungeon", "frame": 96, "tint": "#8fbc5a" },
+    "orc_rogue": { "sheet": "dungeon", "frame": 98, "tint": "#7aaa4a" },
+    "orc_mage": { "sheet": "dungeon", "frame": 84, "tint": "#9ad45a" },
+    "orc_ranger": { "sheet": "dungeon", "frame": 112, "tint": "#86c050" },
+    "orc_paladin": { "sheet": "dungeon", "frame": 88, "tint": "#9ccc62" }
+  },
+  "npcs": {
+    "mira": { "sheet": "dungeon", "frame": 87, "tint": "#f4e0c8" },
+    "brann": { "sheet": "dungeon", "frame": 100, "tint": "#e0a060" },
+    "lila": { "sheet": "dungeon", "frame": 85, "tint": "#ffffff" },
+    "anwen": { "sheet": "dungeon", "frame": 111, "tint": "#e8e0ff" },
+    "tomas": { "sheet": "dungeon", "frame": 86, "tint": "#ffffff" },
+    "durn": { "sheet": "dungeon", "frame": 96, "tint": "#d8d0c0" }
+  },
+  "enemies": {
+    "wolf": {
+      "sheet": "dungeon",
+      "frame": 120,
+      "tint": "#c4a882",
+      "note": "Kenney Tiny Dungeon has no wolf; this brown beast is the prototype stand-in. Swap the frame or drop a wolf PNG in the manifest to replace it."
+    }
+  }
+}

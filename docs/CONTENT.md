@@ -23,7 +23,7 @@ Oakvale Village ◄──── Darkwood Forest ────► Goblin Cave
 
 ### Oakvale Village
 
-Starting town. Warm palettes, dirt paths, palisade.
+Starting town. Kenney Tiny Town tiles, dirt path through the square, tree-line border. Heroes and NPCs come from Tiny Dungeon frames (see `docs/ASSETS.md`).
 
 | Place | Who |
 | --- | --- |

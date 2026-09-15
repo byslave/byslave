@@ -1,19 +1,25 @@
 import Phaser from "phaser";
 import type { GameSession } from "@/application/GameSession";
-import { OAKVALE_ROWS, TILE_SIZE } from "@/content/oakvaleMap";
 import {
-  heroTextureKey,
-  paintHero,
-  paintNpc,
-  paintTile,
-  paintWolf,
-  type Facing,
-} from "../pixel/sprites";
+  assetManifest,
+  hexToTint,
+  lookupEnemy,
+  lookupHero,
+  lookupNpc,
+  sheetByName,
+} from "@/content/assetManifest";
+import { OAKVALE_ROWS, TILE_SIZE } from "@/content/oakvaleMap";
+import { townFrameAt } from "@/content/townTiles";
+import type { Facing } from "../pixel/sprites";
 import { syncHud, type Shell } from "../ui/shell";
 
 function facingFrom(vec: { x: number; y: number }): Facing {
   if (Math.abs(vec.x) > Math.abs(vec.y)) return vec.x >= 0 ? "right" : "left";
   return vec.y >= 0 ? "down" : "up";
+}
+
+function sheetKey(name: string): string {
+  return sheetByName(name).key;
 }
 
 export class WorldScene extends Phaser.Scene {
@@ -36,32 +42,20 @@ export class WorldScene extends Phaser.Scene {
 
   create(): void {
     this.drawTiles();
-    this.cacheHeroFrames();
-    for (const npc of this.session.catalog.npcs.filter((n) => n.locationId === "oakvale")) {
-      const key = `npc_${npc.id}`;
-      if (!this.textures.exists(key)) this.textures.addCanvas(key, paintNpc(npc.role, 0));
-      this.add.image(npc.marker.x, npc.marker.y, key).setDepth(5);
-      this.add
-        .text(npc.marker.x, npc.marker.y - 14, npc.name, {
-          fontFamily: "monospace",
-          fontSize: "8px",
-          color: "#f3e6cf",
-          stroke: "#1a1410",
-          strokeThickness: 2,
-        })
-        .setOrigin(0.5)
-        .setDepth(6);
-    }
+    this.placeNpcs();
 
-    this.textures.addCanvas("wolf_0", paintWolf(0));
-    this.textures.addCanvas("wolf_1", paintWolf(1));
+    const wolfSpec = lookupEnemy("wolf");
     const wolf = this.session.world.encounters[0];
-    this.wolfSprite = this.add.image(wolf.x, wolf.y, "wolf_0").setDepth(8);
+    this.wolfSprite = this.add
+      .image(wolf.x, wolf.y, sheetKey(wolfSpec.sheet), wolfSpec.frame)
+      .setTint(hexToTint(wolfSpec.tint))
+      .setDepth(8);
 
     const { player } = this.session;
-    const face = facingFrom(player.facing);
+    const hero = lookupHero(player.raceId, player.classId);
     this.playerSprite = this.add
-      .image(player.x, player.y, heroTextureKey(player.raceId, player.classId, face, 0))
+      .image(player.x, player.y, sheetKey(hero.sheet), hero.frame)
+      .setTint(hexToTint(hero.tint))
       .setDepth(10);
 
     this.cameras.main.setBounds(0, 0, OAKVALE_ROWS[0].length * TILE_SIZE, OAKVALE_ROWS.length * TILE_SIZE);
@@ -99,41 +93,45 @@ export class WorldScene extends Phaser.Scene {
       this.animAt = time + 180;
     }
     const face = facingFrom(player.facing);
-    const key = heroTextureKey(player.raceId, player.classId, face, moving ? this.frame : 0);
-    this.playerSprite.setTexture(key);
-    this.playerSprite.setPosition(Math.round(player.x), Math.round(player.y));
+    this.playerSprite.setFlipX(face === "left");
+    this.playerSprite.setPosition(Math.round(player.x), Math.round(player.y) + (moving && this.frame === 1 ? -1 : 0));
+    this.playerSprite.setDepth(10 + player.y);
 
     const wolf = this.session.world.encounters[0];
     this.wolfSprite.setVisible(wolf.alive);
-    this.wolfSprite.setTexture(time % 400 < 200 ? "wolf_0" : "wolf_1");
+    this.wolfSprite.setFlipX(time % 800 < 400);
+    this.wolfSprite.setDepth(8 + wolf.y);
 
     syncHud(this.shell, this.session);
   }
 
-  private cacheHeroFrames(): void {
-    const { raceId, classId } = this.session.player;
-    const facings: Facing[] = ["down", "up", "left", "right"];
-    for (const facing of facings) {
-      for (const frame of [0, 1] as const) {
-        const key = heroTextureKey(raceId, classId, facing, frame);
-        if (!this.textures.exists(key)) {
-          this.textures.addCanvas(key, paintHero(raceId, classId, facing, frame));
-        }
-      }
+  private placeNpcs(): void {
+    for (const npc of this.session.catalog.npcs.filter((n) => n.locationId === "oakvale")) {
+      const spec = lookupNpc(npc.id);
+      this.add
+        .image(npc.marker.x, npc.marker.y, sheetKey(spec.sheet), spec.frame)
+        .setTint(hexToTint(spec.tint))
+        .setDepth(5 + npc.marker.y);
+      this.add
+        .text(npc.marker.x, npc.marker.y - 10, npc.name, {
+          fontFamily: "monospace",
+          fontSize: "8px",
+          color: "#f3e6cf",
+          stroke: "#1a1410",
+          strokeThickness: 2,
+        })
+        .setOrigin(0.5)
+        .setDepth(20);
     }
   }
 
   private drawTiles(): void {
     OAKVALE_ROWS.forEach((row, ty) => {
-      [...row].forEach((cell, tx) => {
-        const kind = cell === "w" ? "." : cell;
-        const above = OAKVALE_ROWS[ty - 1]?.[tx];
-        const roof = kind === "H" && above !== "H";
-        const key = `tile_${kind}_${roof ? "roof" : "body"}_${(tx + ty) % 4}`;
-        if (!this.textures.exists(key)) {
-          this.textures.addCanvas(key, paintTile(kind, tx + ty * 3, { roof }));
-        }
-        this.add.image(tx * TILE_SIZE + 8, ty * TILE_SIZE + 8, key).setDepth(0);
+      [...row].forEach((_cell, tx) => {
+        const frame = townFrameAt(tx, ty);
+        this.add
+          .image(tx * TILE_SIZE + 8, ty * TILE_SIZE + 8, assetManifest.sheets.town.key, frame)
+          .setDepth(0);
       });
     });
     for (const place of this.session.catalog.location("oakvale").places) {

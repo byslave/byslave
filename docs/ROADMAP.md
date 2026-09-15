@@ -15,6 +15,7 @@ Playable means: from `npm run dev`, a player can enter the world and perform the
 - Camera follows with light lerp
 - Buildings block movement
 - HUD chrome exists (bars/buttons may be inert)
+- Town, heroes, NPCs, and the well-beast use Kenney tilesheets via `content/assets/manifest.json`
 
 ## PHASE 2 — Basic combat
 
