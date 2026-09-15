@@ -40,6 +40,6 @@ export function townFrameAt(tx: number, ty: number): number {
   if (ch === "o") return tiles.well;
   if (ch === "=") return tiles.path;
   if (ch === "^") return tiles.gate;
-  if ((seed % 13) === 0) return tiles.grass[1] ?? tiles.grass[0];
+  if ((tx * 7 + ty * 3) % 11 === 0) return tiles.grass[1] ?? tiles.grass[0];
   return tiles.grass[0];
 }
