@@ -1,0 +1,34 @@
+NAME (30)
+Neon Blast
+
+SUBTITLE (30)
+Drag. Blast. Combo.
+
+DESCRIPTION
+Neon Blast is a neon arcade puzzle. Drag pieces onto an 8×8 board, blast full rows and columns, and ride gravity chains into bigger combos. At 10x the board catches fire.
+
+No ads. No extra lives shop. Optional ranks live only on this device.
+
+KEYWORDS (100 chars)
+puzzle,arcade,blocks,blast,combo,neon,casual,board,drag,drop
+
+CATEGORY
+Games · Puzzle
+Secondary: Games · Casual
+
+AGE
+4+
+
+PRICE
+Paid (set in App Store Connect). No in-app purchases.
+
+PRIVACY NUTRITION
+Data not collected from our servers.
+If the player joins Ranks: Email Address and Name/Username stored on device only, not linked to identity by us, not used for tracking.
+
+REVIEW NOTES
+Guest play works with no account. Ranks email is local-only (hashed password on device). World list names are fake stage racers.
+
+ASSETS
+• App icon 1024×1024: store/icon-1024.png
+• iPhone 6.7" and 6.1" portrait screenshots of Play and Ranks

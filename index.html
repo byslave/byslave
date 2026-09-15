@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Neon Blast</title>
+    <meta name="description" content="Drag a piece, blast a line, grow the combo. Neon arcade puzzle." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#070A16" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Neon Blast" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito+Sans:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        display: grid;
+        place-items: center;
+        background: #070a16;
+        transition: opacity 0.35s ease;
+      }
+      #boot.out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #boot b {
+        display: grid;
+        grid-template-columns: 22px 22px;
+        gap: 6px;
+      }
+      #boot i {
+        width: 22px;
+        height: 22px;
+        border-radius: 2px;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="boot" aria-hidden="true">
+      <b>
+        <i style="background:#00C8FF;box-shadow:0 0 12px #00C8FF"></i>
+        <i style="background:#FF2EC8;box-shadow:0 0 12px #FF2EC8"></i>
+        <i style="background:#FFE14A;box-shadow:0 0 12px #FFE14A"></i>
+        <i style="background:#7CFF4A;box-shadow:0 0 12px #7CFF4A"></i>
+      </b>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

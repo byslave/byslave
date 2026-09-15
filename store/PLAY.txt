@@ -1,0 +1,43 @@
+APP NAME
+Neon Blast
+
+SHORT DESCRIPTION (80 chars max)
+Drag neon pieces, blast lines, stack combos. Arcade puzzle — no ads.
+
+FULL DESCRIPTION
+Neon Blast is a fast arcade puzzle. Drag a piece onto the 8×8 board, fill a row or column, and blast it. Blocks fall, chains keep going, and big combos set the cubes on fire.
+
+• 8×8 neon board with gravity chains
+• Combos heat up — 10x ignites the screen
+• Stage cabinets unlock when you clear the whole board
+• Optional local league with email on this device only
+• No ads, no energy timers, no in-app shop
+
+Play as a guest. Sign in on Ranks only if you want a name on this phone’s board.
+
+CATEGORY
+Games / Puzzle
+Arcade (secondary)
+
+PRICE
+Paid (set in Play Console). No in-app products.
+
+CONTENT RATING
+Everyone / PEGI 3. No violence, no chat, no location.
+
+DATA SAFETY
+• Data collected: none sent off the device
+• Optional email + player name stored locally if the player uses Ranks
+• Not sold, not used for ads
+• Encryption in transit: not applicable for game data (no server)
+• Users can delete data by uninstalling
+
+CONTACT
+Developer name: byslave
+Privacy: https://byslave.github.io/byslave/privacy.html
+(Enable GitHub Pages on the byslave/byslave repo, or host public/privacy.html yourself and paste that URL.)
+
+ASSETS
+• Hi-res icon: store/icon-512.png
+• Feature graphic: store/feature-graphic.png
+• Phone screenshots: portrait captures of Play and Ranks
