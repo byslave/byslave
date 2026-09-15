@@ -1,0 +1,35 @@
+{
+  "title": "The Blackthorn Curse",
+  "chapters": [
+    {
+      "id": "chapter_1",
+      "title": "Embers in Oakvale",
+      "summary": "Wolves test the palisade. Mira sends you to the smith with a sealed report.",
+      "questIds": ["quest_wolves", "quest_iron"]
+    },
+    {
+      "id": "chapter_2",
+      "title": "The Darkwood Sickens",
+      "summary": "The forest is rotting from the inside. Sela traces the blight toward the cave and the old stones.",
+      "questIds": ["quest_darkwood", "quest_samples"]
+    },
+    {
+      "id": "chapter_3",
+      "title": "Caves Below",
+      "summary": "Goblins nest under Darkwood and hold a villager for something in the castle.",
+      "questIds": ["quest_cave", "quest_escort"]
+    },
+    {
+      "id": "chapter_4",
+      "title": "Quiet of the Grave",
+      "summary": "Ruins name Malrik. The graveyard walks. The castle road unlocks.",
+      "questIds": ["quest_ruins", "quest_graveyard"]
+    },
+    {
+      "id": "chapter_5",
+      "title": "The Blackthorn Curse",
+      "summary": "The Warden falls. The necromancer and the Heart are silenced.",
+      "questIds": ["quest_gate", "quest_heart"]
+    }
+  ]
+}

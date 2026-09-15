@@ -1,0 +1,183 @@
+{
+  "dlg_mira": {
+    "id": "dlg_mira",
+    "start": "mira_hello",
+    "nodes": [
+      {
+        "id": "mira_hello",
+        "speaker": "Elder Mira",
+        "text": "Oakvale still stands, but the woods do not sleep. Wolves at the palisade, goblin fires in Darkwood, and last night a light in Blackthorn's tower.",
+        "choices": [
+          { "text": "How can I help?", "nextId": "mira_help" },
+          { "text": "Tell me about the castle.", "nextId": "mira_castle" },
+          { "text": "I should go.", "nextId": null }
+        ]
+      },
+      {
+        "id": "mira_help",
+        "speaker": "Elder Mira",
+        "text": "Thin the wolves. Bring me proof the road is ours again, and I will put a report in your hands for Brann.",
+        "actions": [{ "type": "giveQuest", "questId": "quest_wolves" }],
+        "nextId": null
+      },
+      {
+        "id": "mira_castle",
+        "speaker": "Elder Mira",
+        "text": "Blackthorn was sealed after the last war. If it wakes, something old is pulling the dead north.",
+        "nextId": "mira_hello"
+      }
+    ]
+  },
+  "dlg_brann": {
+    "id": "dlg_brann",
+    "start": "brann_hello",
+    "nodes": [
+      {
+        "id": "brann_hello",
+        "speaker": "Brann Ironkettle",
+        "text": "Steel's honest. Men aren't. If Mira sent a report, I'll take it. If you need a blade, I'll sell you one.",
+        "choices": [
+          { "text": "Show me your wares.", "nextId": null, "actions": [{ "type": "openShop", "shopId": "shop_blacksmith" }] },
+          { "text": "I have Mira's report.", "nextId": "brann_report" },
+          { "text": "Later.", "nextId": null }
+        ]
+      },
+      {
+        "id": "brann_report",
+        "speaker": "Brann Ironkettle",
+        "text": "Aye. That's her seal. I'll hammer extra rivets into the gate.",
+        "actions": [{ "type": "completeObjective", "questId": "quest_iron", "objectiveId": "deliver_report" }],
+        "nextId": null
+      }
+    ]
+  },
+  "dlg_lila": {
+    "id": "dlg_lila",
+    "start": "lila_hello",
+    "nodes": [
+      {
+        "id": "lila_hello",
+        "speaker": "Lila Reed",
+        "text": "Potions, charms, and news — the last one's free: don't drink anything a goblin bottled.",
+        "choices": [
+          { "text": "Let me see the shelves.", "nextId": null, "actions": [{ "type": "openShop", "shopId": "shop_general" }] },
+          { "text": "Goodbye.", "nextId": null }
+        ]
+      }
+    ]
+  },
+  "dlg_anwen": {
+    "id": "dlg_anwen",
+    "start": "anwen_hello",
+    "nodes": [
+      {
+        "id": "anwen_hello",
+        "speaker": "Sister Anwen",
+        "text": "Light still finds Oakvale. Sit. I can close wounds the woods opened.",
+        "choices": [
+          { "text": "Please heal me.", "nextId": "anwen_heal", "actions": [{ "type": "heal" }] },
+          { "text": "Not now.", "nextId": null }
+        ]
+      },
+      {
+        "id": "anwen_heal",
+        "speaker": "Sister Anwen",
+        "text": "There. Stay out of unmarked graves.",
+        "nextId": null
+      }
+    ]
+  },
+  "dlg_tomas": {
+    "id": "dlg_tomas",
+    "start": "tomas_hello",
+    "nodes": [
+      {
+        "id": "tomas_hello",
+        "speaker": "Tomas Vale",
+        "text": "The Stag has stew, a bed, and rumors. Rumors are cheaper.",
+        "choices": [
+          { "text": "I need to rest.", "nextId": "tomas_rest", "actions": [{ "type": "rest" }] },
+          { "text": "Any rumors?", "nextId": "tomas_rumor" },
+          { "text": "I'll be going.", "nextId": null }
+        ]
+      },
+      {
+        "id": "tomas_rest",
+        "speaker": "Tomas Vale",
+        "text": "Sleep while the palisade still holds.",
+        "nextId": null
+      },
+      {
+        "id": "tomas_rumor",
+        "speaker": "Tomas Vale",
+        "text": "Sela the trapper saw a man in black near the old stones. She said his shadow walked the wrong way.",
+        "nextId": "tomas_hello"
+      }
+    ]
+  },
+  "dlg_durn": {
+    "id": "dlg_durn",
+    "start": "durn_hello",
+    "nodes": [
+      {
+        "id": "durn_hello",
+        "speaker": "Captain Durn",
+        "text": "North gate's the only honest road. Bandits have been cutting purses in Darkwood. If you've steel to spare, I have coin.",
+        "choices": [
+          { "text": "I'll deal with the bandits.", "nextId": "durn_bandits", "actions": [{ "type": "giveQuest", "questId": "quest_bandits" }] },
+          { "text": "Hold the gate.", "nextId": null }
+        ]
+      },
+      {
+        "id": "durn_bandits",
+        "speaker": "Captain Durn",
+        "text": "Four will do. Don't bring me speeches. Bring me quiet roads.",
+        "nextId": null
+      }
+    ]
+  },
+  "dlg_sela": {
+    "id": "dlg_sela",
+    "start": "sela_hello",
+    "nodes": [
+      {
+        "id": "sela_hello",
+        "speaker": "Sela",
+        "text": "The trees are sick. Bring me blighted hearts and I'll tell you which way the rot crawls.",
+        "choices": [
+          { "text": "I'll gather them.", "nextId": null, "actions": [{ "type": "giveQuest", "questId": "quest_samples" }] },
+          { "text": "Another time.", "nextId": null }
+        ]
+      }
+    ]
+  },
+  "dlg_ewan": {
+    "id": "dlg_ewan",
+    "start": "ewan_help",
+    "nodes": [
+      {
+        "id": "ewan_help",
+        "speaker": "Ewan",
+        "text": "They were going to sell me to something in the castle. Get me back to Oakvale. Please.",
+        "actions": [{ "type": "giveQuest", "questId": "quest_escort" }],
+        "nextId": null
+      }
+    ]
+  },
+  "dlg_shade": {
+    "id": "dlg_shade",
+    "start": "shade_speak",
+    "nodes": [
+      {
+        "id": "shade_speak",
+        "speaker": "Inscribed Shade",
+        "text": "The Heart was a lock. Malrik made it a key. The graveyard remembers his name.",
+        "actions": [
+          { "type": "completeObjective", "questId": "quest_ruins", "objectiveId": "talk_shade" },
+          { "type": "setFlag", "flag": "heard_malrik_name", "value": true }
+        ],
+        "nextId": null
+      }
+    ]
+  }
+}

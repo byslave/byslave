@@ -1,0 +1,69 @@
+{
+  "critChanceCap": 0.5,
+  "inventory": { "width": 5, "height": 6 },
+  "levelCap": 20,
+  "xpPerLevel": { "base": 80, "growth": 1.45 },
+  "formulas": {
+    "hpMax": {
+      "base": "class.baseHp",
+      "adds": [
+        { "stat": "vitality", "per": 8 },
+        { "stat": "strength", "per": 1 },
+        { "stat": "level", "per": 6 }
+      ]
+    },
+    "manaMax": {
+      "base": "class.baseMana",
+      "adds": [
+        { "stat": "intelligence", "per": 6 },
+        { "stat": "level", "per": 3 }
+      ]
+    },
+    "staminaMax": {
+      "base": "class.baseStamina",
+      "adds": [
+        { "stat": "vitality", "per": 3 },
+        { "stat": "dexterity", "per": 1 },
+        { "stat": "level", "per": 2 }
+      ]
+    },
+    "attackDamage": {
+      "base": "class.baseAttack",
+      "adds": [
+        { "stat": "attackStat", "per": 1.5 },
+        { "stat": "weaponAttack", "per": 1 }
+      ]
+    },
+    "defense": {
+      "base": "class.baseDefense",
+      "adds": [
+        { "stat": "vitality", "per": 0.8 },
+        { "stat": "armorDefense", "per": 1 }
+      ]
+    },
+    "critChance": {
+      "base": "class.baseCritChance",
+      "adds": [
+        { "stat": "dexterity", "per": 0.0025 },
+        { "stat": "luck", "per": 0.0035 }
+      ]
+    },
+    "critDamage": {
+      "base": 1.5,
+      "adds": [
+        { "stat": "luck", "per": 0.01 },
+        { "stat": "dexterity", "per": 0.005 }
+      ]
+    },
+    "movementSpeed": {
+      "base": "class.baseSpeed",
+      "adds": [{ "stat": "dexterity", "per": 1.2 }]
+    }
+  },
+  "attackStatByStyle": {
+    "melee": "strength",
+    "ranged": "dexterity",
+    "caster": "intelligence",
+    "hybrid": "strength"
+  }
+}

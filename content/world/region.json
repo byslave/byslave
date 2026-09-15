@@ -1,0 +1,6 @@
+{
+  "id": "northmarch",
+  "name": "Northmarch",
+  "startLocationId": "oakvale",
+  "locations": ["oakvale", "darkwood", "goblin_cave", "ancient_ruins", "forgotten_graveyard", "blackthorn_castle"]
+}

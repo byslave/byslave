@@ -1,0 +1,11 @@
+{
+  "slots": [
+    { "id": "weapon", "name": "Weapon" },
+    { "id": "helmet", "name": "Helmet" },
+    { "id": "chest", "name": "Chest Armor" },
+    { "id": "gloves", "name": "Gloves" },
+    { "id": "boots", "name": "Boots" },
+    { "id": "ring", "name": "Ring" },
+    { "id": "amulet", "name": "Amulet" }
+  ]
+}

@@ -1,0 +1,109 @@
+[
+  {
+    "id": "loot_wolf",
+    "guaranteed": [],
+    "rolls": 1,
+    "entries": [
+      { "itemId": "health_potion", "weight": 40 },
+      { "itemId": "blighted_heart", "weight": 35 },
+      { "itemId": "work_gloves", "weight": 10 },
+      { "itemId": "copper_ring", "weight": 5 }
+    ],
+    "gold": { "min": 2, "max": 6 }
+  },
+  {
+    "id": "loot_goblin",
+    "rolls": 1,
+    "entries": [
+      { "itemId": "health_potion", "weight": 30 },
+      { "itemId": "blighted_heart", "weight": 25 },
+      { "itemId": "goblin_cleaver", "weight": 8 },
+      { "itemId": "padded_cap", "weight": 12 }
+    ],
+    "gold": { "min": 4, "max": 10 }
+  },
+  {
+    "id": "loot_goblin_warrior",
+    "rolls": 2,
+    "entries": [
+      { "itemId": "iron_sword", "weight": 20 },
+      { "itemId": "goblin_cleaver", "weight": 25 },
+      { "itemId": "travelers_jerkin", "weight": 15 },
+      { "itemId": "health_potion", "weight": 20 }
+    ],
+    "gold": { "min": 10, "max": 22 }
+  },
+  {
+    "id": "loot_bandit",
+    "rolls": 1,
+    "entries": [
+      { "itemId": "iron_sword", "weight": 12 },
+      { "itemId": "copper_ring", "weight": 18 },
+      { "itemId": "health_potion", "weight": 30 },
+      { "itemId": "mud_boots", "weight": 15 }
+    ],
+    "gold": { "min": 8, "max": 18 }
+  },
+  {
+    "id": "loot_skeleton",
+    "rolls": 1,
+    "entries": [
+      { "itemId": "mana_potion", "weight": 25 },
+      { "itemId": "ruin_circlet", "weight": 6 },
+      { "itemId": "oakvale_charm", "weight": 10 }
+    ],
+    "gold": { "min": 3, "max": 9 }
+  },
+  {
+    "id": "loot_skeleton_archer",
+    "rolls": 1,
+    "entries": [
+      { "itemId": "ashwood_bow", "weight": 10 },
+      { "itemId": "mana_potion", "weight": 25 },
+      { "itemId": "copper_ring", "weight": 12 }
+    ],
+    "gold": { "min": 5, "max": 12 }
+  },
+  {
+    "id": "loot_necromancer",
+    "rolls": 2,
+    "entries": [
+      { "itemId": "ruin_circlet", "weight": 30 },
+      { "itemId": "mana_potion", "weight": 20 },
+      { "itemId": "blackthorn_heart_shard", "weight": 4 }
+    ],
+    "gold": { "min": 20, "max": 40 }
+  },
+  {
+    "id": "loot_warden",
+    "guaranteed": [{ "itemId": "castle_key", "qty": 1 }],
+    "rolls": 2,
+    "entries": [
+      { "itemId": "warden_plate", "weight": 40 },
+      { "itemId": "iron_sword", "weight": 25 },
+      { "itemId": "health_potion", "weight": 20 }
+    ],
+    "gold": { "min": 40, "max": 70 }
+  },
+  {
+    "id": "loot_malrik",
+    "guaranteed": [{ "itemId": "blackthorn_heart_shard", "qty": 1 }],
+    "rolls": 2,
+    "entries": [
+      { "itemId": "warden_plate", "weight": 20 },
+      { "itemId": "ruin_circlet", "weight": 25 },
+      { "itemId": "mana_potion", "weight": 20 }
+    ],
+    "gold": { "min": 80, "max": 120 }
+  },
+  {
+    "id": "loot_chest_village",
+    "rolls": 1,
+    "entries": [
+      { "itemId": "health_potion", "weight": 40 },
+      { "itemId": "copper_ring", "weight": 15 },
+      { "itemId": "oakvale_charm", "weight": 20 }
+    ],
+    "gold": { "min": 5, "max": 15 }
+  }
+]
