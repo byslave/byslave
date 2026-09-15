@@ -65,7 +65,7 @@ export class WorldScene extends Phaser.Scene {
       .setDepth(10);
 
     this.cameras.main.setBounds(0, 0, OAKVALE_ROWS[0].length * TILE_SIZE, OAKVALE_ROWS.length * TILE_SIZE);
-    this.cameras.main.setZoom(3);
+    this.cameras.main.setZoom(4);
     this.cameras.main.startFollow(this.playerSprite, true, 0.16, 0.16);
     this.cameras.main.roundPixels = true;
 
@@ -127,14 +127,17 @@ export class WorldScene extends Phaser.Scene {
     OAKVALE_ROWS.forEach((row, ty) => {
       [...row].forEach((cell, tx) => {
         const kind = cell === "w" ? "." : cell;
-        const key = `tile_${kind}_${(tx + ty) % 4}`;
+        const above = OAKVALE_ROWS[ty - 1]?.[tx];
+        const roof = kind === "H" && above !== "H";
+        const key = `tile_${kind}_${roof ? "roof" : "body"}_${(tx + ty) % 4}`;
         if (!this.textures.exists(key)) {
-          this.textures.addCanvas(key, paintTile(kind, tx + ty * 3));
+          this.textures.addCanvas(key, paintTile(kind, tx + ty * 3, { roof }));
         }
         this.add.image(tx * TILE_SIZE + 8, ty * TILE_SIZE + 8, key).setDepth(0);
       });
     });
     for (const place of this.session.catalog.location("oakvale").places) {
+      if (place.id === "square") continue;
       this.add
         .text(place.x, place.y - 6, place.name, {
           fontFamily: "monospace",

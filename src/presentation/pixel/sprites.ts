@@ -187,7 +187,7 @@ export function paintWolf(frame: 0 | 1 = 0): HTMLCanvasElement {
   return canvas;
 }
 
-export function paintTile(kind: string, seed: number): HTMLCanvasElement {
+export function paintTile(kind: string, seed: number, opts: { roof?: boolean } = {}): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = 16;
   canvas.height = 16;
@@ -208,9 +208,9 @@ export function paintTile(kind: string, seed: number): HTMLCanvasElement {
     for (let y = 0; y < 16; y += 4) {
       for (let x = 0; x < 16; x += 1) p(x, y, "#3a2a22");
     }
-    if (kind === "H") {
-      for (let y = 0; y < 6; y += 1) {
-        for (let x = 0; x < 16; x += 1) p(x, y, y < 2 ? "#8b3a2a" : "#6b2e22");
+    if (opts.roof) {
+      for (let y = 0; y < 16; y += 1) {
+        for (let x = 0; x < 16; x += 1) p(x, y, y < 4 ? "#9a4030" : "#7a3024");
       }
     }
   } else if (kind === "=" || kind === "^") {
@@ -241,7 +241,10 @@ export function paintTile(kind: string, seed: number): HTMLCanvasElement {
   } else {
     fill("#3d7a3a");
     for (let y = 0; y < 16; y += 1) {
-      for (let x = 0; x < 16; x += 1) if (n(x, y)) p(x, y, "#2f6a32");
+      for (let x = 0; x < 16; x += 1) {
+        if ((x * 3 + y * 5 + seed) % 11 === 0) p(x, y, "#2f6a32");
+        if ((x * 5 + y * 2 + seed) % 17 === 0) p(x, y, "#4a8a44");
+      }
     }
   }
   return canvas;
