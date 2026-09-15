@@ -6,6 +6,7 @@ import { Rng } from "@/core/Rng";
 import { createPlayer, type Player } from "@/domain/character/createCharacter";
 import { WorldState } from "@/domain/world/WorldState";
 import { MovementSystem } from "./systems/MovementSystem";
+import { CombatSystem } from "./systems/CombatSystem";
 
 export class GameSession {
   readonly catalog: Catalog;
@@ -13,6 +14,7 @@ export class GameSession {
   readonly rng: Rng;
   readonly world: WorldState;
   readonly systems: GameSystem[] = [];
+  readonly combatSystem = new CombatSystem();
 
   constructor(options: { raceId: string; classId: string; name?: string; seed?: number }) {
     this.catalog = loadCatalog();
@@ -20,6 +22,7 @@ export class GameSession {
     const player = createPlayer(this.catalog, options);
     this.world = new WorldState(player);
     this.register(new MovementSystem());
+    this.register(this.combatSystem);
   }
 
   get player(): Player {
@@ -42,6 +45,10 @@ export class GameSession {
 
   setMoveIntent(x: number, y: number): void {
     this.world.moveIntent = { x, y };
+  }
+
+  attack(): void {
+    this.combatSystem.playerAttack(this.context);
   }
 
   update(dt: number): void {

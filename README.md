@@ -2,7 +2,7 @@
 
 Single-player medieval fantasy RPG for mobile, built so a small indie team (or one developer with AI assistance) can ship a polished prototype without rewriting the game every phase.
 
-**Current milestone:** architecture, data models, content catalog, domain kernel, and Phase 1 playable movement.
+**Current milestone:** pixel Oakvale town, visible 2D race×class sprites, and D&D d20 combat.
 
 ## Why this stack
 
@@ -24,7 +24,7 @@ npm test
 npm run dev
 ```
 
-Open the local URL on a phone or in a desktop browser. Drag the left stick to move. The camera follows the adventurer through Oakvale Village.
+Open the local URL on a phone or in a desktop browser. Pick a race and class (the portrait is the in-world sprite), walk the town, and fight the wolf by the well with **Attack** / J — that rolls a d20.
 
 ## Project map
 
@@ -55,8 +55,8 @@ A **foundation**, not the finished RPG.
 
 - The world, story, classes, enemies, and quests are specified as data.
 - Combat, inventory, quests, and saves have domain APIs and tests.
-- Phase 1 is playable: character, movement, camera, Oakvale layout.
-- Phases 2–14 are intentionally unimplemented in the renderer.
+- Phase 1 is playable: pixel town, 20 race×class sprites, d20 wolf fight.
+- Later locations, quests, and shops stay in data until their phase.
 
 ## Hard constraints
 

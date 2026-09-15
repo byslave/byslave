@@ -10,7 +10,11 @@ export function createPhaserGame(): Phaser.Game {
       width: window.innerWidth,
       height: window.innerHeight,
     },
-    render: { antialias: true, roundPixels: true },
+    render: {
+      pixelArt: true,
+      antialias: false,
+      roundPixels: true,
+    },
     scene: [],
     audio: { noAudio: true },
   });

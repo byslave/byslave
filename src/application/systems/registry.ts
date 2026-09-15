@@ -1,7 +1,7 @@
 /**
  * Systems registered after Phase 1 append here. Do not replace MovementSystem.
  *
- * Phase 2  CombatSystem
+ * Phase 2  CombatSystem (d20) — registered
  * Phase 3  AiSystem
  * Phase 4  ProgressionSystem (XP is already a domain function)
  * Phase 5  InventorySystem

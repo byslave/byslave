@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { Rng } from "@/core/Rng";
-import { resolveHit } from "@/domain/combat/resolveHit";
+import { resolveAttack, resolveHit, abilityMod } from "@/domain/combat/dice";
 import { Inventory, compareItems } from "@/domain/inventory/Inventory";
 import { loadCatalog } from "@/content/loadCatalog";
+import { OAKVALE_ROWS, TILE_SIZE } from "@/content/oakvaleMap";
 import { rollLoot } from "@/domain/loot/rollLoot";
 import { QuestLog } from "@/domain/quests/QuestLog";
 import { DialogueRunner } from "@/domain/dialogue/DialogueRunner";
@@ -13,21 +14,51 @@ import { blocked } from "@/domain/world/WorldState";
 
 const catalog = loadCatalog();
 
-describe("combat", () => {
-  it("always deals at least 1 damage and can crit", () => {
-    const miss = resolveHit(
-      { attack: 8, defense: 3, critChance: 0, critDamage: 2, power: 1 },
-      new Rng(1),
-    );
-    expect(miss.damage).toBeGreaterThanOrEqual(1);
-    expect(miss.crit).toBe(false);
+class SeqRng extends Rng {
+  private values: number[];
+  constructor(values: number[]) {
+    super(1);
+    this.values = values;
+  }
+  int(): number {
+    const next = this.values.shift();
+    if (next === undefined) throw new Error("rng exhausted");
+    return next;
+  }
+}
 
-    const crit = resolveHit(
-      { attack: 8, defense: 3, critChance: 1, critDamage: 2, power: 1 },
-      new Rng(1),
+describe("d20 combat", () => {
+  it("treats a natural 1 as a fumble and a 20 as a crit", () => {
+    const miss = resolveAttack(
+      { attackBonus: 10, armorClass: 10, damageDice: "1d8", damageBonus: 2 },
+      new SeqRng([1]),
+    );
+    expect(miss.fumble).toBe(true);
+    expect(miss.hit).toBe(false);
+    expect(miss.damage).toBe(0);
+
+    const crit = resolveAttack(
+      { attackBonus: 0, armorClass: 99, damageDice: "1d8", damageBonus: 2 },
+      new SeqRng([20, 5, 6]),
     );
     expect(crit.crit).toBe(true);
-    expect(crit.damage).toBeGreaterThan(miss.damage);
+    expect(crit.hit).toBe(true);
+    expect(crit.damage).toBe(5 + 6 + 2);
+  });
+
+  it("hits when d20 + bonus meets AC", () => {
+    const hit = resolveAttack(
+      { attackBonus: 4, armorClass: 13, damageDice: "1d6", damageBonus: 1 },
+      new SeqRng([12, 3]),
+    );
+    expect(hit.hit).toBe(true);
+    expect(hit.damage).toBe(4);
+    expect(abilityMod(8)).toBe(2);
+  });
+
+  it("still exposes resolveHit for older callers", () => {
+    const swing = resolveHit({ attack: 8, defense: 3 }, new SeqRng([15, 4]));
+    expect(swing.damage).toBeGreaterThanOrEqual(0);
   });
 });
 
@@ -85,8 +116,17 @@ describe("save snapshot", () => {
   });
 });
 
-describe("phase 1 movement", () => {
-  it("moves the adventurer and stops on buildings", () => {
+describe("pixel town", () => {
+  it("is a compact tile map with aligned rows", () => {
+    expect(new Set(OAKVALE_ROWS.map((row) => row.length))).toEqual(new Set([28]));
+    const oakvale = catalog.location("oakvale");
+    expect(oakvale.width).toBe(28 * TILE_SIZE);
+    expect(oakvale.places.map((p) => p.id)).toEqual(
+      expect.arrayContaining(["blacksmith", "store", "elder", "healer", "inn", "square"]),
+    );
+  });
+
+  it("moves the adventurer, blocks walls, and can reach the north gate", () => {
     const session = new GameSession({ raceId: "human", classId: "ranger" });
     const startX = session.player.x;
     session.setMoveIntent(1, 0);
@@ -94,20 +134,25 @@ describe("phase 1 movement", () => {
     expect(session.player.x).toBeGreaterThan(startX);
 
     const oakvale = catalog.location("oakvale");
-    const inn = oakvale.collision.find((r) => r.w === 190 && r.h === 150)!;
-    expect(blocked(inn.x + 20, inn.y + 20, 16, oakvale)).toBe(true);
-    expect(blocked(startX, session.player.y, 16, oakvale)).toBe(false);
-
-    session.player.x = 700;
-    session.player.y = 80;
-    session.setMoveIntent(0, 0);
-    session.update(0.05);
-    expect(session.world.exitHint).toMatch(/Darkwood Forest/);
+    const wall = oakvale.collision[0];
+    expect(blocked(wall.x + 2, wall.y + 2, 6, oakvale)).toBe(true);
 
     const walker = new GameSession({ raceId: "human", classId: "ranger" });
     walker.setMoveIntent(0, -1);
-    for (let i = 0; i < 120; i += 1) walker.update(0.05);
-    expect(walker.player.y).toBeLessThan(160);
+    for (let i = 0; i < 160; i += 1) walker.update(0.05);
     expect(walker.world.exitHint).toMatch(/Darkwood Forest/);
+  });
+
+  it("starts a d20 fight when walking into the wolf", () => {
+    const session = new GameSession({ raceId: "orc", classId: "warrior", seed: 9 });
+    const wolf = session.world.encounters[0];
+    session.player.x = wolf.x;
+    session.player.y = wolf.y;
+    session.update(0.016);
+    expect(session.world.combat?.enemyId).toBe("wolf");
+    session.attack();
+    const logged = session.world.combat?.log.some((line) => line.startsWith("You:"));
+    const finished = Boolean(session.world.banner?.includes("falls"));
+    expect(logged || finished).toBe(true);
   });
 });

@@ -11,6 +11,7 @@ import dialogueJson from "@content/npcs/dialogue.json";
 import questsJson from "@content/quests/quests.json";
 import formulasJson from "@content/catalog/formulas.json";
 import type { Catalog } from "./Catalog";
+import { buildOakvaleLocation, OAKVALE_MARKERS } from "./oakvaleMap";
 import {
   abilitySchema,
   behaviorSchema,
@@ -44,8 +45,14 @@ export function loadCatalog(): Catalog {
   const lootTables = lootTableSchema.array().parse(lootJson);
   const enemies = enemySchema.array().parse(enemiesJson);
   const behaviors = behaviorSchema.array().parse(behaviorsJson);
-  const locations = locationSchema.array().parse(locationsJson);
-  const npcs = npcSchema.array().parse(npcsJson);
+  const locations = locationSchema.array().parse(locationsJson).map((location) =>
+    location.id === "oakvale" ? buildOakvaleLocation() : location,
+  );
+  const npcs = npcSchema.array().parse(npcsJson).map((npc) => {
+    const marker = OAKVALE_MARKERS[npc.id as keyof typeof OAKVALE_MARKERS];
+    if (npc.locationId === "oakvale" && marker) return { ...npc, marker };
+    return npc;
+  });
   const quests = questSchema.array().parse(questsJson);
   const dialogue = Object.fromEntries(
     Object.entries(dialogueJson).map(([id, tree]) => [id, dialogueTreeSchema.parse(tree)]),

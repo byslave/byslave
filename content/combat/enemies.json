@@ -12,7 +12,10 @@
     "behaviorId": "pack_lunge",
     "lootTableId": "loot_wolf",
     "tags": ["beast", "darkwood"],
-    "attackPattern": { "telegraphMs": 280, "recoverMs": 700, "range": 40 }
+    "attackPattern": { "telegraphMs": 280, "recoverMs": 700, "range": 40 },
+    "ac": 13,
+    "attackBonus": 4,
+    "damageDice": "1d6+1"
   },
   {
     "id": "goblin",

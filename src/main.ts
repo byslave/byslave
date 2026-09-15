@@ -6,9 +6,10 @@ import { mountShell } from "./presentation/ui/shell";
 
 const shell = mountShell();
 let game: Phaser.Game | null = null;
+let session: GameSession | null = null;
 
 shell.onNewGame((raceId, classId) => {
-  const session = new GameSession({ raceId, classId, name: "Adventurer", seed: 17 });
+  session = new GameSession({ raceId, classId, name: "Adventurer", seed: 17 });
   shell.showHud();
   if (game) {
     game.destroy(true);
@@ -16,4 +17,8 @@ shell.onNewGame((raceId, classId) => {
   }
   game = createPhaserGame();
   game.scene.add("world", WorldScene, true, { session, shell });
+});
+
+shell.onAttack(() => {
+  session?.attack();
 });

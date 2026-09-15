@@ -1,31 +1,29 @@
 import Phaser from "phaser";
 import type { GameSession } from "@/application/GameSession";
-import type { LocationDef, NpcDef } from "@/content/schema";
+import { OAKVALE_ROWS, TILE_SIZE } from "@/content/oakvaleMap";
+import {
+  heroTextureKey,
+  paintHero,
+  paintNpc,
+  paintTile,
+  paintWolf,
+  type Facing,
+} from "../pixel/sprites";
 import { syncHud, type Shell } from "../ui/shell";
 
-const CLASS_COLOR: Record<string, number> = {
-  warrior: 0xc45c3e,
-  rogue: 0x6aa84f,
-  mage: 0x6d8cff,
-  ranger: 0xd4a017,
-  paladin: 0xe8d48a,
-};
-
-const BUILDING_FILL: Record<string, number> = {
-  village: 0x6b5344,
-  forest: 0x2a4632,
-  cave: 0x3a322c,
-  ruins: 0x5a584c,
-  graveyard: 0x3e443c,
-  castle: 0x4a3a42,
-};
+function facingFrom(vec: { x: number; y: number }): Facing {
+  if (Math.abs(vec.x) > Math.abs(vec.y)) return vec.x >= 0 ? "right" : "left";
+  return vec.y >= 0 ? "down" : "up";
+}
 
 export class WorldScene extends Phaser.Scene {
   session!: GameSession;
   shell!: Shell;
-  playerDot!: Phaser.GameObjects.Arc;
-  facing!: Phaser.GameObjects.Triangle;
+  playerSprite!: Phaser.GameObjects.Image;
+  wolfSprite!: Phaser.GameObjects.Image;
   keys: Partial<Record<string, Phaser.Input.Keyboard.Key>> = {};
+  frame: 0 | 1 = 0;
+  animAt = 0;
 
   constructor() {
     super("world");
@@ -37,15 +35,39 @@ export class WorldScene extends Phaser.Scene {
   }
 
   create(): void {
-    const location = this.session.world.location(this.session.catalog);
-    this.drawLocation(location);
-    this.drawNpcs(location.id);
-    this.drawPlayer();
+    this.drawTiles();
+    this.cacheHeroFrames();
+    for (const npc of this.session.catalog.npcs.filter((n) => n.locationId === "oakvale")) {
+      const key = `npc_${npc.id}`;
+      if (!this.textures.exists(key)) this.textures.addCanvas(key, paintNpc(npc.role, 0));
+      this.add.image(npc.marker.x, npc.marker.y, key).setDepth(5);
+      this.add
+        .text(npc.marker.x, npc.marker.y - 14, npc.name, {
+          fontFamily: "monospace",
+          fontSize: "8px",
+          color: "#f3e6cf",
+          stroke: "#1a1410",
+          strokeThickness: 2,
+        })
+        .setOrigin(0.5)
+        .setDepth(6);
+    }
 
-    this.cameras.main.setBounds(0, 0, location.width, location.height);
-    this.cameras.main.startFollow(this.playerDot, true, 0.1, 0.1);
-    this.cameras.main.setZoom(1.05);
-    this.cameras.main.centerOn(this.session.player.x, this.session.player.y);
+    this.textures.addCanvas("wolf_0", paintWolf(0));
+    this.textures.addCanvas("wolf_1", paintWolf(1));
+    const wolf = this.session.world.encounters[0];
+    this.wolfSprite = this.add.image(wolf.x, wolf.y, "wolf_0").setDepth(8);
+
+    const { player } = this.session;
+    const face = facingFrom(player.facing);
+    this.playerSprite = this.add
+      .image(player.x, player.y, heroTextureKey(player.raceId, player.classId, face, 0))
+      .setDepth(10);
+
+    this.cameras.main.setBounds(0, 0, OAKVALE_ROWS[0].length * TILE_SIZE, OAKVALE_ROWS.length * TILE_SIZE);
+    this.cameras.main.setZoom(3);
+    this.cameras.main.startFollow(this.playerSprite, true, 0.16, 0.16);
+    this.cameras.main.roundPixels = true;
 
     const keyboard = this.input.keyboard;
     this.keys = keyboard
@@ -54,11 +76,13 @@ export class WorldScene extends Phaser.Scene {
           A: keyboard.addKey("A"),
           S: keyboard.addKey("S"),
           D: keyboard.addKey("D"),
+          J: keyboard.addKey("J"),
         }
       : {};
+    this.keys.J?.on("down", () => this.session.attack());
   }
 
-  update(_time: number, delta: number): void {
+  update(time: number, delta: number): void {
     let x = this.shell.joystick.vector.x;
     let y = this.shell.joystick.vector.y;
     if (this.keys.A?.isDown) x -= 1;
@@ -69,76 +93,58 @@ export class WorldScene extends Phaser.Scene {
     this.session.update(delta / 1000);
 
     const { player } = this.session;
-    this.playerDot.setPosition(player.x, player.y);
-    this.facing.setPosition(player.x + player.facing.x * 18, player.y + player.facing.y * 18);
+    const moving = Math.hypot(x, y) > 0.01 && !this.session.world.combat;
+    if (moving && time > this.animAt) {
+      this.frame = this.frame === 0 ? 1 : 0;
+      this.animAt = time + 180;
+    }
+    const face = facingFrom(player.facing);
+    const key = heroTextureKey(player.raceId, player.classId, face, moving ? this.frame : 0);
+    this.playerSprite.setTexture(key);
+    this.playerSprite.setPosition(Math.round(player.x), Math.round(player.y));
+
+    const wolf = this.session.world.encounters[0];
+    this.wolfSprite.setVisible(wolf.alive);
+    this.wolfSprite.setTexture(time % 400 < 200 ? "wolf_0" : "wolf_1");
+
     syncHud(this.shell, this.session);
   }
 
-  private drawLocation(location: LocationDef): void {
-    const g = this.add.graphics();
-    g.fillStyle(Number.parseInt(location.ground.slice(1), 16), 1);
-    g.fillRect(0, 0, location.width, location.height);
-
-    g.fillStyle(Number.parseInt(location.path.slice(1), 16), 1);
-    if (location.id === "oakvale") {
-      g.fillRect(640, 80, 120, 900);
-      g.fillRect(220, 560, 960, 90);
-    }
-
-    const fill = BUILDING_FILL[location.kind] ?? 0x4a4038;
-    for (const rect of location.collision) {
-      const edge =
-        rect.w >= location.width - 40 || rect.h >= location.height - 40;
-      g.fillStyle(edge ? 0x241c16 : fill, 1);
-      g.fillRect(rect.x, rect.y, rect.w, rect.h);
-      if (!edge) {
-        g.fillStyle(0x000000, 0.18);
-        g.fillRect(rect.x, rect.y + rect.h - 10, rect.w, 10);
+  private cacheHeroFrames(): void {
+    const { raceId, classId } = this.session.player;
+    const facings: Facing[] = ["down", "up", "left", "right"];
+    for (const facing of facings) {
+      for (const frame of [0, 1] as const) {
+        const key = heroTextureKey(raceId, classId, facing, frame);
+        if (!this.textures.exists(key)) {
+          this.textures.addCanvas(key, paintHero(raceId, classId, facing, frame));
+        }
       }
-    }
-
-    for (const place of location.places) {
-      this.add
-        .text(place.x, place.y, place.name, {
-          fontFamily: "Georgia, serif",
-          fontSize: "14px",
-          color: "#f3e6cf",
-          stroke: "#1a1410",
-          strokeThickness: 4,
-        })
-        .setOrigin(0.5, 0.5)
-        .setDepth(4);
-    }
-
-    g.lineStyle(2, 0xd4b483, 0.5);
-    for (const exit of location.exits) {
-      g.strokeRect(exit.rect.x, exit.rect.y, exit.rect.w, exit.rect.h);
     }
   }
 
-  private drawNpcs(locationId: string): void {
-    const npcs = this.session.catalog.npcs.filter((npc: NpcDef) => npc.locationId === locationId);
-    for (const npc of npcs) {
-      this.add.circle(npc.marker.x, npc.marker.y, 10, 0xd4b483).setDepth(5);
+  private drawTiles(): void {
+    OAKVALE_ROWS.forEach((row, ty) => {
+      [...row].forEach((cell, tx) => {
+        const kind = cell === "w" ? "." : cell;
+        const key = `tile_${kind}_${(tx + ty) % 4}`;
+        if (!this.textures.exists(key)) {
+          this.textures.addCanvas(key, paintTile(kind, tx + ty * 3));
+        }
+        this.add.image(tx * TILE_SIZE + 8, ty * TILE_SIZE + 8, key).setDepth(0);
+      });
+    });
+    for (const place of this.session.catalog.location("oakvale").places) {
       this.add
-        .text(npc.marker.x, npc.marker.y - 18, npc.name, {
-          fontFamily: "Georgia, serif",
-          fontSize: "12px",
-          color: "#ead9ba",
+        .text(place.x, place.y - 6, place.name, {
+          fontFamily: "monospace",
+          fontSize: "8px",
+          color: "#f3e6cf",
           stroke: "#1a1410",
           strokeThickness: 3,
         })
         .setOrigin(0.5)
-        .setDepth(5);
+        .setDepth(4);
     }
-  }
-
-  private drawPlayer(): void {
-    const color = CLASS_COLOR[this.session.player.classId] ?? 0xf3e6cf;
-    this.playerDot = this.add.circle(this.session.player.x, this.session.player.y, 16, color).setDepth(10);
-    this.playerDot.setStrokeStyle(3, 0x1a1410);
-    this.facing = this.add
-      .triangle(this.session.player.x, this.session.player.y + 18, 0, 0, 8, 12, -8, 12, 0xf3e6cf)
-      .setDepth(11);
   }
 }

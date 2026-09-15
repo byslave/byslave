@@ -79,7 +79,7 @@ export function createPlayer(
     x: spawn.x,
     y: spawn.y,
     locationId: "oakvale",
-    radius: 16,
+    radius: 6,
     facing: { x: 0, y: 1 },
     equipment,
     inventory,

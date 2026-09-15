@@ -1,5 +1,6 @@
 import "./shell.css";
 import { VirtualJoystick } from "../input/VirtualJoystick";
+import { paintHero } from "../pixel/sprites";
 import type { GameSession } from "@/application/GameSession";
 
 export interface Shell {
@@ -10,7 +11,11 @@ export interface Shell {
   setMinimap(text: string): void;
   setHint(text: string | null): void;
   setBars(hp: number, resource: number): void;
+  setDiceLog(text: string): void;
+  setAttackEnabled(on: boolean): void;
+  setTracker(text: string): void;
   onNewGame(handler: (raceId: string, classId: string) => void): void;
+  onAttack(handler: () => void): void;
 }
 
 export function mountShell(): Shell {
@@ -20,7 +25,7 @@ export function mountShell(): Shell {
     <section class="screen" id="title-screen">
       <div class="kicker">Northmarch</div>
       <h1>The Blackthorn Curse</h1>
-      <p class="blurb">A single-player medieval fantasy RPG. Phase 1: walk Oakvale. Combat, quests, and the necromancer come later — the bones are already in the catalog.</p>
+      <p class="blurb">A 2D pixel D&amp;D town. Walk Oakvale, pick a race and class you can see, and fight the gate wolf with d20 rolls.</p>
       <div class="stack">
         <button class="btn primary" id="btn-new">New Game</button>
         <button class="btn" id="btn-continue" disabled>Continue</button>
@@ -28,8 +33,9 @@ export function mountShell(): Shell {
     </section>
     <section class="screen hidden" id="create-screen">
       <div class="kicker">Character</div>
-      <h2>Choose your blood and calling</h2>
-      <p class="blurb" id="create-copy">Races grant small passives. Classes change how you will fight.</p>
+      <h2>Choose your adventurer</h2>
+      <canvas id="hero-preview" class="hero-preview" width="32" height="32"></canvas>
+      <p class="blurb" id="create-copy">Each race and class has its own pixel sprite.</p>
       <div class="kicker">Race</div>
       <div class="choices" id="race-choices"></div>
       <div class="kicker">Class</div>
@@ -46,15 +52,16 @@ export function mountShell(): Shell {
         </div>
         <div class="minimap" id="minimap">Oakvale Village</div>
       </div>
-      <div class="tracker">Main story: The Blackthorn Curse<br/>Walk the village. Later phases add steel.</div>
+      <div class="tracker" id="tracker">Walk the square. A wolf hunts near the well. J / Attack rolls a d20.</div>
+      <div class="dice-log" id="dice-log"></div>
       <div class="hint" id="hint"></div>
-      <div class="phase">PHASE 1 · MOVEMENT</div>
+      <div class="phase">PIXEL TOWN · D&D DICE</div>
       <div class="actions">
         <button disabled>A1</button>
         <button disabled>A2</button>
         <button disabled>A3</button>
         <button disabled>A4</button>
-        <button class="atk" disabled>Attack</button>
+        <button class="atk" id="btn-attack">Attack</button>
         <button disabled>Dodge</button>
         <button disabled>Potion</button>
       </div>
@@ -75,6 +82,7 @@ export function mountShell(): Shell {
   let raceId = "human";
   let classId = "warrior";
   let startHandler: ((raceId: string, classId: string) => void) | null = null;
+  let attackHandler: (() => void) | null = null;
 
   const races = [
     ["human", "Human", "+2 LUK, +5% XP"],
@@ -83,15 +91,24 @@ export function mountShell(): Shell {
     ["orc", "Orc", "+2 STR +1 VIT, attack"],
   ];
   const classes = [
-    ["warrior", "Warrior", "Melee · stamina"],
-    ["rogue", "Rogue", "Melee · crits"],
-    ["mage", "Mage", "Caster · mana"],
-    ["ranger", "Ranger", "Ranged · kiting"],
-    ["paladin", "Paladin", "Hybrid · sustain"],
+    ["warrior", "Warrior", "Melee · 1d8+STR"],
+    ["rogue", "Rogue", "Daggers · 1d6+DEX"],
+    ["mage", "Mage", "Cantrip · 1d10+INT"],
+    ["ranger", "Ranger", "Bow · 1d8+DEX"],
+    ["paladin", "Paladin", "Mace · 1d8+STR"],
   ];
 
   const raceBox = root.querySelector("#race-choices") as HTMLElement;
   const classBox = root.querySelector("#class-choices") as HTMLElement;
+  const preview = root.querySelector("#hero-preview") as HTMLCanvasElement;
+
+  const paintPreview = () => {
+    const sprite = paintHero(raceId, classId, "down", 0);
+    const ctx = preview.getContext("2d")!;
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, 32, 32);
+    ctx.drawImage(sprite, 0, 0);
+  };
 
   const paint = () => {
     raceBox.innerHTML = races
@@ -106,6 +123,7 @@ export function mountShell(): Shell {
           `<button class="btn ${id === classId ? "selected" : ""}" data-class="${id}">${name}<small>${note}</small></button>`,
       )
       .join("");
+    paintPreview();
   };
   paint();
 
@@ -125,12 +143,19 @@ export function mountShell(): Shell {
   root.querySelector("#btn-new")?.addEventListener("click", () => {
     root.querySelector("#title-screen")?.classList.add("hidden");
     root.querySelector("#create-screen")?.classList.remove("hidden");
+    paintPreview();
   });
   root.querySelector("#btn-enter")?.addEventListener("click", () => {
     startHandler?.(raceId, classId);
   });
+  root.querySelector("#btn-attack")?.addEventListener("click", () => {
+    attackHandler?.();
+  });
 
   const hintEl = root.querySelector("#hint") as HTMLElement;
+  const diceEl = root.querySelector("#dice-log") as HTMLElement;
+  const attackBtn = root.querySelector("#btn-attack") as HTMLButtonElement;
+  const trackerEl = root.querySelector("#tracker") as HTMLElement;
 
   return {
     joystick,
@@ -162,8 +187,20 @@ export function mountShell(): Shell {
       hpFill.style.width = `${Math.round(hp * 100)}%`;
       resFill.style.width = `${Math.round(resource * 100)}%`;
     },
+    setDiceLog(text: string) {
+      diceEl.textContent = text;
+    },
+    setAttackEnabled(on: boolean) {
+      attackBtn.disabled = !on;
+    },
+    setTracker(text: string) {
+      trackerEl.innerHTML = text;
+    },
     onNewGame(handler) {
       startHandler = handler;
+    },
+    onAttack(handler) {
+      attackHandler = handler;
     },
   };
 }
@@ -175,6 +212,19 @@ export function syncHud(shell: Shell, session: GameSession): void {
     player.stamina / Math.max(1, player.derived.staminaMax),
   );
   const location = session.catalog.location(player.locationId);
-  shell.setMinimap(`${location.name}`);
-  shell.setHint(session.world.exitHint);
+  shell.setMinimap(location.name);
+  const combat = session.world.combat;
+  if (combat) {
+    shell.setHint(null);
+    shell.setDiceLog(combat.log.join("\n"));
+    shell.setAttackEnabled(combat.turn === "player");
+    shell.setTracker(
+      `${combat.enemyName}<br/>HP ${combat.enemyHp}/${combat.enemyMaxHp} · ${combat.turn === "player" ? "Your turn" : "Enemy turn"}`,
+    );
+  } else {
+    shell.setDiceLog("");
+    shell.setAttackEnabled(false);
+    shell.setHint(session.world.banner ?? session.world.exitHint);
+    shell.setTracker("Walk the square. A wolf hunts near the well.<br/>J / Attack rolls a d20.");
+  }
 }

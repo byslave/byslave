@@ -24,24 +24,21 @@ Buffs are `{ stat, op: add|mul, value, sourceId, expiresAt? }`. Equipment is jus
 
 ## 3. Combat
 
-**Owns:** targeting, ability use, resource spend, damage, death.
+**Owns:** d20 attack rolls, damage dice, turn order, death.
 
-Real-time. The player has:
+This is a **D&D dice** game, not real-time hack-and-slash.
 
-- basic attack (weapon style from class)
-- 3–4 class abilities
-- dodge (stamina)
-- potion (inventory quick-slot)
+On the current pixel town, walking into the gate wolf starts a turn:
 
-Hit resolution is domain-only:
+1. Player taps Attack (or J) → `d20 + proficiency + ability mod` vs target AC
+2. Nat 1 always misses, nat 20 crits (damage dice rolled twice)
+3. Hit: class damage die + ability mod (`1d8+STR` etc.)
+4. Enemy rolls the same way against player AC (`10 + DEX mod + class AC bonus`)
+5. Emit `combat.hit` / `combat.killed`
 
-1. spend resource if the action allows it
-2. roll accuracy (v1: melee in range always hits unless dodging)
-3. compute damage from formulas + crit
-4. apply to target HP
-5. emit `combat.hit` / `combat.killed`
+Town walking stays analog (Archero-style stick + visible 2D sprite). Combat is frozen turns with visible dice text.
 
-Presentation plays animations from those events. It does not decide whether a goblin died.
+Presentation never decides the roll. `src/domain/combat/dice.ts` does.
 
 ## 4. Enemy AI
 

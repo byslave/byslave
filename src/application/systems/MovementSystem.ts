@@ -11,12 +11,13 @@ export class MovementSystem implements GameSystem {
     const intent = ctx.world.moveIntent;
     const len = Math.hypot(intent.x, intent.y);
     const location = ctx.world.location(ctx.catalog);
+    if (ctx.world.combat) return;
 
     if (len > 0.01) {
       const nx = intent.x / len;
       const ny = intent.y / len;
       player.facing = { x: nx, y: ny };
-      const speed = player.derived.movementSpeed ?? 170;
+      const speed = 64;
       const tryX = player.x + nx * speed * dt;
       if (!blocked(tryX, player.y, player.radius, location)) player.x = tryX;
       const tryY = player.y + ny * speed * dt;

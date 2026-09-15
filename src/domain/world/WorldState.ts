@@ -3,6 +3,25 @@ import type { LocationDef } from "@/content/schema";
 import type { Player } from "@/domain/character/createCharacter";
 import { QuestLog } from "@/domain/quests/QuestLog";
 import type { Rect, WorldFlagValue } from "@/core/types";
+import { OAKVALE_MARKERS } from "@/content/oakvaleMap";
+
+export interface Encounter {
+  id: string;
+  enemyId: string;
+  x: number;
+  y: number;
+  alive: boolean;
+}
+
+export interface CombatState {
+  encounterId: string;
+  enemyId: string;
+  enemyName: string;
+  enemyHp: number;
+  enemyMaxHp: number;
+  turn: "player" | "enemy";
+  log: string[];
+}
 
 export class WorldState {
   player: Player;
@@ -11,6 +30,12 @@ export class WorldState {
   quests = new QuestLog();
   moveIntent = { x: 0, y: 0 };
   exitHint: string | null = null;
+  banner: string | null = null;
+  combat: CombatState | null = null;
+  encounters: Encounter[] = [
+    { id: "oakvale_wolf", enemyId: "wolf", x: OAKVALE_MARKERS.wolf.x, y: OAKVALE_MARKERS.wolf.y, alive: true },
+  ];
+  enemyTurnIn = 0;
 
   constructor(player: Player) {
     this.player = player;

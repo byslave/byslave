@@ -48,6 +48,11 @@ export const classSchema = z.object({
   abilityIds: z.array(z.string()).min(3).max(4),
   strengths: z.array(z.string()),
   weaknesses: z.array(z.string()),
+  dice: z.object({
+    attackAbility: z.enum(["strength", "dexterity", "intelligence"]),
+    damage: z.string(),
+    acBonus: z.number(),
+  }),
 });
 
 export const abilitySchema = z.object({
@@ -125,6 +130,9 @@ export const enemySchema = z.object({
   lootTableId: z.string(),
   tags: z.array(z.string()),
   attackPattern: attackPatternSchema,
+  ac: z.number().optional(),
+  attackBonus: z.number().optional(),
+  damageDice: z.string().optional(),
   phases: z
     .array(z.object({ hpRatio: z.number(), notes: z.string() }))
     .optional(),

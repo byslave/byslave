@@ -20,6 +20,8 @@
   display: flex;
   flex-direction: column;
   padding: max(24px, env(safe-area-inset-top)) 22px 28px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .screen.hidden,
@@ -99,8 +101,30 @@ button.btn:disabled {
   margin-top: 4px;
 }
 
-.choices button.selected {
-  outline: 2px solid #d4b483;
+.hero-preview {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #2a2018;
+  border: 2px solid #d4b483;
+  border-radius: 8px;
+  align-self: center;
+  margin: 4px auto 8px;
+}
+
+.dice-log {
+  margin: 8px 12px;
+  width: min(280px, 70vw);
+  min-height: 52px;
+  background: rgba(16, 12, 10, 0.72);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #ead9ba;
+  font-family: monospace;
+  white-space: pre-wrap;
 }
 
 .hud {
