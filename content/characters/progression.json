@@ -1,0 +1,20 @@
+{
+  "levelCap": 20,
+  "attributeGainPerLevel": {
+    "warrior": { "strength": 2, "dexterity": 1, "intelligence": 0, "vitality": 2, "luck": 0 },
+    "rogue": { "strength": 1, "dexterity": 2, "intelligence": 0, "vitality": 1, "luck": 1 },
+    "mage": { "strength": 0, "dexterity": 1, "intelligence": 2, "vitality": 1, "luck": 1 },
+    "ranger": { "strength": 1, "dexterity": 2, "intelligence": 0, "vitality": 1, "luck": 1 },
+    "paladin": { "strength": 1, "dexterity": 0, "intelligence": 1, "vitality": 2, "luck": 0 }
+  },
+  "potion": {
+    "healthRestore": 0.4,
+    "cooldownMs": 8000
+  },
+  "dodge": {
+    "staminaCost": 18,
+    "durationMs": 280,
+    "distance": 78,
+    "cooldownMs": 700
+  }
+}

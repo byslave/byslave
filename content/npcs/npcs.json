@@ -1,0 +1,85 @@
+[
+  {
+    "id": "mira",
+    "name": "Elder Mira",
+    "title": "Elder of Oakvale",
+    "locationId": "oakvale",
+    "role": "quest",
+    "dialogueTreeId": "dlg_mira",
+    "marker": { "x": 700, "y": 360 }
+  },
+  {
+    "id": "brann",
+    "name": "Brann Ironkettle",
+    "title": "Blacksmith",
+    "locationId": "oakvale",
+    "role": "shop",
+    "dialogueTreeId": "dlg_brann",
+    "shopId": "shop_blacksmith",
+    "marker": { "x": 355, "y": 440 }
+  },
+  {
+    "id": "lila",
+    "name": "Lila Reed",
+    "title": "Shopkeeper",
+    "locationId": "oakvale",
+    "role": "shop",
+    "dialogueTreeId": "dlg_lila",
+    "shopId": "shop_general",
+    "marker": { "x": 1015, "y": 440 }
+  },
+  {
+    "id": "anwen",
+    "name": "Sister Anwen",
+    "title": "Healer",
+    "locationId": "oakvale",
+    "role": "healer",
+    "dialogueTreeId": "dlg_anwen",
+    "marker": { "x": 1040, "y": 200 }
+  },
+  {
+    "id": "tomas",
+    "name": "Tomas Vale",
+    "title": "Innkeeper",
+    "locationId": "oakvale",
+    "role": "inn",
+    "dialogueTreeId": "dlg_tomas",
+    "marker": { "x": 650, "y": 720 }
+  },
+  {
+    "id": "durn",
+    "name": "Captain Durn",
+    "title": "Watch Captain",
+    "locationId": "oakvale",
+    "role": "info",
+    "dialogueTreeId": "dlg_durn",
+    "marker": { "x": 700, "y": 160 }
+  },
+  {
+    "id": "sela",
+    "name": "Sela",
+    "title": "Trapper",
+    "locationId": "darkwood",
+    "role": "quest",
+    "dialogueTreeId": "dlg_sela",
+    "marker": { "x": 1180, "y": 700 }
+  },
+  {
+    "id": "ewan",
+    "name": "Ewan",
+    "title": "Miller",
+    "locationId": "goblin_cave",
+    "role": "quest",
+    "dialogueTreeId": "dlg_ewan",
+    "marker": { "x": 980, "y": 220 }
+  },
+  {
+    "id": "shade",
+    "name": "Inscribed Shade",
+    "title": "Echo",
+    "locationId": "ancient_ruins",
+    "role": "info",
+    "dialogueTreeId": "dlg_shade",
+    "marker": { "x": 650, "y": 500 }
+  }
+]

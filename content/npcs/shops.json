@@ -1,0 +1,14 @@
+{
+  "shop_blacksmith": {
+    "id": "shop_blacksmith",
+    "buyMultiplier": 1,
+    "sellMultiplier": 0.4,
+    "itemIds": ["iron_sword", "padded_cap", "travelers_jerkin", "work_gloves", "mud_boots"]
+  },
+  "shop_general": {
+    "id": "shop_general",
+    "buyMultiplier": 1,
+    "sellMultiplier": 0.4,
+    "itemIds": ["health_potion", "mana_potion", "oakvale_charm", "copper_ring"]
+  }
+}

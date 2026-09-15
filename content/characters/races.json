@@ -1,0 +1,61 @@
+[
+  {
+    "id": "human",
+    "name": "Human",
+    "description": "Adaptable folk of the Northmarch. They learn quickly and fortune favors them.",
+    "attributeBonuses": { "luck": 2 },
+    "passives": [
+      {
+        "id": "adaptability",
+        "name": "Adaptability",
+        "description": "Gain 5% more experience."
+      }
+    ],
+    "modifiers": [{ "stat": "xpGain", "op": "mul", "value": 0.05, "sourceId": "race:human" }]
+  },
+  {
+    "id": "elf",
+    "name": "Elf",
+    "description": "Graceful woodland people with keen senses and a gift for the arcane.",
+    "attributeBonuses": { "dexterity": 2, "intelligence": 1, "vitality": -1 },
+    "passives": [
+      {
+        "id": "moonwell",
+        "name": "Moonwell Blood",
+        "description": "Maximum mana increased by 8%."
+      }
+    ],
+    "modifiers": [{ "stat": "manaMax", "op": "mul", "value": 0.08, "sourceId": "race:elf" }]
+  },
+  {
+    "id": "dwarf",
+    "name": "Dwarf",
+    "description": "Stout artisans of stone and steel. Hard to move, harder to kill.",
+    "attributeBonuses": { "vitality": 2, "strength": 1, "dexterity": -1 },
+    "passives": [
+      {
+        "id": "stoneflesh",
+        "name": "Stoneflesh",
+        "description": "Defense increased by 8%."
+      }
+    ],
+    "modifiers": [{ "stat": "defense", "op": "mul", "value": 0.08, "sourceId": "race:dwarf" }]
+  },
+  {
+    "id": "orc",
+    "name": "Orc",
+    "description": "Fierce warriors whose blood runs hot. They strike hard and waste little time on subtlety.",
+    "attributeBonuses": { "strength": 2, "vitality": 1, "intelligence": -1 },
+    "passives": [
+      {
+        "id": "warblood",
+        "name": "Warblood",
+        "description": "Attack damage increased by 6%. Maximum mana reduced by 10%."
+      }
+    ],
+    "modifiers": [
+      { "stat": "attackDamage", "op": "mul", "value": 0.06, "sourceId": "race:orc" },
+      { "stat": "manaMax", "op": "mul", "value": -0.1, "sourceId": "race:orc" }
+    ]
+  }
+]

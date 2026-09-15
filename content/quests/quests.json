@@ -1,0 +1,165 @@
+[
+  {
+    "id": "quest_wolves",
+    "title": "Wolves at the Gate",
+    "description": "Elder Mira asked you to drive wolves from Oakvale's palisade.",
+    "chapterId": "chapter_1",
+    "type": "kill",
+    "giverNpcId": "mira",
+    "turnInNpcId": "mira",
+    "objectives": [
+      { "id": "kill_wolves", "type": "kill", "enemyId": "wolf", "count": 5, "description": "Slay wolves near Oakvale" }
+    ],
+    "rewards": { "xp": 80, "gold": 25, "itemIds": ["health_potion"] },
+    "nextQuestId": "quest_iron",
+    "setFlagsOnComplete": ["chapter1_wolves_done"]
+  },
+  {
+    "id": "quest_iron",
+    "title": "Iron and Ash",
+    "description": "Deliver Elder Mira's report to Brann the blacksmith.",
+    "chapterId": "chapter_1",
+    "type": "deliver",
+    "giverNpcId": "mira",
+    "turnInNpcId": "brann",
+    "objectives": [
+      { "id": "deliver_report", "type": "deliver", "itemId": "mira_report", "npcId": "brann", "description": "Give the report to Brann" }
+    ],
+    "rewards": { "xp": 50, "gold": 15, "itemIds": ["iron_sword"] },
+    "nextQuestId": "quest_darkwood",
+    "requiredFlags": ["chapter1_wolves_done"],
+    "setFlagsOnComplete": ["chapter_1_complete"]
+  },
+  {
+    "id": "quest_darkwood",
+    "title": "Into the Trees",
+    "description": "Scout Darkwood Forest and see how far the blight has spread.",
+    "chapterId": "chapter_2",
+    "type": "explore",
+    "giverNpcId": "mira",
+    "objectives": [
+      { "id": "explore_darkwood", "type": "explore", "locationId": "darkwood", "description": "Enter Darkwood Forest" }
+    ],
+    "rewards": { "xp": 60, "gold": 10 },
+    "nextQuestId": "quest_samples",
+    "requiredFlags": ["chapter_1_complete"],
+    "setFlagsOnComplete": ["reached_darkwood"]
+  },
+  {
+    "id": "quest_samples",
+    "title": "Blight Samples",
+    "description": "Collect blighted hearts for Sela the trapper.",
+    "chapterId": "chapter_2",
+    "type": "collect",
+    "giverNpcId": "sela",
+    "turnInNpcId": "sela",
+    "objectives": [
+      { "id": "collect_hearts", "type": "collect", "itemId": "blighted_heart", "count": 4, "description": "Gather blighted hearts" }
+    ],
+    "rewards": { "xp": 90, "gold": 30 },
+    "nextQuestId": "quest_cave",
+    "setFlagsOnComplete": ["chapter_2_complete"]
+  },
+  {
+    "id": "quest_cave",
+    "title": "Goblin Nest",
+    "description": "Clear goblins from the cave west of Darkwood.",
+    "chapterId": "chapter_3",
+    "type": "kill",
+    "giverNpcId": "sela",
+    "objectives": [
+      { "id": "kill_goblins", "type": "kill", "enemyId": "goblin", "count": 8, "description": "Slay goblins in the cave" },
+      { "id": "explore_cave", "type": "explore", "locationId": "goblin_cave", "description": "Enter Goblin Cave" }
+    ],
+    "rewards": { "xp": 110, "gold": 40 },
+    "nextQuestId": "quest_escort",
+    "requiredFlags": ["chapter_2_complete"]
+  },
+  {
+    "id": "quest_escort",
+    "title": "The Missing Miller",
+    "description": "Escort Ewan from the goblin cage back to Oakvale.",
+    "chapterId": "chapter_3",
+    "type": "escort",
+    "giverNpcId": "ewan",
+    "turnInNpcId": "mira",
+    "objectives": [
+      { "id": "talk_ewan", "type": "talk", "npcId": "ewan", "description": "Find Ewan" },
+      { "id": "escort_ewan", "type": "escort", "npcId": "ewan", "toLocationId": "oakvale", "description": "Bring Ewan to Oakvale" }
+    ],
+    "rewards": { "xp": 130, "gold": 50, "itemIds": ["oakvale_charm"] },
+    "nextQuestId": "quest_ruins",
+    "setFlagsOnComplete": ["chapter_3_complete"]
+  },
+  {
+    "id": "quest_ruins",
+    "title": "Stone Memory",
+    "description": "Search the Ancient Ruins and speak with whatever still remembers.",
+    "chapterId": "chapter_4",
+    "type": "explore",
+    "giverNpcId": "mira",
+    "objectives": [
+      { "id": "explore_ruins", "type": "explore", "locationId": "ancient_ruins", "description": "Explore the Ancient Ruins" },
+      { "id": "talk_shade", "type": "talk", "npcId": "shade", "description": "Speak with the inscribed shade" }
+    ],
+    "rewards": { "xp": 120, "gold": 35 },
+    "nextQuestId": "quest_graveyard",
+    "requiredFlags": ["chapter_3_complete"]
+  },
+  {
+    "id": "quest_graveyard",
+    "title": "Bones of the Garrison",
+    "description": "Put down the risen dead in the Forgotten Graveyard.",
+    "chapterId": "chapter_4",
+    "type": "kill",
+    "giverNpcId": "shade",
+    "objectives": [
+      { "id": "kill_skeletons", "type": "kill", "enemyId": "skeleton", "count": 6, "description": "Destroy skeletons" },
+      { "id": "explore_graveyard", "type": "explore", "locationId": "forgotten_graveyard", "description": "Enter the Forgotten Graveyard" }
+    ],
+    "rewards": { "xp": 150, "gold": 45 },
+    "nextQuestId": "quest_gate",
+    "setFlagsOnComplete": ["chapter_4_complete", "castle_road_open"]
+  },
+  {
+    "id": "quest_gate",
+    "title": "Open the Gate",
+    "description": "Defeat the Blackthorn Warden and take the castle key.",
+    "chapterId": "chapter_5",
+    "type": "boss",
+    "giverNpcId": "durn",
+    "objectives": [
+      { "id": "kill_warden", "type": "boss", "enemyId": "blackthorn_warden", "description": "Defeat the Blackthorn Warden" }
+    ],
+    "rewards": { "xp": 220, "gold": 80 },
+    "nextQuestId": "quest_heart",
+    "requiredFlags": ["chapter_4_complete"]
+  },
+  {
+    "id": "quest_heart",
+    "title": "Heart of Night",
+    "description": "End Malrik the Hollow and silence the Blackthorn Heart.",
+    "chapterId": "chapter_5",
+    "type": "boss",
+    "giverNpcId": "mira",
+    "objectives": [
+      { "id": "explore_castle", "type": "explore", "locationId": "blackthorn_castle", "description": "Enter Blackthorn Castle" },
+      { "id": "kill_malrik", "type": "boss", "enemyId": "malrik_boss", "description": "Defeat Malrik the Hollow" }
+    ],
+    "rewards": { "xp": 400, "gold": 150, "itemIds": ["blackthorn_heart_shard"] },
+    "setFlagsOnComplete": ["campaign_complete"]
+  },
+  {
+    "id": "quest_bandits",
+    "title": "Bandits on the Road",
+    "description": "Captain Durn wants the Darkwood road cleared of bandits.",
+    "chapterId": "side",
+    "type": "kill",
+    "giverNpcId": "durn",
+    "turnInNpcId": "durn",
+    "objectives": [
+      { "id": "kill_bandits", "type": "kill", "enemyId": "bandit", "count": 4, "description": "Slay bandits" }
+    ],
+    "rewards": { "xp": 70, "gold": 40 }
+  }
+]

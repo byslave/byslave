@@ -1,0 +1,63 @@
+[
+  {
+    "id": "pack_lunge",
+    "name": "Pack lunge",
+    "aggroRange": 160,
+    "leashRange": 420,
+    "preferredDistance": 36,
+    "lungeCooldownMs": 2200,
+    "notes": "Close quickly, periodic lunge, groups share aggro."
+  },
+  {
+    "id": "skirmish",
+    "name": "Skirmish",
+    "aggroRange": 150,
+    "leashRange": 400,
+    "preferredDistance": 48,
+    "fleeHpRatio": 0.25,
+    "notes": "Hit, backstep, flee when low."
+  },
+  {
+    "id": "aggressive_melee",
+    "name": "Aggressive melee",
+    "aggroRange": 170,
+    "leashRange": 450,
+    "preferredDistance": 40,
+    "heavyEvery": 3,
+    "notes": "Walks in and commits. Occasional heavy attack."
+  },
+  {
+    "id": "slow_relentless",
+    "name": "Slow relentless",
+    "aggroRange": 140,
+    "leashRange": 500,
+    "preferredDistance": 42,
+    "notes": "Ignores kiting somewhat. Never flees."
+  },
+  {
+    "id": "kiting_ranged",
+    "name": "Kiting ranged",
+    "aggroRange": 240,
+    "leashRange": 520,
+    "preferredDistance": 180,
+    "minDistance": 110,
+    "notes": "Keeps a distance band and repositions."
+  },
+  {
+    "id": "backline_caster",
+    "name": "Backline caster",
+    "aggroRange": 220,
+    "leashRange": 480,
+    "preferredDistance": 200,
+    "summonHpRatios": [0.6, 0.3],
+    "notes": "Strafes, bolts, summons at HP thresholds."
+  },
+  {
+    "id": "boss_phased",
+    "name": "Phased boss",
+    "aggroRange": 260,
+    "leashRange": 800,
+    "preferredDistance": 50,
+    "notes": "Reads enemy.phases. Telegraphed attacks. No leash inside arena."
+  }
+]

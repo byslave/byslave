@@ -1,0 +1,271 @@
+.shell {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  font-family: "Georgia", "Times New Roman", serif;
+  color: #f3e6cf;
+}
+
+.shell * {
+  box-sizing: border-box;
+}
+
+.screen {
+  pointer-events: auto;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(1200px 600px at 50% 0%, #3a2a1c 0%, #1a1410 55%, #100c0a 100%);
+  display: flex;
+  flex-direction: column;
+  padding: max(24px, env(safe-area-inset-top)) 22px 28px;
+}
+
+.screen.hidden,
+.hud.hidden {
+  display: none;
+}
+
+.kicker {
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: #d4b483;
+  margin: 12px 0 8px;
+}
+
+h1,
+h2 {
+  margin: 0 0 12px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: 34px;
+}
+
+.blurb {
+  max-width: 28rem;
+  color: #d7cbb6;
+  line-height: 1.45;
+  font-size: 16px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+
+button.btn {
+  pointer-events: auto;
+  appearance: none;
+  border: 1px solid #d4b483;
+  background: #2a2018;
+  color: #f3e6cf;
+  font: inherit;
+  font-size: 18px;
+  padding: 14px 16px;
+  min-height: 52px;
+  border-radius: 10px;
+}
+
+button.btn.primary {
+  background: #6b3a1f;
+}
+
+button.btn:disabled {
+  opacity: 0.4;
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0 18px;
+}
+
+.choices button {
+  text-align: left;
+}
+
+.choices button small {
+  display: block;
+  color: #b9a88c;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.choices button.selected {
+  outline: 2px solid #d4b483;
+}
+
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hud-top {
+  display: flex;
+  gap: 10px;
+  padding: max(10px, env(safe-area-inset-top)) 12px 0;
+}
+
+.bars {
+  flex: 1;
+}
+
+.bar {
+  height: 12px;
+  background: #2a211c;
+  border: 1px solid #5a4a3a;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+}
+
+.bar.hp > span {
+  width: 100%;
+  background: #8b2e2e;
+}
+
+.bar.res > span {
+  width: 100%;
+  background: #c4a35a;
+}
+
+.minimap {
+  width: 86px;
+  height: 86px;
+  border: 1px solid #d4b483;
+  background: rgba(16, 12, 10, 0.72);
+  border-radius: 10px;
+  font-size: 11px;
+  padding: 8px;
+  line-height: 1.3;
+}
+
+.tracker {
+  margin: 8px 12px;
+  max-width: 70%;
+  background: rgba(16, 12, 10, 0.55);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #ead9ba;
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  transform: translateX(-50%);
+  background: rgba(16, 12, 10, 0.8);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  text-align: center;
+  width: min(280px, 80vw);
+}
+
+.hint.show {
+  opacity: 1;
+}
+
+.phase {
+  position: absolute;
+  right: 12px;
+  top: max(108px, calc(env(safe-area-inset-top) + 96px));
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: #d4b483;
+}
+
+.actions {
+  position: absolute;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: repeat(2, 56px);
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.actions button {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid #8a7358;
+  background: rgba(42, 32, 24, 0.85);
+  color: #f3e6cf;
+  font-size: 11px;
+}
+
+.actions button.atk {
+  grid-column: 1 / 3;
+  width: 120px;
+  border-radius: 18px;
+  height: 52px;
+  font-size: 15px;
+}
+
+.actions button:disabled {
+  opacity: 0.45;
+}
+
+.stick-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 58%;
+  pointer-events: auto;
+}
+
+.stick-base,
+.stick-knob {
+  position: absolute;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
+  pointer-events: none;
+}
+
+.stick-base.visible,
+.stick-base.visible + .stick-knob,
+.stick-knob.visible {
+  display: block;
+}
+
+.stick-base {
+  background: rgba(243, 230, 207, 0.08);
+  border: 2px solid rgba(212, 180, 131, 0.45);
+}
+
+.stick-base.visible {
+  display: block;
+}
+
+.stick-knob {
+  width: 54px;
+  height: 54px;
+  background: rgba(212, 180, 131, 0.55);
+  display: none;
+}
+
+.stick-base.visible ~ .stick-knob {
+  display: block;
+}

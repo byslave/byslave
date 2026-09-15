@@ -1,0 +1,20 @@
+{
+  "primaries": [
+    { "id": "strength", "name": "Strength", "short": "STR", "description": "Melee power and a small amount of health." },
+    { "id": "dexterity", "name": "Dexterity", "short": "DEX", "description": "Crit chance, ranged power, and movement." },
+    { "id": "intelligence", "name": "Intelligence", "short": "INT", "description": "Mana and spell power." },
+    { "id": "vitality", "name": "Vitality", "short": "VIT", "description": "Health, stamina, and defense." },
+    { "id": "luck", "name": "Luck", "short": "LUK", "description": "Crit, loot bias, and gold finds." }
+  ],
+  "derived": [
+    { "id": "hpMax", "name": "Health", "description": "Maximum hit points." },
+    { "id": "manaMax", "name": "Mana", "description": "Resource for spells and paladin arts." },
+    { "id": "staminaMax", "name": "Stamina", "description": "Resource for attacks, dodge, and martial skills." },
+    { "id": "attackDamage", "name": "Attack Damage", "description": "Outgoing hit power after weapon and attributes." },
+    { "id": "defense", "name": "Defense", "description": "Reduces incoming physical damage." },
+    { "id": "critChance", "name": "Critical Chance", "description": "Chance to deal critical damage. Capped." },
+    { "id": "critDamage", "name": "Critical Damage", "description": "Multiplier applied on a crit." },
+    { "id": "movementSpeed", "name": "Movement Speed", "description": "World units per second." },
+    { "id": "xpGain", "name": "XP Gain", "description": "Multiplier on experience received." }
+  ]
+}
