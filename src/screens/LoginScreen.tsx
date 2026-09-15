@@ -57,7 +57,7 @@ export default function LoginScreen({ progress, onBound }: Props) {
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="nova@blockpatlat.com"
+          placeholder="nova@email.com"
           type="email"
           autoComplete="email"
           inputMode="email"

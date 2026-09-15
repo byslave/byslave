@@ -805,7 +805,7 @@ export default function PlayScreen({ progress, onProgress, onMood }: Props) {
                 Privacy
               </a>
             </div>
-            <p className="legal-note">BLOCK PATLAT 1.0.0 · com.byslave.neonpatlat</p>
+            <p className="legal-note">Neon Blast 1.0.0 · com.byslave.neonpatlat</p>
           </div>
         </div>
       ) : null}

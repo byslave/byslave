@@ -1,7 +1,7 @@
 {
-  "name": "BLOCK PATLAT",
-  "short_name": "BLOCK PATLAT",
-  "description": "Neon arcade puzzle — drag, blast, combo.",
+  "name": "Neon Blast",
+  "short_name": "Neon Blast",
+  "description": "Drag a piece, blast a line, grow the combo. Neon arcade puzzle.",
   "display": "standalone",
   "background_color": "#070A16",
   "theme_color": "#070A16",
@@ -14,6 +14,12 @@
       "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
