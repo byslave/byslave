@@ -6,7 +6,7 @@
     "locationId": "oakvale",
     "role": "quest",
     "dialogueTreeId": "dlg_mira",
-    "marker": { "x": 700, "y": 360 }
+    "marker": { "x": 480, "y": 400 }
   },
   {
     "id": "brann",

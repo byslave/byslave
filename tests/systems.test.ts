@@ -97,5 +97,17 @@ describe("phase 1 movement", () => {
     const inn = oakvale.collision.find((r) => r.w === 190 && r.h === 150)!;
     expect(blocked(inn.x + 20, inn.y + 20, 16, oakvale)).toBe(true);
     expect(blocked(startX, session.player.y, 16, oakvale)).toBe(false);
+
+    session.player.x = 700;
+    session.player.y = 80;
+    session.setMoveIntent(0, 0);
+    session.update(0.05);
+    expect(session.world.exitHint).toMatch(/Darkwood Forest/);
+
+    const walker = new GameSession({ raceId: "human", classId: "ranger" });
+    walker.setMoveIntent(0, -1);
+    for (let i = 0; i < 120; i += 1) walker.update(0.05);
+    expect(walker.player.y).toBeLessThan(160);
+    expect(walker.world.exitHint).toMatch(/Darkwood Forest/);
   });
 });

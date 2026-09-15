@@ -1,7 +1,7 @@
 .shell {
   position: fixed;
   inset: 0;
-  z-index: 5;
+  z-index: 20;
   pointer-events: none;
   font-family: "Georgia", "Times New Roman", serif;
   color: #f3e6cf;
@@ -156,7 +156,7 @@ button.btn:disabled {
 
 .tracker {
   margin: 8px 12px;
-  max-width: 70%;
+  width: min(240px, 58vw);
   background: rgba(16, 12, 10, 0.55);
   padding: 8px 10px;
   border-radius: 8px;
@@ -167,16 +167,19 @@ button.btn:disabled {
 .hint {
   position: absolute;
   left: 50%;
-  top: 38%;
+  top: 22%;
   transform: translateX(-50%);
-  background: rgba(16, 12, 10, 0.8);
-  padding: 8px 12px;
+  background: rgba(16, 12, 10, 0.88);
+  padding: 10px 14px;
+  border: 1px solid #d4b483;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   opacity: 0;
   transition: opacity 0.2s;
   text-align: center;
-  width: min(280px, 80vw);
+  width: min(300px, 84vw);
+  z-index: 8;
+  pointer-events: none;
 }
 
 .hint.show {
