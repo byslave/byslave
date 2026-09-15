@@ -4,7 +4,7 @@
 
 Ship a small, polished, **playable** single-player action RPG on phones. The code must stay modular so later phases add systems instead of rewriting them.
 
-The first slice is not “the whole game.” It is a stable skeleton: content catalogs, typed models, decoupled systems, and a character that can walk around Oakvale.
+The first slice is not “the whole game.” It is a stable skeleton plus a playable pixel town: catalogs, typed models, d20 combat, and a 2D sprite for every race×class.
 
 ## Constraints that drive the design
 
