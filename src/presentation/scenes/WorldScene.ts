@@ -27,6 +27,7 @@ export class WorldScene extends Phaser.Scene {
   shell!: Shell;
   playerSprite!: Phaser.GameObjects.Image;
   wolfSprite!: Phaser.GameObjects.Image;
+  wolfLabel!: Phaser.GameObjects.Text;
   keys: Partial<Record<string, Phaser.Input.Keyboard.Key>> = {};
   frame: 0 | 1 = 0;
   animAt = 0;
@@ -50,6 +51,16 @@ export class WorldScene extends Phaser.Scene {
       .image(wolf.x, wolf.y, sheetKey(wolfSpec.sheet), wolfSpec.frame)
       .setTint(hexToTint(wolfSpec.tint))
       .setDepth(8);
+    this.wolfLabel = this.add
+      .text(wolf.x, wolf.y - 10, "Beast", {
+        fontFamily: "monospace",
+        fontSize: "8px",
+        color: "#f3e6cf",
+        stroke: "#1a1410",
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5)
+      .setDepth(20);
 
     const { player } = this.session;
     const hero = lookupHero(player.raceId, player.classId);
@@ -99,6 +110,7 @@ export class WorldScene extends Phaser.Scene {
 
     const wolf = this.session.world.encounters[0];
     this.wolfSprite.setVisible(wolf.alive);
+    this.wolfLabel.setVisible(wolf.alive);
     this.wolfSprite.setFlipX(time % 800 < 400);
     this.wolfSprite.setDepth(8 + wolf.y);
 
