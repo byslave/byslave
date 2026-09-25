@@ -12,12 +12,14 @@ type Persisted = {
   readNotificationIds: string[];
 };
 
-const empty: Persisted = {
-  profile: null,
-  activities: [],
-  joinedEventIds: [],
-  readNotificationIds: [],
-};
+function blank(): Persisted {
+  return {
+    profile: null,
+    activities: [],
+    joinedEventIds: [],
+    readNotificationIds: [],
+  };
+}
 
 function toPublic(profile: Profile): PublicUser {
   return {
@@ -31,7 +33,7 @@ function toPublic(profile: Profile): PublicUser {
 
 export class DemoRepository implements ActivityRepository {
   readonly mode = 'demo' as const;
-  private persisted: Persisted = empty;
+  private persisted: Persisted = blank();
 
   private snapshot(): AppSnapshot {
     const seed = buildSeed();
@@ -58,9 +60,7 @@ export class DemoRepository implements ActivityRepository {
 
   async load(): Promise<AppSnapshot> {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      this.persisted = { ...empty, ...JSON.parse(raw) };
-    }
+    this.persisted = raw ? { ...blank(), ...JSON.parse(raw) } : blank();
     return this.snapshot();
   }
 
@@ -92,7 +92,7 @@ export class DemoRepository implements ActivityRepository {
   }
 
   async clearLocal() {
-    this.persisted = empty;
+    this.persisted = blank();
     await AsyncStorage.removeItem(STORAGE_KEY);
   }
 }

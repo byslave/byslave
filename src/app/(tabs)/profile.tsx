@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, Card, Field, Screen, SectionTitle } from '../../components/ui';
@@ -13,6 +14,7 @@ const statusText = {
 };
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { profile, mode, modeNote, updateProfile, resetLocal } = useAppState();
   const [editing, setEditing] = useState(false);
   const [age, setAge] = useState(profile?.age?.toString() ?? '');
@@ -21,7 +23,15 @@ export default function ProfileScreen() {
   if (!profile) return null;
 
   return (
-    <Screen footer={<Button label={mode === 'supabase' ? 'Çıkış yap' : 'Demoyu sıfırla'} kind="ghost" onPress={() => void resetLocal()} />}>
+    <Screen footer={
+        <Button
+          label={mode === 'supabase' ? 'Çıkış yap' : 'Demoyu sıfırla'}
+          kind="ghost"
+          onPress={() => {
+            void resetLocal().then(() => router.replace('/onboarding'));
+          }}
+        />
+      }>
       <View style={styles.header}>
         <Avatar label={profile.displayName} color={profile.avatarColor} uri={profile.avatarUri} size={72} />
         <View style={{ flex: 1 }}>
