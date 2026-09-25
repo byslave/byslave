@@ -24,9 +24,13 @@ export default function EventScreen() {
   return (
     <Screen
       footer={
-        <View style={{ gap: space.sm }}>
-          <Button label="Bu etkinliği kaydet" onPress={() => router.push({ pathname: '/(tabs)/record', params: { eventId: event.id } })} />
-          <Button label={joined ? 'Katıldın' : 'Katıl'} kind="ghost" disabled={joined} onPress={() => void joinEvent(event.id)} />
+        <View style={{ flexDirection: 'row', gap: space.sm }}>
+          <View style={{ flex: 1 }}>
+            <Button label={joined ? 'Katıldın' : 'Katıl'} kind="ghost" disabled={joined} onPress={() => void joinEvent(event.id)} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button label="Kaydı bağla" onPress={() => router.push({ pathname: '/(tabs)/record', params: { eventId: event.id } })} />
+          </View>
         </View>
       }
     >

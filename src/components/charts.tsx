@@ -21,8 +21,7 @@ export function ScoreRing({ score }: { score: number }) {
           fill="none"
           strokeDasharray={`${dash} ${circ}`}
           strokeLinecap="round"
-          rotation={-90}
-          origin="60, 60"
+          transform="rotate(-90 60 60)"
         />
       </Svg>
       <View style={styles.ringLabel}>
@@ -84,7 +83,7 @@ export function RouteMap({ route }: { route: GeoPoint[] }) {
 const styles = StyleSheet.create({
   ringWrap: { width: 120, height: 120, alignItems: 'center', justifyContent: 'center' },
   ringLabel: { position: 'absolute', alignItems: 'center' },
-  score: { color: colors.white, fontSize: 32, fontWeight: '700', textShadowColor: 'rgba(229,9,20,0.45)', textShadowRadius: 16 },
+  score: { color: colors.red, fontSize: 32, fontWeight: '700' },
   caption: { color: colors.textSecondary, fontSize: 10 },
   muted: { color: colors.textSecondary, fontSize: 13 },
   map: { width: '100%', height: 180, borderRadius: 12, backgroundColor: colors.bg },

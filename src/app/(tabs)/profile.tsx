@@ -21,7 +21,7 @@ export default function ProfileScreen() {
   if (!profile) return null;
 
   return (
-    <Screen>
+    <Screen footer={<Button label={mode === 'supabase' ? 'Çıkış yap' : 'Demoyu sıfırla'} kind="ghost" onPress={() => void resetLocal()} />}>
       <View style={styles.header}>
         <Avatar label={profile.displayName} color={profile.avatarColor} uri={profile.avatarUri} size={72} />
         <View style={{ flex: 1 }}>
@@ -75,7 +75,6 @@ export default function ProfileScreen() {
         <Text style={styles.meta}>Konum: {statusText[profile.locationStatus]}</Text>
         <Text style={styles.meta}>Bildirim: {statusText[profile.notificationStatus]}</Text>
       </Card>
-      <Button label={mode === 'supabase' ? 'Çıkış yap' : 'Demoyu sıfırla'} kind="ghost" onPress={() => void resetLocal()} />
     </Screen>
   );
 }
