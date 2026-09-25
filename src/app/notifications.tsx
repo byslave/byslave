@@ -10,8 +10,7 @@ export default function NotificationsScreen() {
   const { notifications, markNotificationRead, markAllNotificationsRead } = useAppState();
   const unread = notifications.some((item) => !item.read);
   return (
-    <Screen>
-      <Button label="Geri" kind="ghost" onPress={() => router.back()} />
+    <Screen back={{ onPress: () => router.back() }}>
       <Text style={styles.title}>Bildirimler</Text>
       {unread ? <Button label="Tümünü okundu say" kind="ghost" onPress={() => void markAllNotificationsRead()} /> : null}
       {notifications.length === 0 ? <Text style={styles.meta}>Bildirim yok.</Text> : null}

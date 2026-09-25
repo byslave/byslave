@@ -21,9 +21,8 @@ export default function SessionScreen() {
   const activity = activities.find((item) => item.id === id);
   if (!activity) {
     return (
-      <Screen>
+      <Screen back={{ onPress: () => router.back() }}>
         <Text style={styles.title}>Kayıt yok</Text>
-        <Button label="Geri" kind="ghost" onPress={() => router.back()} />
       </Screen>
     );
   }
@@ -41,8 +40,7 @@ export default function SessionScreen() {
     setCopied(true);
   };
   return (
-    <Screen footer={<Button label={copied ? 'Kopyalandı' : 'Özeti kopyala'} onPress={() => void share()} />}>
-      <Button label="Geri" kind="ghost" onPress={() => router.back()} />
+    <Screen back={{ onPress: () => router.back() }} footer={<Button label={copied ? 'Kopyalandı' : 'Özeti kopyala'} onPress={() => void share()} />}>
       <Text style={styles.kicker}>{user?.displayName ?? 'Sen'}</Text>
       <Text style={styles.title}>{activity.title}</Text>
       <Text style={styles.meta}>

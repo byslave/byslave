@@ -7,13 +7,21 @@ export function Screen({
   children,
   scroll = true,
   footer,
+  back,
 }: {
   children: ReactNode;
   scroll?: boolean;
   footer?: ReactNode;
+  back?: { onPress: () => void; label?: string };
 }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      {back ? (
+        <Pressable accessibilityRole="button" accessibilityLabel="Geri" onPress={back.onPress} style={styles.back}>
+          <Text style={styles.backMark}>‹</Text>
+          <Text style={styles.backText}>{back.label ?? 'Geri'}</Text>
+        </Pressable>
+      ) : null}
       {scroll ? (
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {children}
@@ -94,6 +102,17 @@ export function SectionTitle({ children }: { children: string }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
+  back: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 44,
+    paddingHorizontal: space.md,
+    paddingTop: space.sm,
+  },
+  backMark: { color: colors.white, fontSize: 28, lineHeight: 28, marginTop: -2 },
+  backText: { color: colors.white, fontSize: 16, fontWeight: '600' },
   flex: { flex: 1, padding: space.md },
   scroll: { padding: space.md, paddingBottom: space.xl, gap: space.md },
   footer: { padding: space.md, gap: space.sm, borderTopWidth: 1, borderTopColor: colors.border },

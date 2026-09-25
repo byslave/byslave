@@ -90,6 +90,11 @@ export default function RecordScreen() {
       {recording.kind === 'demo' ? (
         <Text style={styles.meta}>Bu ortamda sensör yok. Zıplama ve nabız tahmindir.</Text>
       ) : null}
+      {profile?.watchLabel ? (
+        <Text style={styles.meta}>
+          {profile.watchLabel} {profile.watchStatus === 'granted' ? 'bağlı' : 'eşleşmedi'}
+        </Text>
+      ) : null}
       {recording.activeSeconds > 0 && recording.activeSeconds < 3 ? (
         <Text style={styles.meta}>Bitirmek için birkaç saniye.</Text>
       ) : null}

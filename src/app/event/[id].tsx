@@ -13,9 +13,8 @@ export default function EventScreen() {
   const event = events.find((item) => item.id === id);
   if (!event) {
     return (
-      <Screen>
+      <Screen back={{ onPress: () => router.back() }}>
         <Text style={styles.title}>Etkinlik yok</Text>
-        <Button label="Geri" kind="ghost" onPress={() => router.back()} />
       </Screen>
     );
   }
@@ -35,8 +34,8 @@ export default function EventScreen() {
           </View>
         </View>
       }
+    back={{ onPress: () => router.back() }}
     >
-      <Button label="Geri" kind="ghost" onPress={() => router.back()} />
       <Text style={styles.phase}>{eventPhase(event.startsAt)}</Text>
       <Text style={styles.title}>{event.title}</Text>
       <Text style={styles.meta}>

@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { brand } from '../../config/brand';
 import { Avatar, Button, Field, Screen } from '../../components/ui';
 import { isUsernameTaken } from '../../data/seed';
-import { connectWatch, platformHealthProvider, watchOptions } from '../../health/providers';
+import { pairWatch, platformHealthProvider, watchOptions } from '../../health/providers';
 import { useAppState, type OnboardingDraft } from '../../state/AppState';
 import type { FitnessLevel, PermissionChoice, Sex } from '../../domain/types';
 import { colors, space } from '../../theme/tokens';
@@ -222,7 +222,7 @@ export function OnboardingScreen() {
               label={watch.label}
               kind="ghost"
               onPress={() => {
-                void connectWatch(watch.label).then((result) => {
+                void pairWatch(watch.id).then((result) => {
                   setDraft({ ...draft, watchStatus: 'unavailable', watchLabel: watch.label, watchNote: result.reason });
                   setInfo(result.reason);
                 });

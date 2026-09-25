@@ -8,14 +8,19 @@ export type HealthProvider = {
   connect: () => Promise<ProviderResult>;
 };
 
-export type WatchOption = { id: string; label: string };
+export type WatchOption = {
+  id: string;
+  label: string;
+  via: string;
+  signals: string[];
+};
 
 export const watchOptions: WatchOption[] = [
-  { id: 'apple-watch', label: 'Apple Watch' },
-  { id: 'wear-os', label: 'Wear OS' },
-  { id: 'garmin', label: 'Garmin' },
-  { id: 'huawei', label: 'Huawei Watch' },
-  { id: 'fitbit', label: 'Fitbit' },
+  { id: 'apple-watch', label: 'Apple Watch', via: 'Apple Health', signals: ['Nabız', 'Aktif kalori', 'Hareket'] },
+  { id: 'wear-os', label: 'Wear OS', via: 'Health Connect', signals: ['Nabız', 'Adım'] },
+  { id: 'garmin', label: 'Garmin', via: 'Health Connect', signals: ['Nabız', 'Aktivite'] },
+  { id: 'huawei', label: 'Huawei Watch', via: 'Health Connect', signals: ['Nabız'] },
+  { id: 'fitbit', label: 'Fitbit', via: 'Health Connect', signals: ['Nabız', 'Aktif kalori'] },
 ];
 
 const healthKit: HealthProvider = {
@@ -57,9 +62,18 @@ export function platformHealthProvider(): HealthProvider {
   return unavailable;
 }
 
-export async function connectWatch(label: string): Promise<ProviderResult> {
-  return {
-    connected: false,
-    reason: `${label} doğrudan bağlanmıyor. Saat nabzı Apple Health veya Health Connect üzerinden gelirse kullanılır.`,
-  };
+export async function pairWatch(id: string): Promise<ProviderResult> {
+  const watch = watchOptions.find((item) => item.id === id);
+  if (!watch) return { connected: false, reason: 'Saat seçilmedi.' };
+  if (Platform.OS === 'web') {
+    return {
+      connected: false,
+      reason: `${watch.label} bu tarayıcıda eşleşmez. Telefonda ${watch.via} açıkken aynı ekrandan tekrar dene. O zamana kadar nabız tahmin olarak işaretlenir.`,
+    };
+  }
+  const health = await platformHealthProvider().connect();
+  if (!health.connected) {
+    return { connected: false, reason: `${watch.label} seçildi. ${health.reason}` };
+  }
+  return { connected: true, reason: `${watch.label}, ${watch.via} üzerinden bağlandı.` };
 }
