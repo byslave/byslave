@@ -45,6 +45,8 @@ function night(input: {
   avgHeartRate: number;
   peakHeartRate: number;
   nightKind: NightKind;
+  note?: string | null;
+  respectIds?: string[];
   body: BodyProfile;
   route: ActivitySummary['route'];
 }): ActivitySummary {
@@ -77,6 +79,8 @@ function night(input: {
     heartRateOrigin: 'measured',
     musicBpm: input.event?.musicBpm ?? null,
     nightKind: input.nightKind,
+    note: input.note ?? null,
+    respectIds: input.respectIds ?? [],
     partyScore: scoreParty({
       intensity: input.intensity,
       jumps: input.jumps,
@@ -139,6 +143,8 @@ export function buildSeed(now = Date.now()) {
       avgHeartRate: 151,
       peakHeartRate: 176,
       nightKind: 'rave',
+      note: 'Pist kapanana kadar.',
+      respectIds: ['usr_deniz', 'usr_kerem'],
       body: { age: 27, heightCm: 168, weightKg: 60, sex: 'female', fitnessLevel: 'high' },
       route: loop(41.022, 28.975),
     }),

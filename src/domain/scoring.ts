@@ -161,6 +161,7 @@ export function buildSummary(input: {
   shared: boolean;
   heartRateOrigin: HeartRateOrigin;
   nightKind?: NightKind | null;
+  note?: string | null;
   now?: number;
 }): ActivitySummary {
   const intensities = input.samples.map(sampleIntensity);
@@ -218,6 +219,8 @@ export function buildSummary(input: {
     heartRateOrigin: input.heartRateOrigin,
     musicBpm: input.event?.musicBpm ?? null,
     nightKind: input.nightKind ?? null,
+    note: input.note?.trim() ? input.note.trim().slice(0, 80) : null,
+    respectIds: [],
     partyScore: scoreParty({
       intensity,
       jumps,

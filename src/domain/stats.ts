@@ -36,6 +36,25 @@ export function nightlifeStats(activities: ActivitySummary[], userId: string, no
   };
 }
 
+export function weekRhythm(activities: ActivitySummary[], userId: string, now = Date.now()): { label: string; nights: number }[] {
+  const mine = activities.filter((item) => item.userId === userId);
+  const monday = new Date(now);
+  monday.setHours(0, 0, 0, 0);
+  const weekday = monday.getDay();
+  monday.setDate(monday.getDate() + (weekday === 0 ? -6 : 1 - weekday));
+  return Array.from({ length: 8 }, (_, index) => {
+    const week = new Date(monday);
+    week.setDate(monday.getDate() - (7 - index) * 7);
+    const end = new Date(week);
+    end.setDate(week.getDate() + 7);
+    const nights = mine.filter((item) => {
+      const time = new Date(item.startedAt).getTime();
+      return time >= week.getTime() && time < end.getTime();
+    }).length;
+    return { label: week.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }), nights };
+  });
+}
+
 export function isSameMonth(iso: string, now = Date.now()): boolean {
   const date = new Date(iso);
   const current = new Date(now);

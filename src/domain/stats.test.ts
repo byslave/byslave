@@ -1,4 +1,4 @@
-import { nightlifeStats } from './stats';
+import { nightlifeStats, weekRhythm } from './stats';
 import type { ActivitySummary } from './types';
 
 function assert(condition: boolean, message: string) {
@@ -24,4 +24,7 @@ assert(stats.nights === 2, 'iki gece');
 assert(stats.monthNights === 1, 'bu ay bir gece');
 assert(stats.bestScore?.id === 'b', 'rekor eski gecede');
 assert(stats.jumps === 14, 'zıplama toplamı');
+const weeks = weekRhythm([activity], 'me', now);
+assert(weeks.length === 8, 'sekiz hafta');
+assert(weeks.some((week) => week.nights === 1), 'eylül gecesi bir haftada');
 console.log('stats ok');

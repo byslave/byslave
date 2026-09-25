@@ -55,6 +55,8 @@ function asActivity(row: Record<string, unknown>): ActivitySummary {
     heartRateOrigin: row.heart_rate_origin as ActivitySummary['heartRateOrigin'],
     musicBpm: row.music_bpm == null ? null : Number(row.music_bpm),
     nightKind: (row.night_kind as ActivitySummary['nightKind']) ?? null,
+    note: row.note ? String(row.note) : null,
+    respectIds: [],
     partyScore: Number(row.party_score),
     route: (row.route as ActivitySummary['route']) ?? [],
     intensitySeries: (row.intensity_series as number[]) ?? [],
@@ -77,7 +79,7 @@ export class SupabaseRepository implements ActivityRepository {
       if (error) throw error;
       profile = data ? asProfile(data) : null;
     }
-    const [eventsRes, peopleRes, attendeesRes, activitiesRes, notesRes] = await Promise.all([
+    const [eventsRes, peopleRes, attendeesRes, activitiesRes, notesRes, respectsRes, followsRes] = await Promise.all([
       this.client.from('events').select('*').order('starts_at'),
       this.client.from('profiles').select('id, display_name, username, avatar_color, avatar_url'),
       this.client.from('event_attendees').select('event_id, user_id'),
@@ -85,12 +87,24 @@ export class SupabaseRepository implements ActivityRepository {
       userId
         ? this.client.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false })
         : Promise.resolve({ data: [], error: null }),
+      this.client.from('activity_respects').select('activity_id, user_id'),
+      userId
+        ? this.client.from('follows').select('following_id').eq('follower_id', userId)
+        : Promise.resolve({ data: [], error: null }),
     ]);
     if (eventsRes.error) throw eventsRes.error;
     if (peopleRes.error) throw peopleRes.error;
     if (attendeesRes.error) throw attendeesRes.error;
     if (activitiesRes.error) throw activitiesRes.error;
     if (notesRes.error) throw notesRes.error;
+    if (respectsRes.error) throw respectsRes.error;
+    if (followsRes.error) throw followsRes.error;
+    const respectMap = new Map<string, string[]>();
+    for (const row of respectsRes.data ?? []) {
+      const list = respectMap.get(row.activity_id) ?? [];
+      list.push(row.user_id);
+      respectMap.set(row.activity_id, list);
+    }
     const attendeeMap = new Map<string, string[]>();
     for (const row of attendeesRes.data ?? []) {
       const list = attendeeMap.get(row.event_id) ?? [];
@@ -125,8 +139,12 @@ export class SupabaseRepository implements ActivityRepository {
       profile,
       users,
       events,
-      activities: (activitiesRes.data ?? []).map((row) => asActivity(row)),
+      activities: (activitiesRes.data ?? []).map((row) => ({
+        ...asActivity(row),
+        respectIds: respectMap.get(row.id) ?? [],
+      })),
       notifications,
+      followingIds: (followsRes.data ?? []).map((row) => row.following_id),
     };
   }
 
@@ -177,6 +195,7 @@ export class SupabaseRepository implements ActivityRepository {
       heart_rate_origin: activity.heartRateOrigin,
       music_bpm: activity.musicBpm,
       night_kind: activity.nightKind,
+      note: activity.note,
       party_score: activity.partyScore,
       route: activity.route,
       intensity_series: activity.intensitySeries,
@@ -200,6 +219,43 @@ export class SupabaseRepository implements ActivityRepository {
     const { data } = await this.client.auth.getUser();
     if (!data.user) return;
     const { error } = await this.client.from('notifications').update({ read: true }).eq('user_id', data.user.id).eq('read', false);
+    if (error) throw error;
+  }
+
+  async setNote(activityId: string, note: string) {
+    const { error } = await this.client.from('activities').update({ note: note.trim().slice(0, 80) || null }).eq('id', activityId);
+    if (error) throw error;
+  }
+
+  async toggleRespect(activityId: string, userId: string) {
+    const { data, error: readError } = await this.client
+      .from('activity_respects')
+      .select('user_id')
+      .eq('activity_id', activityId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (readError) throw readError;
+    const { error } = data
+      ? await this.client.from('activity_respects').delete().eq('activity_id', activityId).eq('user_id', userId)
+      : await this.client.from('activity_respects').insert({ activity_id: activityId, user_id: userId });
+    if (error) throw error;
+  }
+
+  async toggleFollow(userId: string) {
+    const { data: sessionData, error: sessionError } = await this.client.auth.getUser();
+    if (sessionError) throw sessionError;
+    const followerId = sessionData.user?.id;
+    if (!followerId || followerId === userId) return;
+    const { data, error: readError } = await this.client
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', followerId)
+      .eq('following_id', userId)
+      .maybeSingle();
+    if (readError) throw readError;
+    const { error } = data
+      ? await this.client.from('follows').delete().eq('follower_id', followerId).eq('following_id', userId)
+      : await this.client.from('follows').insert({ follower_id: followerId, following_id: userId });
     if (error) throw error;
   }
 

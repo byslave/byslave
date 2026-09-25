@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
-import { Button, Card, Screen, Stat } from '../../components/ui';
+import { Button, Card, Field, Screen, Stat } from '../../components/ui';
 import { nightKindLabel, nightKindOptions } from '../../domain/labels';
 import { buildSummary } from '../../domain/scoring';
 import type { NightKind } from '../../domain/types';
@@ -17,6 +17,7 @@ export default function RecordScreen() {
   const recording = useRecording();
   const [eventId, setEventId] = useState<string | null>(null);
   const [nightKind, setNightKind] = useState<NightKind>('rave');
+  const [note, setNote] = useState('');
   const [shared, setShared] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -54,6 +55,7 @@ export default function RecordScreen() {
       body: profile,
       shared,
       nightKind,
+      note,
       heartRateOrigin: snapshot.kind === 'demo' ? 'estimated' : 'none',
     });
     await saveActivity(summary);
@@ -130,6 +132,7 @@ export default function RecordScreen() {
           </Pressable>
         ))}
       </View>
+      <Field value={note} onChangeText={(value) => setNote(value.slice(0, 80))} placeholder="Gece notu, 80 karakter" />
       <View style={styles.shareRow}>
         <Text style={styles.meta}>Arkadaşların görsün</Text>
         <Switch value={shared} onValueChange={setShared} trackColor={{ true: colors.red, false: colors.border }} />

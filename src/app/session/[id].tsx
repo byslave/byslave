@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { brand } from '../../config/brand';
 import { RouteMap, ScoreRing, Sparkline } from '../../components/charts';
-import { Button, Card, Screen, Stat } from '../../components/ui';
+import { Button, Card, Field, Screen, Stat } from '../../components/ui';
 import { formatCalories, formatDistance, formatDuration, formatWhen } from '../../domain/format';
 import { compareLine, leaderboard, rankOf } from '../../domain/leaderboard';
 import { nightKindLabel } from '../../domain/labels';
@@ -15,8 +15,9 @@ import { colors, space } from '../../theme/tokens';
 export default function SessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { activities, users, profile } = useAppState();
+  const { activities, users, profile, toggleRespect, setNote } = useAppState();
   const [copied, setCopied] = useState(false);
+  const [draftNote, setDraftNote] = useState<string | null>(null);
   const activity = activities.find((item) => item.id === id);
   if (!activity) {
     return (
@@ -54,6 +55,26 @@ export default function SessionScreen() {
       {isRecord ? <Text style={styles.record}>Kişisel rekor</Text> : null}
       {rank ? <Text style={styles.meta}>Bu etkinlikte {rank.rank}. sıra / {rank.total}</Text> : null}
       {versus ? <Text style={styles.meta}>{versus}</Text> : null}
+      {activity.note ? <Text style={styles.note}>{activity.note}</Text> : null}
+      {profile && activity.userId !== profile.id && activity.shared ? (
+        <Button
+          label={activity.respectIds.includes(profile.id) ? `Saygı var · ${activity.respectIds.length}` : `Saygı · ${activity.respectIds.length}`}
+          kind={activity.respectIds.includes(profile.id) ? 'primary' : 'ghost'}
+          onPress={() => void toggleRespect(activity.id)}
+        />
+      ) : (
+        <Text style={styles.meta}>{activity.respectIds.length} saygı</Text>
+      )}
+      {profile?.id === activity.userId ? (
+        <View style={{ gap: space.sm }}>
+          <Field
+            value={draftNote ?? activity.note ?? ''}
+            onChangeText={(value) => setDraftNote(value.slice(0, 80))}
+            placeholder="Gece notu"
+          />
+          <Button label="Notu kaydet" kind="ghost" onPress={() => void setNote(activity.id, draftNote ?? activity.note ?? '')} />
+        </View>
+      ) : null}
       <Card>
         <View style={styles.stats}>
           <Stat label="Süre" value={formatDuration(activity.activeSeconds)} />
@@ -88,6 +109,7 @@ export default function SessionScreen() {
 }
 
 const styles = StyleSheet.create({
+  note: { color: colors.white, fontSize: 18, lineHeight: 26 },
   record: { color: colors.red, fontSize: 14, fontWeight: '700' },
   kicker: { color: colors.textSecondary, fontSize: 14 },
   title: { color: colors.white, fontSize: 36, fontWeight: '700' },

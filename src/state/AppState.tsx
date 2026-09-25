@@ -14,12 +14,16 @@ type AppContextValue = {
   events: NightEvent[];
   activities: ActivitySummary[];
   notifications: AppNotification[];
+  followingIds: string[];
   completeOnboarding: (draft: OnboardingDraft) => Promise<void>;
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
   saveActivity: (activity: ActivitySummary) => Promise<void>;
   joinEvent: (eventId: string) => Promise<void>;
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
+  setNote: (activityId: string, note: string) => Promise<void>;
+  toggleRespect: (activityId: string) => Promise<void>;
+  toggleFollow: (userId: string) => Promise<void>;
   resetLocal: () => Promise<void>;
 };
 
@@ -34,6 +38,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<NightEvent[]>([]);
   const [activities, setActivities] = useState<ActivitySummary[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
 
   const apply = (snapshot: Awaited<ReturnType<ActivityRepository['load']>>) => {
     setProfile(snapshot.profile);
@@ -41,6 +46,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setEvents(snapshot.events);
     setActivities(snapshot.activities);
     setNotifications(snapshot.notifications);
+    setFollowingIds(snapshot.followingIds);
   };
 
   useEffect(() => {
@@ -75,6 +81,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       events,
       activities,
       notifications,
+      followingIds,
       async completeOnboarding(draft) {
         if (!repo) return;
         let id: string = crypto.randomUUID();
@@ -115,13 +122,28 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         await repo.markAllNotificationsRead();
         apply(await repo.load());
       },
+      async setNote(activityId, note) {
+        if (!repo) return;
+        await repo.setNote(activityId, note);
+        apply(await repo.load());
+      },
+      async toggleRespect(activityId) {
+        if (!repo || !profile) return;
+        await repo.toggleRespect(activityId, profile.id);
+        apply(await repo.load());
+      },
+      async toggleFollow(userId) {
+        if (!repo || !profile || profile.id === userId) return;
+        await repo.toggleFollow(userId);
+        apply(await repo.load());
+      },
       async resetLocal() {
         if (!repo) return;
         await repo.clearLocal();
         apply(await repo.load());
       },
     };
-  }, [activities, events, modeNote, notifications, profile, ready, repo, users]);
+  }, [activities, events, followingIds, modeNote, notifications, profile, ready, repo, users]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

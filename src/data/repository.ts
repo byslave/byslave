@@ -8,6 +8,9 @@ export interface ActivityRepository {
   joinEvent(eventId: string, userId: string): Promise<void>;
   markNotificationRead(id: string): Promise<void>;
   markAllNotificationsRead(): Promise<void>;
+  setNote(activityId: string, note: string): Promise<void>;
+  toggleRespect(activityId: string, userId: string): Promise<void>;
+  toggleFollow(userId: string): Promise<void>;
   clearLocal(): Promise<void>;
   subscribe?(onChange: () => void): () => void;
 }

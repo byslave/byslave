@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { Card, Screen, SectionTitle } from '../../components/ui';
+import { Card, Field, Screen, SectionTitle } from '../../components/ui';
 import { eventPhase, formatWhen } from '../../domain/format';
 import { useAppState } from '../../state/AppState';
 import { colors } from '../../theme/tokens';
@@ -10,10 +11,20 @@ const phaseLabel = { live: 'Canlı', upcoming: 'Yakında', past: 'Geçmiş' };
 export default function EventsScreen() {
   const router = useRouter();
   const { events } = useAppState();
-  const ordered = [...events].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const [query, setQuery] = useState('');
+  const needle = query.trim().toLocaleLowerCase('tr-TR');
+  const ordered = [...events]
+    .filter((event) => {
+      if (!needle) return true;
+      return `${event.title} ${event.venue} ${event.city}`.toLocaleLowerCase('tr-TR').includes(needle);
+    })
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const venues = [...new Set(ordered.map((event) => `${event.venue}, ${event.city}`))];
   return (
     <Screen>
       <SectionTitle>Etkinlikler</SectionTitle>
+      <Field value={query} onChangeText={setQuery} placeholder="Etkinlik veya mekân ara" />
+      {ordered.length === 0 ? <Text style={styles.meta}>Bu aramada etkinlik yok.</Text> : null}
       {ordered.map((event) => {
         const phase = eventPhase(event.startsAt);
         return (
@@ -32,6 +43,12 @@ export default function EventsScreen() {
           </Pressable>
         );
       })}
+      <SectionTitle>Mekânlar</SectionTitle>
+      {venues.map((venue) => (
+        <Card key={venue}>
+          <Text style={styles.title}>{venue}</Text>
+        </Card>
+      ))}
     </Screen>
   );
 }

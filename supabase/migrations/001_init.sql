@@ -60,6 +60,7 @@ create table if not exists public.activities (
   heart_rate_origin text not null check (heart_rate_origin in ('estimated', 'measured', 'none')),
   music_bpm numeric,
   night_kind text check (night_kind in ('rave', 'club', 'festival', 'concert', 'after')),
+  note text,
   party_score numeric not null,
   route jsonb not null default '[]'::jsonb,
   intensity_series jsonb not null default '[]'::jsonb,

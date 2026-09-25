@@ -69,6 +69,8 @@ export type ActivitySummary = {
   heartRateOrigin: HeartRateOrigin;
   musicBpm: number | null;
   nightKind: NightKind | null;
+  note: string | null;
+  respectIds: string[];
   partyScore: number;
   route: GeoPoint[];
   intensitySeries: number[];
@@ -108,4 +110,5 @@ export type AppSnapshot = {
   events: NightEvent[];
   activities: ActivitySummary[];
   notifications: AppNotification[];
+  followingIds: string[];
 };

@@ -10,6 +10,9 @@ type Persisted = {
   activities: ActivitySummary[];
   joinedEventIds: string[];
   readNotificationIds: string[];
+  followingIds: string[];
+  respectedActivityIds: string[];
+  notes: { activityId: string; note: string }[];
 };
 
 function blank(): Persisted {
@@ -18,6 +21,9 @@ function blank(): Persisted {
     activities: [],
     joinedEventIds: [],
     readNotificationIds: [],
+    followingIds: [],
+    respectedActivityIds: [],
+    notes: [],
   };
 }
 
@@ -54,10 +60,19 @@ export class DemoRepository implements ActivityRepository {
       profile,
       users: profile ? [...seed.users, toPublic(profile)] : seed.users,
       events,
-      activities: [...seed.activities, ...this.persisted.activities].map((activity) => ({
-        ...activity,
-        nightKind: activity.nightKind ?? null,
-      })),
+      activities: [...seed.activities, ...this.persisted.activities].map((activity) => {
+        const note = this.persisted.notes.find((item) => item.activityId === activity.id)?.note ?? activity.note ?? null;
+        const respectIds = [...(activity.respectIds ?? [])];
+        if (profile && this.persisted.respectedActivityIds.includes(activity.id) && !respectIds.includes(profile.id)) {
+          respectIds.push(profile.id);
+        }
+        if (profile && !this.persisted.respectedActivityIds.includes(activity.id)) {
+          const mine = respectIds.indexOf(profile.id);
+          if (mine >= 0) respectIds.splice(mine, 1);
+        }
+        return { ...activity, nightKind: activity.nightKind ?? null, note, respectIds };
+      }),
+      followingIds: this.persisted.followingIds,
       notifications: seed.notifications.map((item) => ({
         ...item,
         read: item.read || this.persisted.readNotificationIds.includes(item.id),
@@ -105,6 +120,32 @@ export class DemoRepository implements ActivityRepository {
   async markAllNotificationsRead() {
     const ids = buildSeed().notifications.map((item) => item.id);
     this.persisted.readNotificationIds = [...new Set([...this.persisted.readNotificationIds, ...ids])];
+    await this.persist();
+  }
+
+  async setNote(activityId: string, note: string) {
+    const trimmed = note.trim().slice(0, 80);
+    const own = this.persisted.activities.find((item) => item.id === activityId);
+    if (own) own.note = trimmed || null;
+    this.persisted.notes = this.persisted.notes.filter((item) => item.activityId !== activityId);
+    if (trimmed) this.persisted.notes.push({ activityId, note: trimmed });
+    await this.persist();
+  }
+
+  async toggleRespect(activityId: string, userId: string) {
+    if (this.persisted.profile?.id !== userId) return;
+    const has = this.persisted.respectedActivityIds.includes(activityId);
+    this.persisted.respectedActivityIds = has
+      ? this.persisted.respectedActivityIds.filter((id) => id !== activityId)
+      : [...this.persisted.respectedActivityIds, activityId];
+    await this.persist();
+  }
+
+  async toggleFollow(userId: string) {
+    const has = this.persisted.followingIds.includes(userId);
+    this.persisted.followingIds = has
+      ? this.persisted.followingIds.filter((id) => id !== userId)
+      : [...this.persisted.followingIds, userId];
     await this.persist();
   }
 
