@@ -31,9 +31,17 @@ function toPublic(profile: Profile): PublicUser {
   };
 }
 
+type KeyValueStore = {
+  getItem(key: string): Promise<string | null>;
+  setItem(key: string, value: string): Promise<void>;
+  removeItem(key: string): Promise<void>;
+};
+
 export class DemoRepository implements ActivityRepository {
   readonly mode = 'demo' as const;
   private persisted: Persisted = blank();
+
+  constructor(private readonly storage: KeyValueStore = AsyncStorage) {}
 
   private snapshot(): AppSnapshot {
     const seed = buildSeed();
@@ -55,11 +63,11 @@ export class DemoRepository implements ActivityRepository {
   }
 
   private async persist() {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.persisted));
+    await this.storage.setItem(STORAGE_KEY, JSON.stringify(this.persisted));
   }
 
   async load(): Promise<AppSnapshot> {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    const raw = await this.storage.getItem(STORAGE_KEY);
     this.persisted = raw ? { ...blank(), ...JSON.parse(raw) } : blank();
     return this.snapshot();
   }
@@ -93,6 +101,6 @@ export class DemoRepository implements ActivityRepository {
 
   async clearLocal() {
     this.persisted = blank();
-    await AsyncStorage.removeItem(STORAGE_KEY);
+    await this.storage.removeItem(STORAGE_KEY);
   }
 }
