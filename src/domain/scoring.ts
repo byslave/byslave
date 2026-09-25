@@ -1,4 +1,5 @@
 import { scoringConfig } from '../config/scoring';
+import { nightKindLabel } from './labels';
 import type {
   ActivitySample,
   ActivitySummary,
@@ -8,6 +9,7 @@ import type {
   GeoPoint,
   HeartRateOrigin,
   NightEvent,
+  NightKind,
   Sex,
 } from './types';
 
@@ -158,6 +160,7 @@ export function buildSummary(input: {
   body: BodyProfile;
   shared: boolean;
   heartRateOrigin: HeartRateOrigin;
+  nightKind?: NightKind | null;
   now?: number;
 }): ActivitySummary {
   const intensities = input.samples.map(sampleIntensity);
@@ -197,7 +200,7 @@ export function buildSummary(input: {
     id: input.id,
     userId: input.userId,
     eventId: input.event?.id ?? null,
-    title: input.event?.title ?? 'Serbest gece',
+    title: input.event?.title ?? nightKindLabel(input.nightKind ?? null),
     venue: input.event?.venue ?? 'Mekân yok',
     startedAt: new Date(ended - input.activeSeconds * 1000).toISOString(),
     endedAt: new Date(ended).toISOString(),
@@ -214,6 +217,7 @@ export function buildSummary(input: {
     peakHeartRate,
     heartRateOrigin: input.heartRateOrigin,
     musicBpm: input.event?.musicBpm ?? null,
+    nightKind: input.nightKind ?? null,
     partyScore: scoreParty({
       intensity,
       jumps,

@@ -2,6 +2,9 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, Card, Field, Screen, SectionTitle } from '../../components/ui';
+import { formatDuration } from '../../domain/format';
+import { danceEffortLabel, sexLabel } from '../../domain/labels';
+import { nightlifeStats } from '../../domain/stats';
 import { useAppState } from '../../state/AppState';
 import type { FitnessLevel, Sex } from '../../domain/types';
 import { colors, space } from '../../theme/tokens';
@@ -15,12 +18,15 @@ const statusText = {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { profile, mode, modeNote, updateProfile, resetLocal } = useAppState();
+  const { profile, activities, mode, modeNote, updateProfile, resetLocal } = useAppState();
   const [editing, setEditing] = useState(false);
   const [age, setAge] = useState(profile?.age?.toString() ?? '');
   const [height, setHeight] = useState(profile?.heightCm?.toString() ?? '');
   const [weight, setWeight] = useState(profile?.weightKg?.toString() ?? '');
   if (!profile) return null;
+  const stats = nightlifeStats(activities, profile.id);
+  const efforts: FitnessLevel[] = ['low', 'medium', 'high'];
+  const sexes: Sex[] = ['female', 'male', 'unspecified'];
 
   return (
     <Screen footer={
@@ -42,20 +48,28 @@ export default function ProfileScreen() {
       <Card>
         <Text style={styles.meta}>{modeNote}</Text>
       </Card>
+      <SectionTitle>Rekorlar</SectionTitle>
+      <Card>
+        <Text style={styles.meta}>En yüksek skor {stats.bestScore?.partyScore ?? '—'}{stats.bestScore ? ` · ${stats.bestScore.title}` : ''}</Text>
+        <Text style={styles.meta}>En çok zıplama {stats.bestJumps?.jumps ?? '—'}</Text>
+        <Text style={styles.meta}>En uzun gece {stats.longest ? formatDuration(stats.longest.activeSeconds) : '—'}</Text>
+        <Text style={styles.meta}>{stats.nights} gece · bu ay {stats.monthNights}</Text>
+      </Card>
       <SectionTitle>Beden</SectionTitle>
       <Card>
         <Text style={styles.meta}>Yaş {profile.age ?? '—'} · Boy {profile.heightCm ?? '—'} cm · Kilo {profile.weightKg ?? '—'} kg</Text>
-        <Text style={styles.meta}>Cinsiyet {profile.sex ?? 'yok'} · Tempo {profile.fitnessLevel}</Text>
+        <Text style={styles.meta}>Cinsiyet {profile.sex ? sexLabel[profile.sex] : 'yok'} · Dans {danceEffortLabel[profile.fitnessLevel]}</Text>
+        <Text style={styles.meta}>Dans şiddeti müzik BPM’i değildir. BPM etkinlikte görünür.</Text>
         {editing ? (
           <View style={{ gap: space.sm }}>
             <Field value={age} onChangeText={setAge} placeholder="Yaş" keyboardType="number-pad" />
             <Field value={height} onChangeText={setHeight} placeholder="Boy cm" keyboardType="number-pad" />
             <Field value={weight} onChangeText={setWeight} placeholder="Kilo kg" keyboardType="number-pad" />
-            {(['low', 'medium', 'high'] as FitnessLevel[]).map((level) => (
-              <Button key={level} label={level} kind={profile.fitnessLevel === level ? 'primary' : 'ghost'} onPress={() => void updateProfile({ fitnessLevel: level })} />
+            {efforts.map((level) => (
+              <Button key={level} label={danceEffortLabel[level]} kind={profile.fitnessLevel === level ? 'primary' : 'ghost'} onPress={() => void updateProfile({ fitnessLevel: level })} />
             ))}
-            {(['female', 'male', 'unspecified'] as Sex[]).map((sex) => (
-              <Button key={sex} label={sex} kind={profile.sex === sex ? 'primary' : 'ghost'} onPress={() => void updateProfile({ sex })} />
+            {sexes.map((sex) => (
+              <Button key={sex} label={sexLabel[sex]} kind={profile.sex === sex ? 'primary' : 'ghost'} onPress={() => void updateProfile({ sex })} />
             ))}
             <Button
               label="Ölçüleri kaydet"

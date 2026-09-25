@@ -4,6 +4,7 @@ import type {
   AppNotification,
   BodyProfile,
   NightEvent,
+  NightKind,
   PublicUser,
 } from '../domain/types';
 
@@ -43,6 +44,7 @@ function night(input: {
   peakIntensity: number;
   avgHeartRate: number;
   peakHeartRate: number;
+  nightKind: NightKind;
   body: BodyProfile;
   route: ActivitySummary['route'];
 }): ActivitySummary {
@@ -74,6 +76,7 @@ function night(input: {
     peakHeartRate: input.peakHeartRate,
     heartRateOrigin: 'measured',
     musicBpm: input.event?.musicBpm ?? null,
+    nightKind: input.nightKind,
     partyScore: scoreParty({
       intensity: input.intensity,
       jumps: input.jumps,
@@ -135,6 +138,7 @@ export function buildSeed(now = Date.now()) {
       peakIntensity: 0.95,
       avgHeartRate: 151,
       peakHeartRate: 176,
+      nightKind: 'rave',
       body: { age: 27, heightCm: 168, weightKg: 60, sex: 'female', fitnessLevel: 'high' },
       route: loop(41.022, 28.975),
     }),
@@ -152,6 +156,7 @@ export function buildSeed(now = Date.now()) {
       peakIntensity: 0.9,
       avgHeartRate: 146,
       peakHeartRate: 170,
+      nightKind: 'rave',
       body: { age: 29, heightCm: 182, weightKg: 78, sex: 'male', fitnessLevel: 'medium' },
       route: loop(41.023, 28.976),
     }),
@@ -169,6 +174,7 @@ export function buildSeed(now = Date.now()) {
       peakIntensity: 0.8,
       avgHeartRate: 138,
       peakHeartRate: 162,
+      nightKind: 'rave',
       body: { age: 31, heightCm: 176, weightKg: 74, sex: 'male', fitnessLevel: 'medium' },
       route: loop(41.021, 28.974),
     }),
@@ -186,6 +192,7 @@ export function buildSeed(now = Date.now()) {
       peakIntensity: 0.74,
       avgHeartRate: 132,
       peakHeartRate: 158,
+      nightKind: 'concert',
       body: { age: 26, heightCm: 165, weightKg: 58, sex: 'female', fitnessLevel: 'low' },
       route: loop(41.028, 28.973),
     }),

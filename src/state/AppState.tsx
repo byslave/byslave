@@ -19,6 +19,7 @@ type AppContextValue = {
   saveActivity: (activity: ActivitySummary) => Promise<void>;
   joinEvent: (eventId: string) => Promise<void>;
   markNotificationRead: (id: string) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
   resetLocal: () => Promise<void>;
 };
 
@@ -107,6 +108,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       async markNotificationRead(id) {
         if (!repo) return;
         await repo.markNotificationRead(id);
+        apply(await repo.load());
+      },
+      async markAllNotificationsRead() {
+        if (!repo) return;
+        await repo.markAllNotificationsRead();
         apply(await repo.load());
       },
       async resetLocal() {

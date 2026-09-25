@@ -7,6 +7,7 @@ export interface ActivityRepository {
   saveActivity(activity: ActivitySummary): Promise<void>;
   joinEvent(eventId: string, userId: string): Promise<void>;
   markNotificationRead(id: string): Promise<void>;
+  markAllNotificationsRead(): Promise<void>;
   clearLocal(): Promise<void>;
   subscribe?(onChange: () => void): () => void;
 }

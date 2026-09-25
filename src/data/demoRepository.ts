@@ -54,7 +54,10 @@ export class DemoRepository implements ActivityRepository {
       profile,
       users: profile ? [...seed.users, toPublic(profile)] : seed.users,
       events,
-      activities: [...seed.activities, ...this.persisted.activities],
+      activities: [...seed.activities, ...this.persisted.activities].map((activity) => ({
+        ...activity,
+        nightKind: activity.nightKind ?? null,
+      })),
       notifications: seed.notifications.map((item) => ({
         ...item,
         read: item.read || this.persisted.readNotificationIds.includes(item.id),
@@ -97,6 +100,12 @@ export class DemoRepository implements ActivityRepository {
       this.persisted.readNotificationIds = [...this.persisted.readNotificationIds, id];
       await this.persist();
     }
+  }
+
+  async markAllNotificationsRead() {
+    const ids = buildSeed().notifications.map((item) => item.id);
+    this.persisted.readNotificationIds = [...new Set([...this.persisted.readNotificationIds, ...ids])];
+    await this.persist();
   }
 
   async clearLocal() {

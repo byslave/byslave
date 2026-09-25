@@ -29,3 +29,15 @@ export function rankOf(rows: LeaderboardRow[], userId: string): { rank: number; 
   if (index < 0) return null;
   return { rank: index + 1, total: rows.length };
 }
+
+export function compareLine(rows: LeaderboardRow[], userId: string): string | null {
+  const place = rankOf(rows, userId);
+  if (!place) return null;
+  if (place.rank === 1) return 'Bu gecenin birincisisin.';
+  const ahead = rows[place.rank - 2];
+  const mine = rows[place.rank - 1];
+  if (!ahead || !mine) return null;
+  const gap = ahead.activity.partyScore - mine.activity.partyScore;
+  const name = ahead.user?.displayName ?? 'Öndeki';
+  return `${name} senden ${gap} puan önde.`;
+}

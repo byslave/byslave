@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, Card, Screen } from '../../components/ui';
 import { eventPhase, formatWhen } from '../../domain/format';
-import { leaderboard } from '../../domain/leaderboard';
+import { compareLine, leaderboard, rankOf } from '../../domain/leaderboard';
 import { useAppState } from '../../state/AppState';
 import { colors, space } from '../../theme/tokens';
 
@@ -21,6 +21,8 @@ export default function EventScreen() {
   }
   const rows = leaderboard(activities, event.id, users);
   const joined = profile ? event.attendeeIds.includes(profile.id) : false;
+  const place = profile ? rankOf(rows, profile.id) : null;
+  const versus = profile ? compareLine(rows, profile.id) : null;
   return (
     <Screen
       footer={
@@ -43,6 +45,8 @@ export default function EventScreen() {
       <Text style={styles.meta}>{formatWhen(event.startsAt)}</Text>
       <Text style={styles.meta}>{event.musicBpm ? `Etkinlik BPM ${event.musicBpm}` : 'BPM yok'}</Text>
       <Text style={styles.meta}>{event.attendeeIds.length} katılımcı</Text>
+      {place ? <Text style={styles.meta}>Senin sıran {place.rank} / {place.total}</Text> : null}
+      {versus ? <Text style={styles.meta}>{versus}</Text> : null}
       <Text style={styles.section}>Liderlik</Text>
       {rows.length === 0 ? (
         <Card>

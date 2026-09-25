@@ -54,6 +54,7 @@ function asActivity(row: Record<string, unknown>): ActivitySummary {
     peakHeartRate: row.peak_heart_rate == null ? null : Number(row.peak_heart_rate),
     heartRateOrigin: row.heart_rate_origin as ActivitySummary['heartRateOrigin'],
     musicBpm: row.music_bpm == null ? null : Number(row.music_bpm),
+    nightKind: (row.night_kind as ActivitySummary['nightKind']) ?? null,
     partyScore: Number(row.party_score),
     route: (row.route as ActivitySummary['route']) ?? [],
     intensitySeries: (row.intensity_series as number[]) ?? [],
@@ -175,6 +176,7 @@ export class SupabaseRepository implements ActivityRepository {
       peak_heart_rate: activity.peakHeartRate,
       heart_rate_origin: activity.heartRateOrigin,
       music_bpm: activity.musicBpm,
+      night_kind: activity.nightKind,
       party_score: activity.partyScore,
       route: activity.route,
       intensity_series: activity.intensitySeries,
@@ -191,6 +193,13 @@ export class SupabaseRepository implements ActivityRepository {
 
   async markNotificationRead(id: string) {
     const { error } = await this.client.from('notifications').update({ read: true }).eq('id', id);
+    if (error) throw error;
+  }
+
+  async markAllNotificationsRead() {
+    const { data } = await this.client.auth.getUser();
+    if (!data.user) return;
+    const { error } = await this.client.from('notifications').update({ read: true }).eq('user_id', data.user.id).eq('read', false);
     if (error) throw error;
   }
 

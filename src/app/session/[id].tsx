@@ -6,7 +6,9 @@ import { brand } from '../../config/brand';
 import { RouteMap, ScoreRing, Sparkline } from '../../components/charts';
 import { Button, Card, Screen, Stat } from '../../components/ui';
 import { formatCalories, formatDistance, formatDuration, formatWhen } from '../../domain/format';
-import { leaderboard, rankOf } from '../../domain/leaderboard';
+import { compareLine, leaderboard, rankOf } from '../../domain/leaderboard';
+import { nightKindLabel } from '../../domain/labels';
+import { nightlifeStats } from '../../domain/stats';
 import { useAppState } from '../../state/AppState';
 import { colors, space } from '../../theme/tokens';
 
@@ -27,6 +29,9 @@ export default function SessionScreen() {
   const user = users.find((item) => item.id === activity.userId);
   const rows = activity.eventId ? leaderboard(activities, activity.eventId, users) : [];
   const rank = rankOf(rows, activity.userId);
+  const versus = compareLine(rows, activity.userId);
+  const ownStats = profile ? nightlifeStats(activities, profile.id) : null;
+  const isRecord = Boolean(profile && activity.userId === profile.id && ownStats?.bestScore?.id === activity.id);
   const hrLabel =
     activity.heartRateOrigin === 'estimated' ? 'Nabız · tahmin' : activity.heartRateOrigin === 'measured' ? 'Nabız' : 'Nabız yok';
   const share = async () => {
@@ -45,7 +50,10 @@ export default function SessionScreen() {
       <View style={styles.center}>
         <ScoreRing score={activity.partyScore} />
       </View>
+      <Text style={styles.meta}>{nightKindLabel(activity.nightKind)}</Text>
+      {isRecord ? <Text style={styles.record}>Kişisel rekor</Text> : null}
       {rank ? <Text style={styles.meta}>Bu etkinlikte {rank.rank}. sıra / {rank.total}</Text> : null}
+      {versus ? <Text style={styles.meta}>{versus}</Text> : null}
       <Card>
         <View style={styles.stats}>
           <Stat label="Süre" value={formatDuration(activity.activeSeconds)} />
@@ -80,6 +88,7 @@ export default function SessionScreen() {
 }
 
 const styles = StyleSheet.create({
+  record: { color: colors.red, fontSize: 14, fontWeight: '700' },
   kicker: { color: colors.textSecondary, fontSize: 14 },
   title: { color: colors.white, fontSize: 36, fontWeight: '700' },
   meta: { color: colors.textSecondary, fontSize: 14 },

@@ -2,7 +2,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { Button, Card, Screen, Stat } from '../../components/ui';
+import { nightKindLabel, nightKindOptions } from '../../domain/labels';
 import { buildSummary } from '../../domain/scoring';
+import type { NightKind } from '../../domain/types';
 import { formatCalories, formatDistance, formatDuration } from '../../domain/format';
 import { useRecording } from '../../features/record/useRecording';
 import { useAppState } from '../../state/AppState';
@@ -14,6 +16,7 @@ export default function RecordScreen() {
   const { profile, events, saveActivity } = useAppState();
   const recording = useRecording();
   const [eventId, setEventId] = useState<string | null>(null);
+  const [nightKind, setNightKind] = useState<NightKind>('rave');
   const [shared, setShared] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -32,9 +35,10 @@ export default function RecordScreen() {
       samples: recording.samples,
       body: profile,
       shared,
+      nightKind,
       heartRateOrigin: recording.kind === 'demo' ? 'estimated' : 'none',
     });
-  }, [eventId, events, profile, recording.activeSeconds, recording.kind, recording.samples, shared]);
+  }, [eventId, events, nightKind, profile, recording.activeSeconds, recording.kind, recording.samples, shared]);
 
   const save = async () => {
     if (!profile || !preview || saving) return;
@@ -49,6 +53,7 @@ export default function RecordScreen() {
       samples: snapshot.samples,
       body: profile,
       shared,
+      nightKind,
       heartRateOrigin: snapshot.kind === 'demo' ? 'estimated' : 'none',
     });
     await saveActivity(summary);
@@ -106,6 +111,14 @@ export default function RecordScreen() {
           <View style={[styles.fill, { width: `${Math.round((preview?.intensity ?? 0) * 100)}%` }]} />
         </View>
       </Card>
+      <Text style={styles.meta}>Gece türü · {nightKindLabel(nightKind)}</Text>
+      <View style={styles.chips}>
+        {nightKindOptions.map((option) => (
+          <Pressable key={option.id} onPress={() => setNightKind(option.id)} style={[styles.chip, nightKind === option.id && styles.chipOn]}>
+            <Text style={styles.chipText}>{option.label}</Text>
+          </Pressable>
+        ))}
+      </View>
       <Text style={styles.meta}>Etkinlik</Text>
       <View style={styles.chips}>
         <Pressable onPress={() => setEventId(null)} style={[styles.chip, eventId == null && styles.chipOn]}>

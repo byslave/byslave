@@ -1,19 +1,32 @@
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card, Screen, SectionTitle } from '../../components/ui';
 import { formatCalories, formatDuration, formatWhen } from '../../domain/format';
+import { nightKindLabel } from '../../domain/labels';
+import { isSameMonth } from '../../domain/stats';
 import { useAppState } from '../../state/AppState';
-import { colors } from '../../theme/tokens';
+import { colors, space } from '../../theme/tokens';
 
 export default function ActivityScreen() {
   const router = useRouter();
   const { profile, activities } = useAppState();
+  const [monthOnly, setMonthOnly] = useState(false);
   const mine = activities
     .filter((item) => item.userId === profile?.id)
+    .filter((item) => (monthOnly ? isSameMonth(item.startedAt) : true))
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
   return (
     <Screen>
       <SectionTitle>Geçmiş</SectionTitle>
+      <View style={styles.filters}>
+        <Pressable onPress={() => setMonthOnly(false)} style={[styles.chip, !monthOnly && styles.chipOn]}>
+          <Text style={styles.chipText}>Tümü</Text>
+        </Pressable>
+        <Pressable onPress={() => setMonthOnly(true)} style={[styles.chip, monthOnly && styles.chipOn]}>
+          <Text style={styles.chipText}>Bu ay</Text>
+        </Pressable>
+      </View>
       {mine.length === 0 ? (
         <Card>
           <Text style={styles.title}>Kayıt yok</Text>
@@ -26,7 +39,7 @@ export default function ActivityScreen() {
               <Text style={styles.score}>{activity.partyScore}</Text>
               <Text style={styles.title}>{activity.title}</Text>
               <Text style={styles.meta}>
-                {formatWhen(activity.startedAt)} · {formatDuration(activity.activeSeconds)} · {formatCalories(activity.calories)} kcal · {activity.jumps} zıplama
+                {nightKindLabel(activity.nightKind)} · {formatWhen(activity.startedAt)} · {formatDuration(activity.activeSeconds)} · {formatCalories(activity.calories)} kcal · {activity.jumps} zıplama
               </Text>
             </Card>
           </Pressable>
@@ -40,4 +53,8 @@ const styles = StyleSheet.create({
   score: { color: colors.red, fontSize: 28, fontWeight: '700' },
   title: { color: colors.white, fontSize: 18, fontWeight: '700' },
   meta: { color: colors.textSecondary, fontSize: 14 },
+  filters: { flexDirection: 'row', gap: space.sm },
+  chip: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  chipOn: { borderColor: colors.red, backgroundColor: '#2A0C0E' },
+  chipText: { color: colors.white, fontSize: 13 },
 });

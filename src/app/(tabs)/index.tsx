@@ -4,6 +4,9 @@ import { brand } from '../../config/brand';
 import { Avatar, Card, Screen, SectionTitle } from '../../components/ui';
 import { ScoreRing } from '../../components/charts';
 import { eventPhase, formatCalories, formatDuration, formatWhen } from '../../domain/format';
+import { leaderboard, rankOf } from '../../domain/leaderboard';
+import { nightKindLabel } from '../../domain/labels';
+import { nightlifeStats } from '../../domain/stats';
 import { useAppState } from '../../state/AppState';
 import { colors, space } from '../../theme/tokens';
 
@@ -19,6 +22,9 @@ export default function HomeScreen() {
   const feed = activities
     .filter((item) => item.shared && item.userId !== profile?.id)
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const stats = profile ? nightlifeStats(activities, profile.id) : null;
+  const liveRows = live ? leaderboard(activities, live.id, users) : [];
+  const liveRank = profile ? rankOf(liveRows, profile.id) : null;
 
   return (
     <Screen>
@@ -28,6 +34,18 @@ export default function HomeScreen() {
           <Text style={styles.bell}>Bildirim{unread ? ` ${unread}` : ''}</Text>
         </Pressable>
       </View>
+      {stats ? (
+        <>
+          <SectionTitle>Özet</SectionTitle>
+          <Card>
+            <View style={styles.row}>
+              <View style={styles.stat}><Text style={styles.statValue}>{stats.monthNights}</Text><Text style={styles.meta}>bu ay</Text></View>
+              <View style={styles.stat}><Text style={styles.statValue}>{stats.jumps}</Text><Text style={styles.meta}>zıplama</Text></View>
+              <View style={styles.stat}><Text style={styles.statValue}>{stats.bestScore?.partyScore ?? '—'}</Text><Text style={styles.meta}>rekor</Text></View>
+            </View>
+          </Card>
+        </>
+      ) : null}
       <SectionTitle>Son gecen</SectionTitle>
       {latest ? (
         <Pressable onPress={() => router.push(`/session/${latest.id}`)}>
@@ -59,6 +77,7 @@ export default function HomeScreen() {
                 {live.venue} · {formatWhen(live.startsAt)}
                 {live.musicBpm ? ` · ${live.musicBpm} BPM` : ''}
               </Text>
+              {liveRank ? <Text style={styles.meta}>Senin sıran {liveRank.rank} / {liveRank.total}</Text> : null}
             </Card>
           </Pressable>
         </>
@@ -66,6 +85,9 @@ export default function HomeScreen() {
       <SectionTitle>Arkadaşlar</SectionTitle>
       {feed.map((activity) => {
         const user = users.find((item) => item.id === activity.userId);
+        const mineOnEvent = activity.eventId ? mine.find((item) => item.eventId === activity.eventId) : undefined;
+        const gap = mineOnEvent ? activity.partyScore - mineOnEvent.partyScore : null;
+        const gapText = gap == null ? nightKindLabel(activity.nightKind) : gap > 0 ? `${gap} puan senden önde` : gap < 0 ? `${Math.abs(gap)} puan geride` : 'Aynı skor';
         return (
           <Pressable key={activity.id} onPress={() => router.push(`/session/${activity.id}`)}>
             <Card>
@@ -74,7 +96,7 @@ export default function HomeScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.title}>{user?.displayName}</Text>
                   <Text style={styles.meta}>
-                    {activity.title} · {activity.partyScore}
+                    {activity.title} · {activity.partyScore} · {gapText}
                   </Text>
                 </View>
               </View>
@@ -93,4 +115,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: space.md, alignItems: 'center' },
   title: { color: colors.white, fontSize: 18, fontWeight: '700' },
   meta: { color: colors.textSecondary, fontSize: 14 },
+  stat: { flex: 1, gap: 2 },
+  statValue: { color: colors.white, fontSize: 28, fontWeight: '700' },
 });

@@ -1,5 +1,6 @@
 export type Sex = 'female' | 'male' | 'unspecified';
 export type FitnessLevel = 'low' | 'medium' | 'high';
+export type NightKind = 'rave' | 'club' | 'festival' | 'concert' | 'after';
 export type PermissionChoice = 'granted' | 'denied' | 'skipped' | 'unavailable';
 export type HeartRateOrigin = 'estimated' | 'measured' | 'none';
 export type CalorieMethod = 'heart-rate' | 'motion';
@@ -67,6 +68,7 @@ export type ActivitySummary = {
   peakHeartRate: number | null;
   heartRateOrigin: HeartRateOrigin;
   musicBpm: number | null;
+  nightKind: NightKind | null;
   partyScore: number;
   route: GeoPoint[];
   intensitySeries: number[];

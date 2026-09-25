@@ -391,10 +391,12 @@ export function OnboardingScreen() {
       ) : null}
       {step === 'fitness' ? (
         <View style={styles.block}>
-          <Text style={styles.title}>Tempo</Text>
-          <Text style={styles.body}>Hareket kalorisine küçük bir çarpan uygular. Yoğunluk asıl kaynağı sensördür.</Text>
+          <Text style={styles.title}>Dansın</Text>
+          <Text style={styles.body}>
+            Bu müzik BPM’i değil. Ne kadar sert dans ettiğini söyler ve kaloriye küçük bir çarpan uygular. Müzik BPM’i etkinlikten gelir.
+          </Text>
           {([
-            ['low', 'Sakin'],
+            ['low', 'Yumuşak'],
             ['medium', 'Orta'],
             ['high', 'Sert'],
           ] as const).map(([value, label]) => (
