@@ -1,0 +1,96 @@
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { brand } from '../../config/brand';
+import { Avatar, Card, Screen, SectionTitle } from '../../components/ui';
+import { ScoreRing } from '../../components/charts';
+import { eventPhase, formatCalories, formatDuration, formatWhen } from '../../domain/format';
+import { useAppState } from '../../state/AppState';
+import { colors, space } from '../../theme/tokens';
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const { profile, activities, events, users, notifications } = useAppState();
+  const unread = notifications.filter((item) => !item.read).length;
+  const mine = activities
+    .filter((item) => item.userId === profile?.id)
+    .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const latest = mine[0];
+  const live = events.find((event) => eventPhase(event.startsAt) === 'live') ?? events.find((event) => eventPhase(event.startsAt) === 'upcoming');
+  const feed = activities
+    .filter((item) => item.shared && item.userId !== profile?.id)
+    .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+
+  return (
+    <Screen>
+      <View style={styles.header}>
+        <Text style={styles.brand}>{brand.name}</Text>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/notifications')}>
+          <Text style={styles.bell}>Bildirim{unread ? ` ${unread}` : ''}</Text>
+        </Pressable>
+      </View>
+      <SectionTitle>Son gecen</SectionTitle>
+      {latest ? (
+        <Pressable onPress={() => router.push(`/session/${latest.id}`)}>
+          <Card>
+            <View style={styles.row}>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={styles.title}>{latest.title}</Text>
+                <Text style={styles.meta}>
+                  {formatDuration(latest.activeSeconds)} · {formatCalories(latest.calories)} kcal · {latest.jumps} zıplama
+                </Text>
+              </View>
+              <ScoreRing score={latest.partyScore} />
+            </View>
+          </Card>
+        </Pressable>
+      ) : (
+        <Card>
+          <Text style={styles.title}>Henüz bir gecen yok</Text>
+          <Text style={styles.meta}>Kayıt sekmesinden bir gece başlat.</Text>
+        </Card>
+      )}
+      {live ? (
+        <>
+          <SectionTitle>{eventPhase(live.startsAt) === 'live' ? 'Şu an' : 'Yaklaşan'}</SectionTitle>
+          <Pressable onPress={() => router.push(`/event/${live.id}`)}>
+            <Card>
+              <Text style={styles.title}>{live.title}</Text>
+              <Text style={styles.meta}>
+                {live.venue} · {formatWhen(live.startsAt)}
+                {live.musicBpm ? ` · ${live.musicBpm} BPM` : ''}
+              </Text>
+            </Card>
+          </Pressable>
+        </>
+      ) : null}
+      <SectionTitle>Arkadaşlar</SectionTitle>
+      {feed.map((activity) => {
+        const user = users.find((item) => item.id === activity.userId);
+        return (
+          <Pressable key={activity.id} onPress={() => router.push(`/session/${activity.id}`)}>
+            <Card>
+              <View style={styles.row}>
+                <Avatar label={user?.displayName ?? '?'} color={user?.avatarColor ?? colors.card} uri={user?.avatarUri} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.title}>{user?.displayName}</Text>
+                  <Text style={styles.meta}>
+                    {activity.title} · {activity.partyScore}
+                  </Text>
+                </View>
+              </View>
+            </Card>
+          </Pressable>
+        );
+      })}
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  brand: { color: colors.white, fontSize: 28, fontWeight: '700', letterSpacing: 1 },
+  bell: { color: colors.red, fontSize: 14 },
+  row: { flexDirection: 'row', gap: space.md, alignItems: 'center' },
+  title: { color: colors.white, fontSize: 18, fontWeight: '700' },
+  meta: { color: colors.textSecondary, fontSize: 14 },
+});
