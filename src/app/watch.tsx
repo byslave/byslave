@@ -44,7 +44,7 @@ export default function WatchScreen() {
     >
       <Text style={styles.title}>Saat eşleştir</Text>
       <Text style={styles.body}>
-        Saat nabzı {watch?.via} üzerinden gelir. Eşleşme olmazsa kayıt sürer ve nabız tahmin diye yazılır.
+        Saat bağlanırsa nabız {watch?.via} üzerinden kendiliğinden gelir. Bağlanmazsa nabız alınmaz.
       </Text>
       {watchOptions.map((option) => {
         const active = option.id === selected;

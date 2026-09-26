@@ -5,6 +5,7 @@ import { Button, Card, Field, Screen, Stat } from '../../components/ui';
 import { nightKindLabel, nightKindOptions } from '../../domain/labels';
 import { buildSummary } from '../../domain/scoring';
 import type { NightKind } from '../../domain/types';
+import { heartRateOriginForWatch } from '../../health/providers';
 import { formatCalories, formatDistance, formatDuration } from '../../domain/format';
 import { useRecording } from '../../features/record/useRecording';
 import { useAppState } from '../../state/AppState';
@@ -13,7 +14,7 @@ import { colors, space } from '../../theme/tokens';
 export default function RecordScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ eventId?: string }>();
-  const { profile, events, saveActivity } = useAppState();
+  const { profile, events, saveActivity, updateProfile } = useAppState();
   const recording = useRecording();
   const [eventId, setEventId] = useState<string | null>(null);
   const [nightKind, setNightKind] = useState<NightKind>('rave');
@@ -25,6 +26,21 @@ export default function RecordScreen() {
     if (typeof params.eventId === 'string') setEventId(params.eventId);
   }, [params.eventId]);
 
+  useEffect(() => {
+    if (!profile || !recording.permissions) return;
+    if (
+      profile.motionStatus === recording.permissions.motion &&
+      profile.locationStatus === recording.permissions.location
+    ) {
+      return;
+    }
+    void updateProfile({
+      motionStatus: recording.permissions.motion,
+      locationStatus: recording.permissions.location,
+    });
+  }, [profile, recording.permissions, updateProfile]);
+
+  const heartRateOrigin = heartRateOriginForWatch(profile?.watchStatus ?? 'skipped');
   const preview = useMemo(() => {
     if (!profile) return null;
     const event = events.find((item) => item.id === eventId) ?? null;
@@ -37,9 +53,9 @@ export default function RecordScreen() {
       body: profile,
       shared,
       nightKind,
-      heartRateOrigin: recording.kind === 'demo' ? 'estimated' : 'none',
+      heartRateOrigin,
     });
-  }, [eventId, events, nightKind, profile, recording.activeSeconds, recording.kind, recording.samples, shared]);
+  }, [eventId, events, heartRateOrigin, nightKind, profile, recording.activeSeconds, recording.samples, shared]);
 
   const save = async () => {
     if (!profile || !preview || saving) return;
@@ -56,7 +72,7 @@ export default function RecordScreen() {
       shared,
       nightKind,
       note,
-      heartRateOrigin: snapshot.kind === 'demo' ? 'estimated' : 'none',
+      heartRateOrigin,
     });
     await saveActivity(summary);
     setSaving(false);
@@ -87,14 +103,12 @@ export default function RecordScreen() {
         {recording.kind === 'demo' ? ' · Demo hareket' : ''}
         {recording.kind === 'device' ? ' · Telefon hareketi' : ''}
       </Text>
-      {recording.kind === 'demo' ? (
-        <Text style={styles.meta}>Bu ortamda sensör yok. Zıplama ve nabız tahmindir.</Text>
-      ) : null}
-      {profile?.watchLabel ? (
-        <Text style={styles.meta}>
-          {profile.watchLabel} {profile.watchStatus === 'granted' ? 'bağlı' : 'eşleşmedi'}
-        </Text>
-      ) : null}
+      {recording.kind === 'demo' ? <Text style={styles.meta}>Bu ortamda sensör yok. Hareket tahmindir.</Text> : null}
+      <Text style={styles.meta}>
+        {heartRateOrigin === 'measured' && profile?.watchLabel
+          ? `${profile.watchLabel} bağlı. Nabız kayda geliyor.`
+          : 'Saat bağlı değil. Nabız alınmıyor.'}
+      </Text>
       {recording.activeSeconds > 0 && recording.activeSeconds < 3 ? (
         <Text style={styles.meta}>Bitirmek için birkaç saniye.</Text>
       ) : null}
@@ -109,8 +123,9 @@ export default function RecordScreen() {
         </View>
         <View style={styles.stats}>
           <Stat
-            label={preview?.heartRateOrigin === 'estimated' ? 'Nabız · tahmin' : 'Nabız'}
-            value={preview?.avgHeartRate ? Math.round(preview.avgHeartRate).toString() : '—'}
+            label="Nabız"
+            value={heartRateOrigin === 'measured' && preview?.avgHeartRate ? Math.round(preview.avgHeartRate).toString() : '—'}
+            hint={heartRateOrigin === 'measured' ? undefined : 'Saat yok'}
           />
           <Stat label="Yoğunluk" value={`${Math.round((preview?.intensity ?? 0) * 100)}`} />
         </View>

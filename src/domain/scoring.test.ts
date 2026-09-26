@@ -18,7 +18,8 @@ const spike = [
 ];
 assert(countJumps(spike) === 2, 'iki sıçrama sayılmalı');
 
-const samples = Array.from({ length: 40 }, (_, index) => makeDemoSample(index));
+const samples = Array.from({ length: 40 }, (_, index) => ({ ...makeDemoSample(index), heartRate: 140 }));
+assert(makeDemoSample(2).heartRate == null, 'demo örnek nabız taşımaz');
 assert(countJumps(samples) > 0, 'demo akış zıplama üretmeli');
 
 const summary = buildSummary({
@@ -29,7 +30,7 @@ const summary = buildSummary({
   samples,
   body: { age: 28, heightCm: 175, weightKg: 70, sex: 'male', fitnessLevel: 'medium' },
   shared: true,
-  heartRateOrigin: 'estimated',
+  heartRateOrigin: 'measured',
 });
 assert(summary.jumps > 0, 'özette zıplama olmalı');
 assert(summary.distanceMeters > 0, 'özette mesafe olmalı');

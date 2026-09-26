@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import type { HeartRateOrigin, PermissionChoice } from '../domain/types';
 
 export type ProviderResult = { connected: boolean; reason: string };
 
@@ -51,7 +52,7 @@ const unavailable: HealthProvider = {
   async connect() {
     return {
       connected: false,
-      reason: 'Bu tarayıcıda sağlık verisi yok. Kayıt, demo harekete ve tahmini nabza düşer.',
+      reason: 'Bu tarayıcıda sağlık verisi yok. Nabız alınmaz.',
     };
   },
 };
@@ -68,12 +69,16 @@ export async function pairWatch(id: string): Promise<ProviderResult> {
   if (Platform.OS === 'web') {
     return {
       connected: false,
-      reason: `${watch.label} bu tarayıcıda eşleşmez. Telefonda ${watch.via} açıkken aynı ekrandan tekrar dene. O zamana kadar nabız tahmin olarak işaretlenir.`,
+      reason: `${watch.label} bu tarayıcıda eşleşmez. Telefonda ${watch.via} açıkken aynı ekrandan tekrar dene. Saat bağlanmazsa nabız alınmaz.`,
     };
   }
   const health = await platformHealthProvider().connect();
   if (!health.connected) {
     return { connected: false, reason: `${watch.label} seçildi. ${health.reason}` };
   }
-  return { connected: true, reason: `${watch.label}, ${watch.via} üzerinden bağlandı.` };
+  return { connected: true, reason: `${watch.label}, ${watch.via} üzerinden bağlandı. Nabız kayda kendiliğinden gelir.` };
+}
+
+export function heartRateOriginForWatch(status: PermissionChoice): HeartRateOrigin {
+  return status === 'granted' ? 'measured' : 'none';
 }

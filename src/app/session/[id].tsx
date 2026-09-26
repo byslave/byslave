@@ -32,8 +32,8 @@ export default function SessionScreen() {
   const versus = compareLine(rows, activity.userId);
   const ownStats = profile ? nightlifeStats(activities, profile.id) : null;
   const isRecord = Boolean(profile && activity.userId === profile.id && ownStats?.bestScore?.id === activity.id);
-  const hrLabel =
-    activity.heartRateOrigin === 'estimated' ? 'Nabız · tahmin' : activity.heartRateOrigin === 'measured' ? 'Nabız' : 'Nabız yok';
+  const showHeartRate = activity.heartRateOrigin !== 'none';
+  const hrLabel = activity.heartRateOrigin === 'measured' ? 'Nabız' : 'Nabız · tahmin';
   const share = async () => {
     const text = `${brand.name} · ${activity.title} · Party Score ${activity.partyScore} · ${formatCalories(activity.calories)} kcal · ${activity.jumps} zıplama · ${formatDistance(activity.distanceMeters)}`;
     await Clipboard.setStringAsync(text);
@@ -87,7 +87,11 @@ export default function SessionScreen() {
           <Stat label="Mesafe" value={formatDistance(activity.distanceMeters)} />
         </View>
         <View style={styles.stats}>
-          <Stat label={hrLabel} value={activity.avgHeartRate ? Math.round(activity.avgHeartRate).toString() : '—'} hint={activity.peakHeartRate ? `Zirve ${Math.round(activity.peakHeartRate)}` : undefined} />
+          {showHeartRate ? (
+            <Stat label={hrLabel} value={activity.avgHeartRate ? Math.round(activity.avgHeartRate).toString() : '—'} hint={activity.peakHeartRate ? `Zirve ${Math.round(activity.peakHeartRate)}` : undefined} />
+          ) : (
+            <Stat label="Nabız" value="—" hint="Saat yok" />
+          )}
           <Stat label="Zirve yoğunluk" value={`${Math.round(activity.peakIntensity * 100)}`} hint={`${Math.round(activity.peakOffsetSeconds / 60)}. dk`} />
         </View>
         <Text style={styles.meta}>{activity.musicBpm ? `Etkinlik BPM ${activity.musicBpm}` : 'Bu kayıtta müzik BPM’i yok'}</Text>

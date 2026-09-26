@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { openMotionSource, type MotionKind } from '../../motion/source';
-import type { ActivitySample } from '../../domain/types';
+import type { ActivitySample, PermissionChoice } from '../../domain/types';
 
 export function useRecording() {
   const [phase, setPhase] = useState<'idle' | 'running' | 'paused'>('idle');
   const [samples, setSamples] = useState<ActivitySample[]>([]);
   const [activeSeconds, setActiveSeconds] = useState(0);
   const [kind, setKind] = useState<MotionKind | null>(null);
+  const [permissions, setPermissions] = useState<{ motion: PermissionChoice; location: PermissionChoice } | null>(null);
   const stopRef = useRef<(() => void) | null>(null);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const samplesRef = useRef<ActivitySample[]>([]);
@@ -41,6 +42,7 @@ export function useRecording() {
     });
     kindRef.current = opened.kind;
     setKind(opened.kind);
+    setPermissions({ motion: opened.motion, location: opened.location });
     stopRef.current = opened.stop;
     runningSince.current = Date.now();
     clockRef.current = setInterval(() => {
@@ -56,6 +58,7 @@ export function useRecording() {
     samples,
     activeSeconds,
     kind,
+    permissions,
     start: () => begin(true),
     resume: () => begin(false),
     pause: () => {

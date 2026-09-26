@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, Card, Field, Screen, SectionTitle } from '../../components/ui';
 import { formatDuration } from '../../domain/format';
 import { danceEffortLabel, sexLabel } from '../../domain/labels';
 import { nightlifeStats, weekRhythm } from '../../domain/stats';
+import { usernameIssue } from '../../domain/username';
 import { useAppState } from '../../state/AppState';
 import type { FitnessLevel, Sex } from '../../domain/types';
 import { colors, space } from '../../theme/tokens';
@@ -20,9 +21,14 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { profile, activities, users, followingIds, mode, modeNote, updateProfile, resetLocal, toggleFollow } = useAppState();
   const [editing, setEditing] = useState(false);
+  const [username, setUsername] = useState(profile?.username ?? '');
+  const [nameError, setNameError] = useState<string | null>(null);
   const [age, setAge] = useState(profile?.age?.toString() ?? '');
   const [height, setHeight] = useState(profile?.heightCm?.toString() ?? '');
   const [weight, setWeight] = useState(profile?.weightKg?.toString() ?? '');
+  useEffect(() => {
+    setUsername(profile?.username ?? '');
+  }, [profile?.username]);
   if (!profile) return null;
   const stats = nightlifeStats(activities, profile.id);
   const weeks = weekRhythm(activities, profile.id);
@@ -47,6 +53,36 @@ export default function ProfileScreen() {
           <Text style={styles.meta}>@{profile.username}</Text>
         </View>
       </View>
+      <Card>
+        <Field
+          value={username}
+          maxLength={16}
+          autoCapitalize="none"
+          placeholder="Kullanıcı adı"
+          onChangeText={(value) => {
+            setUsername(value.slice(0, 16));
+            setNameError(null);
+          }}
+        />
+        <Text style={styles.meta}>3 ile 16 karakter.</Text>
+        {nameError ? <Text style={styles.error}>{nameError}</Text> : null}
+        <Button
+          label="Kullanıcı adını kaydet"
+          kind="ghost"
+          onPress={() => {
+            const next = username.trim();
+            const issue = usernameIssue(next, users, profile.id);
+            if (issue) {
+              setNameError(issue);
+              return;
+            }
+            void updateProfile({
+              username: next,
+              displayName: profile.displayName === profile.username ? next : profile.displayName,
+            });
+          }}
+        />
+      </Card>
       <Card>
         <Text style={styles.meta}>{modeNote}</Text>
       </Card>
@@ -139,4 +175,5 @@ const styles = StyleSheet.create({
   week: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
   bar: { width: 10, backgroundColor: colors.red, borderRadius: 4 },
   weekLabel: { color: colors.textSecondary, fontSize: 11 },
+  error: { color: colors.redBright, fontSize: 14 },
 });
