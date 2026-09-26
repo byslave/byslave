@@ -3,7 +3,7 @@ import type { ActivitySummary, AppSnapshot, Profile, PublicUser } from '../domai
 import type { ActivityRepository } from './repository';
 import { buildSeed } from './seed';
 
-const STORAGE_KEY = 'nightlife.demo.v1';
+const STORAGE_KEY = 'nightlife.demo.v2';
 
 type Persisted = {
   profile: Profile | null;
