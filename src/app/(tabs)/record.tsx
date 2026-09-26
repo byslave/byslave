@@ -121,7 +121,7 @@ export default function RecordScreen() {
       <Card>
         <View style={styles.stats}>
           <Stat label="Kalori · tahmin" value={formatCalories(preview?.calories ?? 0)} hint={preview?.assumedWeight ? '70 kg varsayıldı' : preview?.calorieMethod === 'heart-rate' ? 'Nabız formülü' : 'Hareket formülü'} />
-          <Stat label="Party Score" value={String(preview?.partyScore ?? 0)} />
+          <Stat label="Party Score" value={String(preview?.partyScore ?? 0)} hint="Süre, zıplama, yoğunluk, kalori, mesafe" />
         </View>
         <View style={styles.stats}>
           <Stat label="Zıplama" value={String(preview?.jumps ?? 0)} />

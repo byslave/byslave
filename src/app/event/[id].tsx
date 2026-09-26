@@ -22,6 +22,11 @@ export default function EventScreen() {
   const joined = profile ? event.attendeeIds.includes(profile.id) : false;
   const place = profile ? rankOf(rows, profile.id) : null;
   const versus = profile ? compareLine(rows, profile.id) : null;
+  const venueNights = activities
+    .filter((item) => item.shared && item.venue === event.venue)
+    .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const venueAvg = venueNights.length ? Math.round(venueNights.reduce((sum, item) => sum + item.partyScore, 0) / venueNights.length) : null;
+  const venuePeople = new Set(venueNights.map((item) => item.userId)).size;
   return (
     <Screen
       footer={
@@ -46,15 +51,28 @@ export default function EventScreen() {
       {event.lineup ? <Text style={styles.meta}>{event.lineup}</Text> : null}
       <Text style={styles.meta}>{event.attendeeIds.length} katılımcı</Text>
       <Text style={styles.meta}>
-        {(() => {
-          const nights = activities.filter((item) => item.shared && item.venue === event.venue);
-          const avg = nights.length ? Math.round(nights.reduce((sum, item) => sum + item.partyScore, 0) / nights.length) : null;
-          const people = new Set(nights.map((item) => item.userId)).size;
-          return `${event.venue} · ${nights.length} gece${avg != null ? ` · ort. skor ${avg}` : ''} · ${people} kişi`;
-        })()}
+        {event.venue} · {venueNights.length} gece{venueAvg != null ? ` · ort. skor ${venueAvg}` : ''} · {venuePeople} kişi
       </Text>
       {place ? <Text style={styles.meta}>Senin sıran {place.rank} / {place.total}</Text> : null}
       {versus ? <Text style={styles.meta}>{versus}</Text> : null}
+      <Text style={styles.section}>Bu mekândaki geceler</Text>
+      {venueNights.length === 0 ? (
+        <Card>
+          <Text style={styles.meta}>Bu mekânda paylaşılmış gece yok.</Text>
+        </Card>
+      ) : (
+        venueNights.map((night) => {
+          const person = users.find((item) => item.id === night.userId);
+          return (
+            <Pressable key={night.id} onPress={() => router.push(`/session/${night.id}`)}>
+              <Card>
+                <Text style={styles.name}>{person?.displayName ?? 'Katılımcı'} · {night.partyScore}</Text>
+                <Text style={styles.meta}>{night.title} · {night.respectIds.length} saygı</Text>
+              </Card>
+            </Pressable>
+          );
+        })
+      )}
       <Text style={styles.section}>Liderlik</Text>
       {rows.length === 0 ? (
         <Card>

@@ -1,3 +1,4 @@
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -28,6 +29,7 @@ export default function ProfileScreen() {
   const [age, setAge] = useState(profile?.age?.toString() ?? '');
   const [height, setHeight] = useState(profile?.heightCm?.toString() ?? '');
   const [weight, setWeight] = useState(profile?.weightKg?.toString() ?? '');
+  const [copiedYear, setCopiedYear] = useState(false);
   useEffect(() => {
     setUsername(profile?.username ?? '');
   }, [profile?.username]);
@@ -139,6 +141,14 @@ export default function ProfileScreen() {
             </View>
           ))}
         </View>
+        <Button
+          label={copiedYear ? 'Kopyalandı' : 'Kartı kopyala'}
+          kind="ghost"
+          onPress={() => {
+            const text = `${wrapped.year} · ${wrapped.nights} gece · ${wrapped.hours.toFixed(1)} saat · ${wrapped.jumps} zıplama · en çok ${wrapped.topVenue ?? '—'} · skor ${wrapped.best?.partyScore ?? '—'}`;
+            void Clipboard.setStringAsync(text).then(() => setCopiedYear(true));
+          }}
+        />
       </Card>
       <SectionTitle>{`Takip · ${followingIds.length}`}</SectionTitle>
       {others.map((user) => {
