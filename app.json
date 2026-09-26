@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "RAVE",
+    "slug": "nightlife-activity",
+    "scheme": "nightlife",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#050505",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.nightlife.activity",
+      "infoPlist": {
+        "NSMotionUsageDescription": "Hareket verisi zıplama ve tempo tahminini iyileştirir.",
+        "NSLocationWhenInUsePermission": "Konum, gece boyunca ne kadar yer değiştirdiğini tahmin etmek için kullanılır.",
+        "NSHealthShareUsageDescription": "Nabız, kalori ve yoğunluk tahminini iyileştirmek için okunur.",
+        "NSHealthUpdateUsageDescription": "Aktivite özeti isteğe bağlı olarak Sağlık uygulamasına yazılabilir."
+      }
+    },
+    "android": {
+      "package": "app.nightlife.activity",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACTIVITY_RECOGNITION",
+        "BODY_SENSORS",
+        "POST_NOTIFICATIONS"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#050505",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "backgroundColor": "#050505"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Konum, gece boyunca ne kadar yer değiştirdiğini tahmin etmek için kullanılır."
+        }
+      ]
+    ]
+  }
+}
