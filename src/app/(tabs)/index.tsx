@@ -6,13 +6,15 @@ import { ScoreRing } from '../../components/charts';
 import { eventPhase, formatCalories, formatDuration, formatWhen } from '../../domain/format';
 import { leaderboard, rankOf } from '../../domain/leaderboard';
 import { nightKindLabel } from '../../domain/labels';
+import { badgeBoard } from '../../domain/badges';
+import { crossedWith } from '../../domain/paths';
 import { nightlifeStats } from '../../domain/stats';
 import { useAppState } from '../../state/AppState';
 import { colors, space } from '../../theme/tokens';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { profile, activities, events, users, notifications, followingIds, toggleFollow } = useAppState();
+  const { profile, activities, events, users, notifications, followingIds, seenBadgeKeys, toggleFollow, toggleRespect, acknowledgeBadges } = useAppState();
   const unread = notifications.filter((item) => !item.read).length;
   const mine = activities
     .filter((item) => item.userId === profile?.id)
@@ -27,6 +29,12 @@ export default function HomeScreen() {
   const stats = profile ? nightlifeStats(activities, profile.id) : null;
   const liveRows = live ? leaderboard(activities, live.id, users) : [];
   const liveRank = profile ? rankOf(liveRows, profile.id) : null;
+  const freshBadge = profile
+    ? badgeBoard(activities, profile.id).find((badge) => badge.earnedAt && !seenBadgeKeys.includes(badge.key))
+    : null;
+  const suggestions = profile
+    ? crossedWith(activities, profile.id).filter((item) => item.times >= 2 && !followingIds.includes(item.userId))
+    : [];
 
   return (
     <Screen>
@@ -36,6 +44,15 @@ export default function HomeScreen() {
           <Text style={styles.bell}>Bildirim{unread ? ` ${unread}` : ''}</Text>
         </Pressable>
       </View>
+      {freshBadge ? (
+        <Card>
+          <Text style={styles.title}>Rozet · {freshBadge.title}</Text>
+          <Text style={styles.meta}>{freshBadge.description}</Text>
+          <Pressable accessibilityRole="button" onPress={() => void acknowledgeBadges([freshBadge.key])}>
+            <Text style={styles.follow}>Tamam</Text>
+          </Pressable>
+        </Card>
+      ) : null}
       {stats ? (
         <>
           <SectionTitle>Özet</SectionTitle>
@@ -92,6 +109,23 @@ export default function HomeScreen() {
       ) : (
         followed.map((activity) => renderFeed(activity))
       )}
+      {suggestions.length > 0 ? (
+        <>
+          <SectionTitle>Aynı gece</SectionTitle>
+          {suggestions.map((item) => {
+            const user = users.find((person) => person.id === item.userId);
+            return (
+              <Card key={item.userId}>
+                <Text style={styles.title}>{user?.displayName ?? 'Biri'} ile {item.times} kez aynı gecedeydiniz</Text>
+                <Text style={styles.meta}>{item.venue}</Text>
+                <Pressable accessibilityRole="button" onPress={() => void toggleFollow(item.userId)}>
+                  <Text style={styles.follow}>Takip et</Text>
+                </Pressable>
+              </Card>
+            );
+          })}
+        </>
+      ) : null}
       <SectionTitle>Keşfet</SectionTitle>
       {discover.map((activity) => renderFeed(activity))}
     </Screen>
@@ -114,9 +148,13 @@ export default function HomeScreen() {
                 {activity.title} · {activity.partyScore} · {gapText}
               </Text>
               {activity.note ? <Text style={styles.meta}>{activity.note}</Text> : null}
-              <Text style={styles.meta}>{activity.respectIds.length} saygı</Text>
             </View>
           </View>
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={() => void toggleRespect(activity.id)}>
+          <Text style={styles.follow}>
+            {profile && activity.respectIds.includes(profile.id) ? `Saygı var · ${activity.respectIds.length}` : `Saygı · ${activity.respectIds.length}`}
+          </Text>
         </Pressable>
         {user && !followedUser ? (
           <Pressable accessibilityRole="button" onPress={() => void toggleFollow(user.id)}>

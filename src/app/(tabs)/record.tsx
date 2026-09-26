@@ -6,6 +6,7 @@ import { nightKindLabel, nightKindOptions } from '../../domain/labels';
 import { buildSummary } from '../../domain/scoring';
 import type { NightKind } from '../../domain/types';
 import { heartRateOriginForWatch } from '../../health/providers';
+import { sustainedHighHeartRate } from '../../domain/safety';
 import { formatCalories, formatDistance, formatDuration } from '../../domain/format';
 import { useRecording } from '../../features/record/useRecording';
 import { useAppState } from '../../state/AppState';
@@ -20,6 +21,8 @@ export default function RecordScreen() {
   const [nightKind, setNightKind] = useState<NightKind>('rave');
   const [note, setNote] = useState('');
   const [shared, setShared] = useState(true);
+  const [sharePlace, setSharePlace] = useState(false);
+  const [askPlace, setAskPlace] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -41,6 +44,7 @@ export default function RecordScreen() {
   }, [profile, recording.permissions, updateProfile]);
 
   const heartRateOrigin = heartRateOriginForWatch(profile?.watchStatus ?? 'skipped');
+  const waterBreak = sustainedHighHeartRate(recording.samples, heartRateOrigin);
   const preview = useMemo(() => {
     if (!profile) return null;
     const event = events.find((item) => item.id === eventId) ?? null;
@@ -52,10 +56,11 @@ export default function RecordScreen() {
       samples: recording.samples,
       body: profile,
       shared,
+      locationShared: sharePlace,
       nightKind,
       heartRateOrigin,
     });
-  }, [eventId, events, heartRateOrigin, nightKind, profile, recording.activeSeconds, recording.samples, shared]);
+  }, [eventId, events, heartRateOrigin, nightKind, profile, recording.activeSeconds, recording.samples, sharePlace, shared]);
 
   const save = async () => {
     if (!profile || !preview || saving) return;
@@ -70,6 +75,7 @@ export default function RecordScreen() {
       samples: snapshot.samples,
       body: profile,
       shared,
+      locationShared: sharePlace,
       nightKind,
       note,
       heartRateOrigin,
@@ -153,10 +159,33 @@ export default function RecordScreen() {
         ))}
       </View>
       <Field value={note} onChangeText={(value) => setNote(value.slice(0, 80))} placeholder="Gece notu, 80 karakter" />
+      {waterBreak ? (
+        <Card>
+          <Text style={styles.meta}>Su molası. Nabız bir süredir yüksek.</Text>
+        </Card>
+      ) : null}
       <View style={styles.shareRow}>
         <Text style={styles.meta}>Arkadaşların görsün</Text>
         <Switch value={shared} onValueChange={setShared} trackColor={{ true: colors.red, false: colors.border }} />
       </View>
+      <View style={styles.shareRow}>
+        <Text style={styles.meta}>Arkadaşını bul</Text>
+        <Switch
+          value={sharePlace}
+          onValueChange={(value) => {
+            if (value) setAskPlace(true);
+            else setSharePlace(false);
+          }}
+          trackColor={{ true: colors.red, false: colors.border }}
+        />
+      </View>
+      {askPlace ? (
+        <Card>
+          <Text style={styles.meta}>Takipçilerin bu gecenin rotasını görür. Kapalı kalsın istersen vazgeç.</Text>
+          <Button label="Rotayı aç" onPress={() => { setSharePlace(true); setAskPlace(false); }} />
+          <Button label="Vazgeç" kind="ghost" onPress={() => setAskPlace(false)} />
+        </Card>
+      ) : null}
     </Screen>
   );
 }

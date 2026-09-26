@@ -75,6 +75,7 @@ export type ActivitySummary = {
   route: GeoPoint[];
   intensitySeries: number[];
   shared: boolean;
+  locationShared: boolean;
 };
 
 export type NightEvent = {
@@ -84,7 +85,16 @@ export type NightEvent = {
   city: string;
   startsAt: string;
   musicBpm: number | null;
+  lineup: string | null;
   attendeeIds: string[];
+};
+
+export type ActivityComment = {
+  id: string;
+  activityId: string;
+  userId: string;
+  text: string;
+  createdAt: string;
 };
 
 export type PublicUser = {
@@ -111,4 +121,6 @@ export type AppSnapshot = {
   activities: ActivitySummary[];
   notifications: AppNotification[];
   followingIds: string[];
+  comments: ActivityComment[];
+  seenBadgeKeys: string[];
 };

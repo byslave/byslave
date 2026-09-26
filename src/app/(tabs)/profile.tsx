@@ -4,7 +4,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, Card, Field, Screen, SectionTitle } from '../../components/ui';
 import { formatDuration } from '../../domain/format';
 import { danceEffortLabel, sexLabel } from '../../domain/labels';
+import { crossedWith } from '../../domain/paths';
 import { nightlifeStats, weekRhythm } from '../../domain/stats';
+import { yearWrapped } from '../../domain/wrapped';
 import { usernameIssue } from '../../domain/username';
 import { useAppState } from '../../state/AppState';
 import type { FitnessLevel, Sex } from '../../domain/types';
@@ -32,6 +34,8 @@ export default function ProfileScreen() {
   if (!profile) return null;
   const stats = nightlifeStats(activities, profile.id);
   const weeks = weekRhythm(activities, profile.id);
+  const crosses = crossedWith(activities, profile.id);
+  const wrapped = yearWrapped(activities, profile.id);
   const others = users.filter((user) => user.id !== profile.id);
   const efforts: FitnessLevel[] = ['low', 'medium', 'high'];
   const sexes: Sex[] = ['female', 'male', 'unspecified'];
@@ -98,6 +102,44 @@ export default function ProfileScreen() {
         </View>
         <Text style={styles.meta}>{weeks[0]?.label} – {weeks[weeks.length - 1]?.label}</Text>
       </Card>
+      <SectionTitle>Rekorlar</SectionTitle>
+      <Card>
+        <Text style={styles.meta}>En uzun gece {stats.longest ? formatDuration(stats.longest.activeSeconds) : '—'}</Text>
+        <Text style={styles.meta}>En yüksek skor {stats.bestScore?.partyScore ?? '—'}{stats.bestScore ? ` · ${stats.bestScore.title}` : ''}</Text>
+        <Text style={styles.meta}>En yüksek nabız {stats.bestHeart?.peakHeartRate ?? '—'}</Text>
+        <Text style={styles.meta}>En çok zıplama {stats.bestJumps?.jumps ?? '—'}</Text>
+        <Text style={styles.meta}>En yüksek BPM {stats.bestBpm?.musicBpm ?? '—'}</Text>
+      </Card>
+      <SectionTitle>Kesişen yollar</SectionTitle>
+      {crosses.length === 0 ? (
+        <Card>
+          <Text style={styles.meta}>Aynı etkinlikte kayıt açınca burada birikir.</Text>
+        </Card>
+      ) : (
+        crosses.map((item) => {
+          const user = users.find((person) => person.id === item.userId);
+          return (
+            <Card key={item.userId}>
+              <Text style={styles.meta}>{user?.displayName ?? 'Biri'} ile {item.times} kez aynı gecedeydiniz · {item.venue}</Text>
+            </Card>
+          );
+        })
+      )}
+      <SectionTitle>{`${wrapped.year} özeti`}</SectionTitle>
+      <Card>
+        <Text style={styles.name}>{wrapped.nights} gece</Text>
+        <Text style={styles.meta}>{wrapped.hours.toFixed(1)} saat · {wrapped.jumps} zıplama</Text>
+        <Text style={styles.meta}>En çok {wrapped.topVenue ?? '—'}</Text>
+        <Text style={styles.meta}>En yüksek skor {wrapped.best?.partyScore ?? '—'}{wrapped.best ? ` · ${wrapped.best.title}` : ''}</Text>
+        <View style={styles.wrapped}>
+          {wrapped.months.map((month) => (
+            <View key={month.label} style={styles.week}>
+              <View style={[styles.bar, { height: 8 + month.nights * 14 }]} />
+              <Text style={styles.weekLabel}>{month.label}</Text>
+            </View>
+          ))}
+        </View>
+      </Card>
       <SectionTitle>{`Takip · ${followingIds.length}`}</SectionTitle>
       {others.map((user) => {
         const following = followingIds.includes(user.id);
@@ -111,11 +153,8 @@ export default function ProfileScreen() {
           </Card>
         );
       })}
-      <SectionTitle>Rekorlar</SectionTitle>
+      <SectionTitle>Toplam</SectionTitle>
       <Card>
-        <Text style={styles.meta}>En yüksek skor {stats.bestScore?.partyScore ?? '—'}{stats.bestScore ? ` · ${stats.bestScore.title}` : ''}</Text>
-        <Text style={styles.meta}>En çok zıplama {stats.bestJumps?.jumps ?? '—'}</Text>
-        <Text style={styles.meta}>En uzun gece {stats.longest ? formatDuration(stats.longest.activeSeconds) : '—'}</Text>
         <Text style={styles.meta}>{stats.nights} gece · bu ay {stats.monthNights}</Text>
       </Card>
       <SectionTitle>Beden</SectionTitle>
@@ -172,6 +211,7 @@ const styles = StyleSheet.create({
   name: { color: colors.white, fontSize: 28, fontWeight: '700' },
   meta: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
   weeks: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 88 },
+  wrapped: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 110 },
   week: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
   bar: { width: 10, backgroundColor: colors.red, borderRadius: 4 },
   weekLabel: { color: colors.textSecondary, fontSize: 11 },

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { ActivitySummary, AppSnapshot, Profile, PublicUser } from '../domain/types';
+import { activityNotices } from '../domain/notices';
+import type { ActivityComment, ActivitySummary, AppSnapshot, Profile, PublicUser } from '../domain/types';
 import type { ActivityRepository } from './repository';
 import { buildSeed } from './seed';
 
@@ -13,6 +14,8 @@ type Persisted = {
   followingIds: string[];
   respectedActivityIds: string[];
   notes: { activityId: string; note: string }[];
+  comments: ActivityComment[];
+  seenBadgeKeys: string[];
 };
 
 function blank(): Persisted {
@@ -24,6 +27,8 @@ function blank(): Persisted {
     followingIds: [],
     respectedActivityIds: [],
     notes: [],
+    comments: [],
+    seenBadgeKeys: [],
   };
 }
 
@@ -56,26 +61,38 @@ export class DemoRepository implements ActivityRepository {
       if (!profile || !this.persisted.joinedEventIds.includes(event.id)) return event;
       return { ...event, attendeeIds: [...new Set([...event.attendeeIds, profile.id])] };
     });
+    const users = profile ? [...seed.users, toPublic(profile)] : seed.users;
+    const comments = [...seed.comments, ...this.persisted.comments];
+    const activities = [...seed.activities, ...this.persisted.activities].map((activity) => {
+      const note = this.persisted.notes.find((item) => item.activityId === activity.id)?.note ?? activity.note ?? null;
+      const respectIds = [...(activity.respectIds ?? [])];
+      if (profile && this.persisted.respectedActivityIds.includes(activity.id) && !respectIds.includes(profile.id)) {
+        respectIds.push(profile.id);
+      }
+      if (profile && !this.persisted.respectedActivityIds.includes(activity.id)) {
+        const mine = respectIds.indexOf(profile.id);
+        if (mine >= 0) respectIds.splice(mine, 1);
+      }
+      return { ...activity, nightKind: activity.nightKind ?? null, note, respectIds, locationShared: activity.locationShared ?? false };
+    });
     return {
       profile,
-      users: profile ? [...seed.users, toPublic(profile)] : seed.users,
+      users,
       events,
-      activities: [...seed.activities, ...this.persisted.activities].map((activity) => {
-        const note = this.persisted.notes.find((item) => item.activityId === activity.id)?.note ?? activity.note ?? null;
-        const respectIds = [...(activity.respectIds ?? [])];
-        if (profile && this.persisted.respectedActivityIds.includes(activity.id) && !respectIds.includes(profile.id)) {
-          respectIds.push(profile.id);
-        }
-        if (profile && !this.persisted.respectedActivityIds.includes(activity.id)) {
-          const mine = respectIds.indexOf(profile.id);
-          if (mine >= 0) respectIds.splice(mine, 1);
-        }
-        return { ...activity, nightKind: activity.nightKind ?? null, note, respectIds };
-      }),
+      activities,
       followingIds: this.persisted.followingIds,
-      notifications: seed.notifications.map((item) => ({
+      comments,
+      seenBadgeKeys: this.persisted.seenBadgeKeys,
+      notifications: activityNotices({
+        profileId: profile?.id ?? null,
+        activities,
+        comments,
+        events,
+        users,
+        followingIds: this.persisted.followingIds,
+      }).map((item) => ({
         ...item,
-        read: item.read || this.persisted.readNotificationIds.includes(item.id),
+        read: this.persisted.readNotificationIds.includes(item.id),
       })),
     };
   }
@@ -86,7 +103,10 @@ export class DemoRepository implements ActivityRepository {
 
   async load(): Promise<AppSnapshot> {
     const raw = await this.storage.getItem(STORAGE_KEY);
-    this.persisted = raw ? { ...blank(), ...JSON.parse(raw) } : blank();
+    const parsed = raw ? (JSON.parse(raw) as Partial<Persisted>) : null;
+    this.persisted = parsed
+      ? { ...blank(), ...parsed, comments: parsed.comments ?? [], seenBadgeKeys: parsed.seenBadgeKeys ?? [] }
+      : blank();
     return this.snapshot();
   }
 
@@ -118,7 +138,7 @@ export class DemoRepository implements ActivityRepository {
   }
 
   async markAllNotificationsRead() {
-    const ids = buildSeed().notifications.map((item) => item.id);
+    const ids = this.snapshot().notifications.map((item) => item.id);
     this.persisted.readNotificationIds = [...new Set([...this.persisted.readNotificationIds, ...ids])];
     await this.persist();
   }
@@ -138,6 +158,22 @@ export class DemoRepository implements ActivityRepository {
     this.persisted.respectedActivityIds = has
       ? this.persisted.respectedActivityIds.filter((id) => id !== activityId)
       : [...this.persisted.respectedActivityIds, activityId];
+    await this.persist();
+  }
+
+  async addComment(activityId: string, text: string) {
+    const profile = this.persisted.profile;
+    const trimmed = text.trim().slice(0, 60);
+    if (!profile || !trimmed) return;
+    this.persisted.comments = [
+      ...this.persisted.comments,
+      { id: crypto.randomUUID(), activityId, userId: profile.id, text: trimmed, createdAt: new Date().toISOString() },
+    ];
+    await this.persist();
+  }
+
+  async acknowledgeBadges(keys: string[]) {
+    this.persisted.seenBadgeKeys = [...new Set([...this.persisted.seenBadgeKeys, ...keys])];
     await this.persist();
   }
 

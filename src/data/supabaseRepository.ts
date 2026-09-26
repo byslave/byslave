@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
+  ActivityComment,
   ActivitySummary,
   AppNotification,
   AppSnapshot,
@@ -61,11 +62,13 @@ function asActivity(row: Record<string, unknown>): ActivitySummary {
     route: (row.route as ActivitySummary['route']) ?? [],
     intensitySeries: (row.intensity_series as number[]) ?? [],
     shared: Boolean(row.shared),
+    locationShared: Boolean(row.location_shared),
   };
 }
 
 export class SupabaseRepository implements ActivityRepository {
   readonly mode = 'supabase' as const;
+  private seenBadgeKeys: string[] = [];
 
   constructor(private readonly client: SupabaseClient) {}
 
@@ -79,7 +82,7 @@ export class SupabaseRepository implements ActivityRepository {
       if (error) throw error;
       profile = data ? asProfile(data) : null;
     }
-    const [eventsRes, peopleRes, attendeesRes, activitiesRes, notesRes, respectsRes, followsRes] = await Promise.all([
+    const [eventsRes, peopleRes, attendeesRes, activitiesRes, notesRes, respectsRes, followsRes, commentsRes] = await Promise.all([
       this.client.from('events').select('*').order('starts_at'),
       this.client.from('profiles').select('id, display_name, username, avatar_color, avatar_url'),
       this.client.from('event_attendees').select('event_id, user_id'),
@@ -91,6 +94,7 @@ export class SupabaseRepository implements ActivityRepository {
       userId
         ? this.client.from('follows').select('following_id').eq('follower_id', userId)
         : Promise.resolve({ data: [], error: null }),
+      this.client.from('activity_comments').select('id, activity_id, user_id, text, created_at').order('created_at'),
     ]);
     if (eventsRes.error) throw eventsRes.error;
     if (peopleRes.error) throw peopleRes.error;
@@ -99,6 +103,7 @@ export class SupabaseRepository implements ActivityRepository {
     if (notesRes.error) throw notesRes.error;
     if (respectsRes.error) throw respectsRes.error;
     if (followsRes.error) throw followsRes.error;
+    if (commentsRes.error) throw commentsRes.error;
     const respectMap = new Map<string, string[]>();
     for (const row of respectsRes.data ?? []) {
       const list = respectMap.get(row.activity_id) ?? [];
@@ -118,6 +123,7 @@ export class SupabaseRepository implements ActivityRepository {
       city: row.city,
       startsAt: row.starts_at,
       musicBpm: row.music_bpm == null ? null : Number(row.music_bpm),
+      lineup: row.lineup ? String(row.lineup) : null,
       attendeeIds: attendeeMap.get(row.id) ?? [],
     }));
     const users: PublicUser[] = (peopleRes.data ?? []).map((row) => ({
@@ -145,6 +151,16 @@ export class SupabaseRepository implements ActivityRepository {
       })),
       notifications,
       followingIds: (followsRes.data ?? []).map((row) => row.following_id),
+      comments: ((commentsRes.data ?? []) as Record<string, unknown>[]).map(
+        (row): ActivityComment => ({
+          id: String(row.id),
+          activityId: String(row.activity_id),
+          userId: String(row.user_id),
+          text: String(row.text),
+          createdAt: String(row.created_at),
+        }),
+      ),
+      seenBadgeKeys: this.seenBadgeKeys,
     };
   }
 
@@ -200,6 +216,7 @@ export class SupabaseRepository implements ActivityRepository {
       route: activity.route,
       intensity_series: activity.intensitySeries,
       shared: activity.shared,
+      location_shared: activity.locationShared,
     });
     if (error) throw error;
     if (activity.eventId) await this.joinEvent(activity.eventId, activity.userId);
@@ -239,6 +256,28 @@ export class SupabaseRepository implements ActivityRepository {
       ? await this.client.from('activity_respects').delete().eq('activity_id', activityId).eq('user_id', userId)
       : await this.client.from('activity_respects').insert({ activity_id: activityId, user_id: userId });
     if (error) throw error;
+    if (!data) await this.notifyOwner(activityId, userId, 'Yeni saygı', 'Gecene saygı bırakıldı.', `/session/${activityId}`);
+  }
+
+  async addComment(activityId: string, text: string) {
+    const { data: sessionData, error: sessionError } = await this.client.auth.getUser();
+    if (sessionError) throw sessionError;
+    const userId = sessionData.user?.id;
+    const trimmed = text.trim().slice(0, 60);
+    if (!userId || !trimmed) return;
+    const { error } = await this.client.from('activity_comments').insert({ activity_id: activityId, user_id: userId, text: trimmed });
+    if (error) throw error;
+    await this.notifyOwner(activityId, userId, 'Yeni yorum', trimmed, `/session/${activityId}`);
+  }
+
+  async acknowledgeBadges(keys: string[]) {
+    this.seenBadgeKeys = [...new Set([...this.seenBadgeKeys, ...keys])];
+  }
+
+  private async notifyOwner(activityId: string, actorId: string, title: string, body: string, href: string) {
+    const { data } = await this.client.from('activities').select('user_id').eq('id', activityId).maybeSingle();
+    if (!data || data.user_id === actorId) return;
+    await this.client.from('notifications').insert({ user_id: data.user_id, title, body, href });
   }
 
   async toggleFollow(userId: string) {
@@ -257,6 +296,14 @@ export class SupabaseRepository implements ActivityRepository {
       ? await this.client.from('follows').delete().eq('follower_id', followerId).eq('following_id', userId)
       : await this.client.from('follows').insert({ follower_id: followerId, following_id: userId });
     if (error) throw error;
+    if (!data) {
+      await this.client.from('notifications').insert({
+        user_id: userId,
+        title: 'Yeni takipçi',
+        body: 'Biri seni takip etti.',
+        href: '/(tabs)/profile',
+      });
+    }
   }
 
   async clearLocal() {
@@ -267,6 +314,9 @@ export class SupabaseRepository implements ActivityRepository {
     const channel = this.client
       .channel('activities-feed')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'activities' }, () => onChange())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_respects' }, () => onChange())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_comments' }, () => onChange())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => onChange())
       .subscribe();
     return () => {
       void this.client.removeChannel(channel);

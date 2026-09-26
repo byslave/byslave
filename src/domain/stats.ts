@@ -9,6 +9,8 @@ export type NightlifeStats = {
   bestScore: ActivitySummary | null;
   bestJumps: ActivitySummary | null;
   longest: ActivitySummary | null;
+  bestHeart: ActivitySummary | null;
+  bestBpm: ActivitySummary | null;
 };
 
 function pickMax(items: ActivitySummary[], value: (item: ActivitySummary) => number): ActivitySummary | null {
@@ -33,6 +35,14 @@ export function nightlifeStats(activities: ActivitySummary[], userId: string, no
     bestScore: pickMax(mine, (item) => item.partyScore),
     bestJumps: pickMax(mine, (item) => item.jumps),
     longest: pickMax(mine, (item) => item.activeSeconds),
+    bestHeart: pickMax(
+      mine.filter((item) => item.heartRateOrigin === 'measured' && item.peakHeartRate != null),
+      (item) => item.peakHeartRate ?? 0,
+    ),
+    bestBpm: pickMax(
+      mine.filter((item) => item.musicBpm != null),
+      (item) => item.musicBpm ?? 0,
+    ),
   };
 }
 

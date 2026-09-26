@@ -43,7 +43,16 @@ export default function EventScreen() {
       </Text>
       <Text style={styles.meta}>{formatWhen(event.startsAt)}</Text>
       <Text style={styles.meta}>{event.musicBpm ? `Etkinlik BPM ${event.musicBpm}` : 'BPM yok'}</Text>
+      {event.lineup ? <Text style={styles.meta}>{event.lineup}</Text> : null}
       <Text style={styles.meta}>{event.attendeeIds.length} katılımcı</Text>
+      <Text style={styles.meta}>
+        {(() => {
+          const nights = activities.filter((item) => item.shared && item.venue === event.venue);
+          const avg = nights.length ? Math.round(nights.reduce((sum, item) => sum + item.partyScore, 0) / nights.length) : null;
+          const people = new Set(nights.map((item) => item.userId)).size;
+          return `${event.venue} · ${nights.length} gece${avg != null ? ` · ort. skor ${avg}` : ''} · ${people} kişi`;
+        })()}
+      </Text>
       {place ? <Text style={styles.meta}>Senin sıran {place.rank} / {place.total}</Text> : null}
       {versus ? <Text style={styles.meta}>{versus}</Text> : null}
       <Text style={styles.section}>Liderlik</Text>

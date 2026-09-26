@@ -1,13 +1,14 @@
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { brand } from '../../config/brand';
 import { RouteMap, ScoreRing, Sparkline } from '../../components/charts';
 import { Button, Card, Field, Screen, Stat } from '../../components/ui';
 import { formatCalories, formatDistance, formatDuration, formatWhen } from '../../domain/format';
 import { compareLine, leaderboard, rankOf } from '../../domain/leaderboard';
 import { nightKindLabel } from '../../domain/labels';
+import { partyScoreParts } from '../../domain/scoring';
 import { nightlifeStats } from '../../domain/stats';
 import { useAppState } from '../../state/AppState';
 import { colors, space } from '../../theme/tokens';
@@ -15,9 +16,11 @@ import { colors, space } from '../../theme/tokens';
 export default function SessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { activities, users, profile, toggleRespect, setNote } = useAppState();
+  const { activities, users, profile, comments, toggleRespect, setNote, addComment } = useAppState();
   const [copied, setCopied] = useState(false);
   const [draftNote, setDraftNote] = useState<string | null>(null);
+  const [comment, setComment] = useState('');
+  const [scoreOpen, setScoreOpen] = useState(false);
   const activity = activities.find((item) => item.id === id);
   if (!activity) {
     return (
@@ -34,6 +37,12 @@ export default function SessionScreen() {
   const isRecord = Boolean(profile && activity.userId === profile.id && ownStats?.bestScore?.id === activity.id);
   const showHeartRate = activity.heartRateOrigin !== 'none';
   const hrLabel = activity.heartRateOrigin === 'measured' ? 'Nabız' : 'Nabız · tahmin';
+  const parts = partyScoreParts(activity);
+  const nightComments = comments.filter((item) => item.activityId === activity.id);
+  const respectNames = activity.respectIds
+    .map((userId) => users.find((item) => item.id === userId)?.displayName)
+    .filter((name): name is string => Boolean(name));
+  const showRoute = activity.locationShared || profile?.id === activity.userId;
   const share = async () => {
     const text = `${brand.name} · ${activity.title} · Party Score ${activity.partyScore} · ${formatCalories(activity.calories)} kcal · ${activity.jumps} zıplama · ${formatDistance(activity.distanceMeters)}`;
     await Clipboard.setStringAsync(text);
@@ -63,6 +72,42 @@ export default function SessionScreen() {
       ) : (
         <Text style={styles.meta}>{activity.respectIds.length} saygı</Text>
       )}
+      {respectNames.length > 0 ? <Text style={styles.meta}>{respectNames.join(', ')}</Text> : null}
+      <Pressable accessibilityRole="button" onPress={() => setScoreOpen((open) => !open)}>
+        <Text style={styles.section}>Party Score nasıl hesaplanır?</Text>
+      </Pressable>
+      {scoreOpen ? (
+        <Card>
+          {parts.map((part) => (
+            <Text key={part.label} style={styles.meta}>{part.label}: {part.points}</Text>
+          ))}
+          <Text style={styles.meta}>Nabız, saat bağlıysa kalori parçasına karışır. BPM skora eklenmez; etkinliğin müziğidir.</Text>
+        </Card>
+      ) : null}
+      <Text style={styles.section}>Yorum</Text>
+      {nightComments.length === 0 ? <Text style={styles.meta}>Henüz yorum yok.</Text> : null}
+      {nightComments.map((item) => {
+        const author = users.find((person) => person.id === item.userId);
+        return (
+          <Card key={item.id}>
+            <Text style={styles.meta}>{author?.displayName ?? 'Biri'}</Text>
+            <Text style={styles.note}>{item.text}</Text>
+          </Card>
+        );
+      })}
+      {profile && activity.userId !== profile.id ? (
+        <View style={{ gap: space.sm }}>
+          <Field value={comment} onChangeText={(value) => setComment(value.slice(0, 60))} placeholder="Kısa yorum, 60 karakter" />
+          <Button
+            label="Yorumu bırak"
+            kind="ghost"
+            onPress={() => {
+              void addComment(activity.id, comment);
+              setComment('');
+            }}
+          />
+        </View>
+      ) : null}
       {profile?.id === activity.userId ? (
         <View style={{ gap: space.sm }}>
           <Field
@@ -102,9 +147,13 @@ export default function SessionScreen() {
         <Sparkline values={activity.intensitySeries} />
       </Card>
       <Text style={styles.section}>Rota</Text>
-      <Card>
-        <RouteMap route={activity.route} />
-      </Card>
+      {showRoute ? (
+        <Card>
+          <RouteMap route={activity.route} />
+        </Card>
+      ) : (
+        <Text style={styles.meta}>Konum bu gecede paylaşılmamış.</Text>
+      )}
       {profile?.id === activity.userId ? null : <Text style={styles.meta}>Başka birinin paylaştığı gece.</Text>}
     </Screen>
   );

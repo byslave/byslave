@@ -44,6 +44,11 @@ async function main() {
   const repo = new DemoRepository(memory());
   await repo.saveProfile(profile);
   assert((await repo.load()).profile?.username === 'ada_gece', 'profil saklanmalı');
+  await repo.addComment('act_ece_warehouse', '  bu yorum altmış karakterden uzun olmamalı ve kırpılırken baştaki boşluk da gider, fazlası silinir tamam mı');
+  const saved = await repo.load();
+  const mine = saved.comments.find((item) => item.userId === 'user-1');
+  assert(mine != null && mine.text.length <= 60 && !mine.text.startsWith(' '), 'yorum 60 karakter ve kırpık');
+  assert(saved.notifications.some((item) => item.title.includes('açık') || item.title.includes('yakında')), 'bildirimler dolu');
   await repo.clearLocal();
   assert((await repo.load()).profile == null, 'sıfırlama profili silmeli');
   console.log('demo repository reset ok');

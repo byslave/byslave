@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card, Screen, SectionTitle } from '../../components/ui';
+import { badgeBoard } from '../../domain/badges';
 import { formatCalories, formatDuration, formatWhen } from '../../domain/format';
 import { nightKindLabel } from '../../domain/labels';
 import { isSameMonth } from '../../domain/stats';
@@ -16,8 +17,18 @@ export default function ActivityScreen() {
     .filter((item) => item.userId === profile?.id)
     .filter((item) => (monthOnly ? isSameMonth(item.startedAt) : true))
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const badges = profile ? badgeBoard(activities, profile.id) : [];
   return (
     <Screen>
+      <SectionTitle>Rozetler</SectionTitle>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badges}>
+        {badges.map((badge) => (
+          <View key={badge.key} style={[styles.badge, badge.earnedAt ? styles.badgeOn : null]}>
+            <Text style={styles.badgeTitle}>{badge.title}</Text>
+            <Text style={styles.meta}>{badge.earnedAt ? 'Kazanıldı' : badge.description}</Text>
+          </View>
+        ))}
+      </ScrollView>
       <SectionTitle>Geçmiş</SectionTitle>
       <View style={styles.filters}>
         <Pressable onPress={() => setMonthOnly(false)} style={[styles.chip, !monthOnly && styles.chipOn]}>
@@ -57,4 +68,8 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
   chipOn: { borderColor: colors.red, backgroundColor: '#2A0C0E' },
   chipText: { color: colors.white, fontSize: 13 },
+  badges: { gap: space.sm, paddingVertical: 4 },
+  badge: { width: 148, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: space.md, gap: 6, backgroundColor: colors.card },
+  badgeOn: { borderColor: colors.red },
+  badgeTitle: { color: colors.white, fontSize: 16, fontWeight: '700' },
 });

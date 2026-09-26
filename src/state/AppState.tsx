@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { getSupabase } from '../supabase/client';
 import { createRepository, type ActivityRepository } from '../data';
-import type { ActivitySummary, AppNotification, NightEvent, Profile, PublicUser } from '../domain/types';
+import type { ActivityComment, ActivitySummary, AppNotification, NightEvent, Profile, PublicUser } from '../domain/types';
 
 export type OnboardingDraft = Omit<Profile, 'id'> & { email?: string; password?: string };
 
@@ -15,6 +15,8 @@ type AppContextValue = {
   activities: ActivitySummary[];
   notifications: AppNotification[];
   followingIds: string[];
+  comments: ActivityComment[];
+  seenBadgeKeys: string[];
   completeOnboarding: (draft: OnboardingDraft) => Promise<void>;
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
   saveActivity: (activity: ActivitySummary) => Promise<void>;
@@ -24,6 +26,8 @@ type AppContextValue = {
   setNote: (activityId: string, note: string) => Promise<void>;
   toggleRespect: (activityId: string) => Promise<void>;
   toggleFollow: (userId: string) => Promise<void>;
+  addComment: (activityId: string, text: string) => Promise<void>;
+  acknowledgeBadges: (keys: string[]) => Promise<void>;
   resetLocal: () => Promise<void>;
 };
 
@@ -39,6 +43,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [activities, setActivities] = useState<ActivitySummary[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [comments, setComments] = useState<ActivityComment[]>([]);
+  const [seenBadgeKeys, setSeenBadgeKeys] = useState<string[]>([]);
 
   const apply = (snapshot: Awaited<ReturnType<ActivityRepository['load']>>) => {
     setProfile(snapshot.profile);
@@ -47,6 +53,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setActivities(snapshot.activities);
     setNotifications(snapshot.notifications);
     setFollowingIds(snapshot.followingIds);
+    setComments(snapshot.comments);
+    setSeenBadgeKeys(snapshot.seenBadgeKeys);
   };
 
   useEffect(() => {
@@ -82,6 +90,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       activities,
       notifications,
       followingIds,
+      comments,
+      seenBadgeKeys,
       async completeOnboarding(draft) {
         if (!repo) return;
         let id: string = crypto.randomUUID();
@@ -137,13 +147,23 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         await repo.toggleFollow(userId);
         apply(await repo.load());
       },
+      async addComment(activityId, text) {
+        if (!repo) return;
+        await repo.addComment(activityId, text);
+        apply(await repo.load());
+      },
+      async acknowledgeBadges(keys) {
+        if (!repo) return;
+        await repo.acknowledgeBadges(keys);
+        apply(await repo.load());
+      },
       async resetLocal() {
         if (!repo) return;
         await repo.clearLocal();
         apply(await repo.load());
       },
     };
-  }, [activities, events, followingIds, modeNote, notifications, profile, ready, repo, users]);
+  }, [activities, comments, events, followingIds, modeNote, notifications, profile, ready, repo, seenBadgeKeys, users]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

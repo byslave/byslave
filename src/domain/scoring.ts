@@ -146,6 +146,28 @@ export function scoreParty(input: {
   return Math.round(score);
 }
 
+export function partyScoreParts(input: {
+  intensity: number;
+  jumps: number;
+  calories: number;
+  activeSeconds: number;
+  distanceMeters: number;
+}): { label: string; points: number }[] {
+  const ref = scoringConfig.reference;
+  const w = scoringConfig.weights;
+  const part = (label: string, weight: number, value: number, reference: number) => ({
+    label,
+    points: Math.round(100 * weight * clamp(value / reference, 0, 1)),
+  });
+  return [
+    part('Yoğunluk', w.intensity, input.intensity, ref.intensity),
+    part('Zıplama', w.jumps, input.jumps, ref.jumps),
+    part('Kalori', w.calories, input.calories, ref.calories),
+    part('Süre', w.time, input.activeSeconds, ref.activeSeconds),
+    part('Mesafe', w.distance, input.distanceMeters, ref.distanceMeters),
+  ];
+}
+
 function average(values: number[]): number | null {
   if (values.length === 0) return null;
   return values.reduce((sum, value) => sum + value, 0) / values.length;
@@ -159,6 +181,7 @@ export function buildSummary(input: {
   samples: ActivitySample[];
   body: BodyProfile;
   shared: boolean;
+  locationShared?: boolean;
   heartRateOrigin: HeartRateOrigin;
   nightKind?: NightKind | null;
   note?: string | null;
@@ -228,8 +251,9 @@ export function buildSummary(input: {
       activeSeconds: input.activeSeconds,
       distanceMeters: distance,
     }),
-    route,
+    route: input.locationShared ? route : [],
     intensitySeries: downsample(intensities, 32),
     shared: input.shared,
+    locationShared: Boolean(input.locationShared),
   };
 }

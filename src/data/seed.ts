@@ -1,5 +1,6 @@
 import { estimateCalories, scoreParty } from '../domain/scoring';
 import type {
+  ActivityComment,
   ActivitySummary,
   AppNotification,
   BodyProfile,
@@ -91,6 +92,7 @@ function night(input: {
     route: input.route,
     intensitySeries: wave(input.intensity),
     shared: true,
+    locationShared: true,
   };
 }
 
@@ -104,6 +106,7 @@ export function buildSeed(now = Date.now()) {
       city: 'İstanbul',
       startsAt: new Date(now - 2 * hour).toISOString(),
       musicBpm: 138,
+      lineup: 'Yerel DJ',
       attendeeIds: ['usr_ece', 'usr_deniz', 'usr_kerem'],
     },
     {
@@ -113,6 +116,7 @@ export function buildSeed(now = Date.now()) {
       city: 'İstanbul',
       startsAt: new Date(now + 3 * 24 * hour).toISOString(),
       musicBpm: 132,
+      lineup: 'Afterhours',
       attendeeIds: ['usr_ece', 'usr_deniz'],
     },
     {
@@ -122,6 +126,7 @@ export function buildSeed(now = Date.now()) {
       city: 'İstanbul',
       startsAt: new Date(now - 8 * 24 * hour).toISOString(),
       musicBpm: 118,
+      lineup: 'Konuk sahne',
       attendeeIds: ['usr_aylin', 'usr_kerem'],
     },
   ];
@@ -221,7 +226,16 @@ export function buildSeed(now = Date.now()) {
       href: '/event/evt_warehouse',
     },
   ];
-  return { users, events, activities, notifications };
+  const comments: ActivityComment[] = [
+    {
+      id: 'cmt_deniz_ece',
+      activityId: 'act_ece_warehouse',
+      userId: 'usr_deniz',
+      text: 'Pist kapanmasın',
+      createdAt: new Date(now - 20 * 60 * 1000).toISOString(),
+    },
+  ];
+  return { users, events, activities, notifications, comments };
 }
 
 export function isUsernameTaken(username: string, usersList: PublicUser[], selfId?: string): boolean {
