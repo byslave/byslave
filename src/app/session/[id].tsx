@@ -1,11 +1,10 @@
-import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { brand } from '../../config/brand';
-import { NightTrace, ScoreRing, Sparkline } from '../../components/charts';
+import { NightTrace, ScoreRing } from '../../components/charts';
 import { Button, Card, Field, Screen, Stat } from '../../components/ui';
+import { ShareSheet } from '../../features/share/ShareSheet';
 import { formatCalories, formatDistance, formatDuration, formatWhen } from '../../domain/format';
 import { compareLine, leaderboard, rankOf } from '../../domain/leaderboard';
 import { nightKindLabel } from '../../domain/labels';
@@ -18,7 +17,7 @@ export default function SessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { activities, users, profile, comments, toggleRespect, setNote, addComment, setPhotos } = useAppState();
-  const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [draftNote, setDraftNote] = useState<string | null>(null);
   const [comment, setComment] = useState('');
   const [scoreOpen, setScoreOpen] = useState(false);
@@ -58,30 +57,53 @@ export default function SessionScreen() {
     setPhotoNote(null);
     await setPhotos(activity.id, [...activity.photoUris, uri].slice(0, 4));
   };
-  const share = async () => {
-    const text = `${brand.name} · ${activity.title} · Party Score ${activity.partyScore} · ${formatCalories(activity.calories)} kcal · ${activity.jumps} zıplama · ${formatDistance(activity.distanceMeters)}`;
-    await Clipboard.setStringAsync(text);
-    setCopied(true);
-  };
   return (
-    <Screen back={{ onPress: () => router.back() }} footer={<Button label={copied ? 'Kopyalandı' : 'Özeti kopyala'} onPress={() => void share()} />}>
+    <Screen back={{ onPress: () => router.back() }} footer={<Button label="Kaydet" onPress={() => setShareOpen(true)} />}>
       <Text style={styles.kicker}>{user?.displayName ?? 'Sen'}</Text>
       <Text style={styles.title}>{activity.title}</Text>
       <Text style={styles.meta}>
         {activity.venue} · {formatWhen(activity.startedAt)}
       </Text>
+      {isRecord ? <Text style={styles.record}>Kişisel rekor</Text> : null}
+      {profile && activity.userId !== profile.id && activity.shared ? (
+        <Button
+          label={activity.respectIds.includes(profile.id) ? `Saygı var · ${activity.respectIds.length}` : `Saygı · ${activity.respectIds.length}`}
+          kind={activity.respectIds.includes(profile.id) ? 'primary' : 'ghost'}
+          onPress={() => void toggleRespect(activity.id)}
+        />
+      ) : (
+        <Text style={styles.meta}>{activity.respectIds.length} saygı</Text>
+      )}
+      {respectNames.length > 0 ? <Text style={styles.meta}>{respectNames.join(', ')}</Text> : null}
       <View style={styles.center}>
         <ScoreRing score={activity.partyScore} />
       </View>
-      <Text style={styles.section}>Gece izi</Text>
+      <Text style={styles.section}>İstatistikler</Text>
       <Card>
-        <NightTrace
-          venue={activity.venue}
-          route={activity.route}
-          intensity={activity.intensitySeries}
-          peakOffsetSeconds={activity.peakOffsetSeconds}
-          locationShared={activity.locationShared}
-        />
+        <View style={styles.stats}>
+          <Stat label="Süre" value={formatDuration(activity.activeSeconds)} />
+          <Stat
+            label="Kalori · tahmin"
+            value={formatCalories(activity.calories)}
+            hint={activity.assumedWeight ? '70 kg varsayıldı' : activity.calorieMethod === 'heart-rate' ? 'Nabız formülü' : 'Hareket formülü'}
+          />
+        </View>
+        <View style={styles.stats}>
+          <Stat label="Zıplama" value={String(activity.jumps)} />
+          <Stat label="Mesafe" value={formatDistance(activity.distanceMeters)} />
+        </View>
+        <View style={styles.stats}>
+          {showHeartRate ? (
+            <Stat label={hrLabel} value={activity.avgHeartRate ? Math.round(activity.avgHeartRate).toString() : '—'} hint={activity.peakHeartRate ? `Zirve ${Math.round(activity.peakHeartRate)}` : undefined} />
+          ) : (
+            <Stat label="Nabız" value="—" hint="Saat yok" />
+          )}
+          <Stat label="Yoğunluk" value={`${Math.round(activity.peakIntensity * 100)}`} hint={`Hareketin sertliği · ${Math.round(activity.peakOffsetSeconds / 60)}. dk`} />
+        </View>
+        <Text style={styles.meta}>{activity.musicBpm ? `Etkinlik BPM ${activity.musicBpm}` : 'Bu kayıtta müzik BPM’i yok'}</Text>
+        <Text style={styles.meta}>{activity.shared ? 'Paylaşılıyor' : 'Gizli'}</Text>
+        {rank ? <Text style={styles.meta}>Bu etkinlikte {rank.rank}. sıra / {rank.total}</Text> : null}
+        {versus ? <Text style={styles.meta}>{versus}</Text> : null}
       </Card>
       <Text style={styles.section}>Fotoğraflar</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photos}>
@@ -109,20 +131,16 @@ export default function SessionScreen() {
       {photoNote ? <Text style={styles.meta}>{photoNote}</Text> : null}
       {!ownsNight && activity.photoUris.length === 0 ? <Text style={styles.meta}>Bu gecede fotoğraf yok.</Text> : null}
       <Text style={styles.meta}>{nightKindLabel(activity.nightKind)}</Text>
-      {isRecord ? <Text style={styles.record}>Kişisel rekor</Text> : null}
-      {rank ? <Text style={styles.meta}>Bu etkinlikte {rank.rank}. sıra / {rank.total}</Text> : null}
-      {versus ? <Text style={styles.meta}>{versus}</Text> : null}
       {activity.note ? <Text style={styles.note}>{activity.note}</Text> : null}
-      {profile && activity.userId !== profile.id && activity.shared ? (
-        <Button
-          label={activity.respectIds.includes(profile.id) ? `Saygı var · ${activity.respectIds.length}` : `Saygı · ${activity.respectIds.length}`}
-          kind={activity.respectIds.includes(profile.id) ? 'primary' : 'ghost'}
-          onPress={() => void toggleRespect(activity.id)}
+      <Text style={styles.section}>Gece izi</Text>
+      <Card>
+        <NightTrace
+          venue={activity.venue}
+          route={activity.route}
+          peakOffsetSeconds={activity.peakOffsetSeconds}
+          locationShared={activity.locationShared}
         />
-      ) : (
-        <Text style={styles.meta}>{activity.respectIds.length} saygı</Text>
-      )}
-      {respectNames.length > 0 ? <Text style={styles.meta}>{respectNames.join(', ')}</Text> : null}
+      </Card>
       <Pressable accessibilityRole="button" onPress={() => setScoreOpen((open) => !open)}>
         <Text style={styles.section}>Party Score nasıl hesaplanır?</Text>
       </Pressable>
@@ -168,35 +186,19 @@ export default function SessionScreen() {
           <Button label="Notu kaydet" kind="ghost" onPress={() => void setNote(activity.id, draftNote ?? activity.note ?? '')} />
         </View>
       ) : null}
-      <Card>
-        <View style={styles.stats}>
-          <Stat label="Süre" value={formatDuration(activity.activeSeconds)} />
-          <Stat
-            label="Kalori · tahmin"
-            value={formatCalories(activity.calories)}
-            hint={activity.assumedWeight ? '70 kg varsayıldı' : activity.calorieMethod === 'heart-rate' ? 'Nabız formülü' : 'Hareket formülü'}
-          />
-        </View>
-        <View style={styles.stats}>
-          <Stat label="Zıplama" value={String(activity.jumps)} />
-          <Stat label="Mesafe" value={formatDistance(activity.distanceMeters)} />
-        </View>
-        <View style={styles.stats}>
-          {showHeartRate ? (
-            <Stat label={hrLabel} value={activity.avgHeartRate ? Math.round(activity.avgHeartRate).toString() : '—'} hint={activity.peakHeartRate ? `Zirve ${Math.round(activity.peakHeartRate)}` : undefined} />
-          ) : (
-            <Stat label="Nabız" value="—" hint="Saat yok" />
-          )}
-          <Stat label="Zirve yoğunluk" value={`${Math.round(activity.peakIntensity * 100)}`} hint={`${Math.round(activity.peakOffsetSeconds / 60)}. dk`} />
-        </View>
-        <Text style={styles.meta}>{activity.musicBpm ? `Etkinlik BPM ${activity.musicBpm}` : 'Bu kayıtta müzik BPM’i yok'}</Text>
-        <Text style={styles.meta}>{activity.shared ? 'Paylaşılıyor' : 'Gizli'}</Text>
-      </Card>
-      <Text style={styles.section}>Yoğunluk</Text>
-      <Card>
-        <Sparkline values={activity.intensitySeries} />
-      </Card>
       {ownsNight ? null : <Text style={styles.meta}>Başka birinin paylaştığı gece.</Text>}
+      <ShareSheet
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        title={activity.title}
+        venue={activity.venue}
+        score={activity.partyScore}
+        duration={formatDuration(activity.activeSeconds)}
+        jumps={String(activity.jumps)}
+        distance={formatDistance(activity.distanceMeters)}
+        calories={formatCalories(activity.calories)}
+        photoUris={activity.photoUris}
+      />
     </Screen>
   );
 }

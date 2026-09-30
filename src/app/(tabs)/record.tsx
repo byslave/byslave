@@ -1,7 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { PlaceList } from '../../components/PlaceList';
 import { Button, Card, Field, Screen, Stat } from '../../components/ui';
+import { searchPlaces, type PlaceHit } from '../../domain/venues';
 import { nightKindLabel, nightKindOptions } from '../../domain/labels';
 import { buildSummary } from '../../domain/scoring';
 import type { NightKind } from '../../domain/types';
@@ -64,14 +66,40 @@ export default function RecordScreen() {
     });
   }, [eventId, events, heartRateOrigin, nightKind, profile, recording.activeSeconds, recording.samples, sharePlace, shared]);
 
+  useEffect(() => {
+    if (!eventQuery.trim() || typeof document === 'undefined') return;
+    const timer = setTimeout(() => {
+      document.getElementById('place-results')?.scrollIntoView({ block: 'center' });
+    }, 40);
+    return () => clearTimeout(timer);
+  }, [eventQuery, events]);
+
   const selectedEvent = events.find((item) => item.id === eventId) ?? null;
-  const eventNeedle = eventQuery.trim().toLocaleLowerCase('tr-TR');
-  const eventMatches =
-    eventNeedle.length === 0
-      ? []
-      : events
-          .filter((event) => `${event.title} ${event.venue} ${event.city}`.toLocaleLowerCase('tr-TR').includes(eventNeedle))
-          .slice(0, 8);
+  const eventNeedle = eventQuery.trim();
+  const places = searchPlaces(eventQuery, events);
+
+  const pickPlace = async (place: PlaceHit) => {
+    if (place.eventId) {
+      setEventId(place.eventId);
+      setEventQuery('');
+      return;
+    }
+    if (creatingEvent) return;
+    setCreatingEvent(true);
+    const id = await addEvent({
+      title: place.name,
+      venue: place.name,
+      city: place.city,
+      startsAt: new Date().toISOString(),
+      musicBpm: null,
+      lineup: null,
+    });
+    setCreatingEvent(false);
+    if (id) {
+      setEventId(id);
+      setEventQuery('');
+    }
+  };
 
   const createFromQuery = async () => {
     const name = eventQuery.trim();
@@ -163,11 +191,12 @@ export default function RecordScreen() {
             value={heartRateOrigin === 'measured' && preview?.avgHeartRate ? Math.round(preview.avgHeartRate).toString() : '—'}
             hint={heartRateOrigin === 'measured' ? undefined : 'Saat yok'}
           />
-          <Stat label="Yoğunluk" value={`${Math.round((preview?.intensity ?? 0) * 100)}`} />
+          <Stat label="Yoğunluk" value={`${Math.round((preview?.intensity ?? 0) * 100)}`} hint="Hareketin sertliği" />
         </View>
         <View style={styles.intensity}>
           <View style={[styles.fill, { width: `${Math.round((preview?.intensity ?? 0) * 100)}%` }]} />
         </View>
+        <Text style={styles.meta}>Yoğunluk, ne kadar sert zıpladığın. 0 sakin, 100 en sert an. Nerede durduğunu göstermez.</Text>
       </Card>
       <Text style={styles.meta}>Gece türü · {nightKindLabel(nightKind)}</Text>
       <View style={styles.chips}>
@@ -193,28 +222,13 @@ export default function RecordScreen() {
           ) : null}
         </View>
       ) : (
-        <View style={styles.chips}>
-          {eventMatches.map((event) => (
-            <Pressable
-              key={event.id}
-              accessibilityRole="button"
-              onPress={() => {
-                setEventId(event.id);
-                setEventQuery('');
-              }}
-              style={[styles.chip, eventId === event.id && styles.chipOn]}
-            >
-              <Text style={styles.chipText}>
-                {event.venue} · {event.title}
-              </Text>
-            </Pressable>
-          ))}
-          {eventMatches.length === 0 && eventNeedle.length >= 2 ? (
+        <View style={{ gap: space.sm }}>
+          <PlaceList places={places} onPick={(place) => void pickPlace(place)} />
+          {places.length === 0 && eventNeedle.trim().length >= 2 ? (
             <Pressable accessibilityRole="button" onPress={() => void createFromQuery()} disabled={creatingEvent} style={styles.chip}>
-              <Text style={styles.chipText}>{creatingEvent ? 'Ekleniyor' : `“${eventQuery.trim()}” etkinliğini ekle`}</Text>
+              <Text style={styles.chipText}>{creatingEvent ? 'Ekleniyor' : `“${eventQuery.trim()}” mekanını ekle`}</Text>
             </Pressable>
           ) : null}
-          {eventMatches.length === 0 && eventNeedle.length < 2 ? <Text style={styles.meta}>Biraz daha yaz.</Text> : null}
         </View>
       )}
       <Field value={note} onChangeText={(value) => setNote(value.slice(0, 80))} placeholder="Gece notu, 80 karakter" />

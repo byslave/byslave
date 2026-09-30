@@ -56,13 +56,11 @@ const routeSpreadMeters = 40;
 export function NightTrace({
   venue,
   route,
-  intensity,
   peakOffsetSeconds,
   locationShared,
 }: {
   venue: string;
   route: GeoPoint[];
-  intensity: number[];
   peakOffsetSeconds: number;
   locationShared: boolean;
 }) {
@@ -75,7 +73,7 @@ export function NightTrace({
         <RouteMap route={route} />
       ) : (
         <View style={styles.trace}>
-          <Sparkline values={intensity} />
+          <Text style={styles.muted}>Aynı mekân. Rota yok.</Text>
           <Text style={styles.muted}>Zıplama zirvesi · {peakMinute}. dk</Text>
         </View>
       )}

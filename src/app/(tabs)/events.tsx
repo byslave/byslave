@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { PlaceList } from '../../components/PlaceList';
 import { Button, Card, Field, Screen, SectionTitle } from '../../components/ui';
+import { searchPlaces } from '../../domain/venues';
 import { averageMusicBpm, eventPulse, similarByBpm } from '../../domain/discover';
 import { eventPhase, formatWhen } from '../../domain/format';
 import { useAppState } from '../../state/AppState';
@@ -20,6 +22,7 @@ export default function EventsScreen() {
   const [bpm, setBpm] = useState('');
   const [busy, setBusy] = useState(false);
   const needle = query.trim().toLocaleLowerCase('tr-TR');
+  const places = searchPlaces(query, events);
   const ordered = [...events]
     .filter((event) => {
       if (!needle) return true;
@@ -57,6 +60,25 @@ export default function EventsScreen() {
     <Screen>
       <SectionTitle>Etkinlikler</SectionTitle>
       <Field value={query} onChangeText={setQuery} placeholder="Etkinlik veya mekân ara" />
+      {needle ? (
+        <PlaceList
+          places={places}
+          onPick={(place) => {
+            if (place.eventId) {
+              router.push(`/event/${place.eventId}`);
+              return;
+            }
+            void addEvent({
+              title: place.name,
+              venue: place.name,
+              city: place.city,
+              startsAt: new Date().toISOString(),
+              musicBpm: null,
+              lineup: null,
+            }).then(() => setQuery(''));
+          }}
+        />
+      ) : null}
       {adding ? (
         <Card>
           <Text style={styles.meta}>Bu gece için. Bugece ve Bubilet’in açık etkinlik listesi yok; ekleyen sensin.</Text>
