@@ -164,10 +164,15 @@ export default function RecordScreen() {
       <Text style={styles.timer}>{formatDuration(recording.activeSeconds)}</Text>
       <Text style={styles.meta}>
         {recording.phase === 'running' ? 'Canlı' : recording.phase === 'paused' ? 'Duraklatıldı' : 'Hazır'}
-        {recording.kind === 'demo' ? ' · Demo hareket' : ''}
         {recording.kind === 'device' ? ' · Telefon hareketi' : ''}
+        {recording.kind === 'unavailable' ? ' · Sensör yok' : ''}
       </Text>
-      {recording.kind === 'demo' ? <Text style={styles.meta}>Bu ortamda sensör yok. Hareket tahmindir.</Text> : null}
+      {recording.kind === 'device' ? (
+        <Text style={styles.meta}>Sayılar telefonun ivmesinden gelir. Hareket yoksa zıplama ve kalori sıfır kalır.</Text>
+      ) : null}
+      {recording.kind === 'unavailable' ? (
+        <Text style={styles.meta}>Hareket algılanmıyor. Otururken zıplama ve kalori yazılmaz. iPhone’da Ayarlar, Safari, Hareket ve Yön açık olmalı.</Text>
+      ) : null}
       <Text style={styles.meta}>
         {heartRateOrigin === 'measured' && profile?.watchLabel
           ? `${profile.watchLabel} bağlı. Nabız kayda geliyor.`
@@ -178,7 +183,7 @@ export default function RecordScreen() {
       ) : null}
       <Card>
         <View style={styles.stats}>
-          <Stat label="Kalori · tahmin" value={formatCalories(preview?.calories ?? 0)} hint={preview?.assumedWeight ? '70 kg varsayıldı' : preview?.calorieMethod === 'heart-rate' ? 'Nabız formülü' : 'Hareket formülü'} />
+          <Stat label="Kalori · tahmin" value={formatCalories(preview?.calories ?? 0)} hint={(preview?.calories ?? 0) <= 0 ? 'Hareket yok' : preview?.assumedWeight ? '70 kg varsayıldı' : preview?.calorieMethod === 'heart-rate' ? 'Nabız formülü' : 'Hareket formülü'} />
           <Stat label="Party Score" value={String(preview?.partyScore ?? 0)} hint="Süre, zıplama, yoğunluk, kalori, mesafe" />
         </View>
         <View style={styles.stats}>

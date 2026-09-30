@@ -17,6 +17,10 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+export function gForce(sample: ActivitySample): number {
+  return Math.sqrt(sample.ax ** 2 + sample.ay ** 2 + sample.az ** 2);
+}
+
 export function countJumps(
   samples: ActivitySample[],
   high = scoringConfig.jumpHighG,
@@ -25,10 +29,11 @@ export function countJumps(
   let jumps = 0;
   let armed = true;
   for (const sample of samples) {
-    if (armed && sample.az >= high) {
+    const force = gForce(sample);
+    if (armed && force >= high) {
       jumps += 1;
       armed = false;
-    } else if (!armed && sample.az <= rearm) {
+    } else if (!armed && force <= rearm) {
       armed = true;
     }
   }
@@ -82,9 +87,9 @@ export function distanceMeters(samples: ActivitySample[], heightCm: number | nul
 }
 
 export function sampleIntensity(sample: ActivitySample): number {
-  const vertical = sample.az - 1;
-  const dev = Math.sqrt(sample.ax ** 2 + sample.ay ** 2 + vertical ** 2);
-  return clamp(dev / scoringConfig.intensityDivisor, 0, 1);
+  const dev = Math.abs(gForce(sample) - 1);
+  if (dev < scoringConfig.stillG) return 0;
+  return clamp((dev - scoringConfig.stillG) / scoringConfig.intensityDivisor, 0, 1);
 }
 
 export function downsample(values: number[], buckets: number): number[] {
@@ -121,7 +126,9 @@ export function estimateCalories(input: {
   const weight = input.body.weightKg ?? scoringConfig.defaultWeightKg;
   const fitness: FitnessLevel = input.body.fitnessLevel;
   const met =
-    scoringConfig.metMin + input.intensity * (scoringConfig.metMax - scoringConfig.metMin);
+    input.intensity <= 0
+      ? 0
+      : scoringConfig.metMin + input.intensity * (scoringConfig.metMax - scoringConfig.metMin);
   const motion = met * weight * (input.activeSeconds / 3600) * scoringConfig.fitnessFactor[fitness];
   const sex = input.body.sex;
   const canUseHr =

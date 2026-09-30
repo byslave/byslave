@@ -5,6 +5,7 @@
 export const scoringConfig = {
   jumpHighG: 2.2,
   jumpRearmG: 1.35,
+  stillG: 0.12,
   intensityDivisor: 2.5,
   metMin: 4.5,
   metMax: 10,

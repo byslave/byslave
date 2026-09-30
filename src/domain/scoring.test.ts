@@ -1,6 +1,6 @@
 import { makeDemoSample } from '../motion/demo';
 import { leaderboard } from './leaderboard';
-import { buildSummary, countJumps, estimateCalories, routeSpanMeters, scoreParty } from './scoring';
+import { buildSummary, countJumps, estimateCalories, routeSpanMeters, sampleIntensity, scoreParty } from './scoring';
 import type { ActivitySummary, PublicUser } from './types';
 
 function assert(condition: boolean, message: string) {
@@ -17,6 +17,30 @@ const spike = [
   { ...makeDemoSample(1), az: 3.4 },
 ];
 assert(countJumps(spike) === 2, 'iki sıçrama sayılmalı');
+
+const still = [
+  { t: 0, ax: 0.02, ay: 0.99, az: 0.04 },
+  { t: 400, ax: 0, ay: 1.01, az: 0 },
+  { t: 800, ax: 0.98, ay: 0.05, az: 0.02 },
+];
+assert(countJumps(still) === 0, 'elde duran telefon zıplama saymamalı');
+assert(sampleIntensity(still[0]!) === 0, 'elde duran telefonun yoğunluğu 0');
+assert(
+  countJumps([
+    { t: 0, ax: 0, ay: 1, az: 0 },
+    { t: 1, ax: 0, ay: 3.1, az: 0.1 },
+    { t: 2, ax: 0, ay: 1, az: 0 },
+  ]) === 1,
+  'dik tutulan telefonda sıçrama y ekseninden sayılmalı',
+);
+const sitting = estimateCalories({
+  intensity: 0,
+  activeSeconds: 600,
+  body: { age: null, heightCm: null, weightKg: 70, sex: null, fitnessLevel: 'medium' },
+  avgHeartRate: null,
+  heartRateOrigin: 'none',
+});
+assert(sitting.calories === 0, 'hareketsiz kayıt kalori yazmamalı');
 
 const samples = Array.from({ length: 40 }, (_, index) => ({ ...makeDemoSample(index), heartRate: 140 }));
 assert(makeDemoSample(2).heartRate == null, 'demo örnek nabız taşımaz');

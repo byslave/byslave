@@ -2,7 +2,7 @@ import type { ActivitySample } from '../domain/types';
 
 export const demoOrigin = { lat: 41.0255, lng: 28.9742 };
 
-/** Tarayıcıda sensör yokken kullanılan dans hareketi. Nabız burada üretilmez. */
+/** Yalnız testlerde kullanılan örnek. Canlı kayıt bunu basmaz. Nabız üretilmez. */
 export function makeDemoSample(index: number, startedAt = 0): ActivitySample {
   const jumping = index % 6 === 0 && index > 0;
   const az = jumping ? 3.2 : 1 + Math.sin(index / 2) * 0.25;
