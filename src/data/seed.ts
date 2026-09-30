@@ -93,6 +93,7 @@ function night(input: {
     intensitySeries: wave(input.intensity),
     shared: true,
     locationShared: true,
+    photoUris: [],
   };
 }
 

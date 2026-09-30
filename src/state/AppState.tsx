@@ -24,6 +24,7 @@ type AppContextValue = {
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
   setNote: (activityId: string, note: string) => Promise<void>;
+  setPhotos: (activityId: string, photoUris: string[]) => Promise<void>;
   toggleRespect: (activityId: string) => Promise<void>;
   toggleFollow: (userId: string) => Promise<void>;
   addComment: (activityId: string, text: string) => Promise<void>;
@@ -135,6 +136,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       async setNote(activityId, note) {
         if (!repo) return;
         await repo.setNote(activityId, note);
+        apply(await repo.load());
+      },
+      async setPhotos(activityId, photoUris) {
+        if (!repo) return;
+        await repo.setPhotos(activityId, photoUris);
         apply(await repo.load());
       },
       async toggleRespect(activityId) {

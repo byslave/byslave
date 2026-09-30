@@ -1,5 +1,6 @@
 import { Tabs, useRouter } from 'expo-router';
 import { useEffect } from 'react';
+import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppState } from '../../state/AppState';
 import { colors } from '../../theme/tokens';
@@ -18,7 +19,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.bgSecondary,
           borderTopColor: colors.border,
-          height: 64,
+          height: 72,
+          overflow: 'visible',
         },
         tabBarActiveTintColor: colors.red,
         tabBarInactiveTintColor: colors.textSecondary,
@@ -33,17 +35,31 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="record"
-        options={{
-          title: 'Kayıt',
-          tabBarIcon: ({ color, size }) => <Ionicons name="radio-button-on" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
         name="events"
         options={{
           title: 'Etkinlik',
           tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="record"
+        options={{
+          title: 'Kayıt',
+          tabBarIcon: () => (
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                backgroundColor: colors.red,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: -22,
+              }}
+            >
+              <Ionicons name="radio-button-on" color={colors.white} size={26} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen

@@ -9,6 +9,7 @@ export interface ActivityRepository {
   markNotificationRead(id: string): Promise<void>;
   markAllNotificationsRead(): Promise<void>;
   setNote(activityId: string, note: string): Promise<void>;
+  setPhotos(activityId: string, photoUris: string[]): Promise<void>;
   toggleRespect(activityId: string, userId: string): Promise<void>;
   toggleFollow(userId: string): Promise<void>;
   addComment(activityId: string, text: string): Promise<void>;

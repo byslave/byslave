@@ -1,6 +1,6 @@
 import { makeDemoSample } from '../motion/demo';
 import { leaderboard } from './leaderboard';
-import { buildSummary, countJumps, estimateCalories, scoreParty } from './scoring';
+import { buildSummary, countJumps, estimateCalories, routeSpanMeters, scoreParty } from './scoring';
 import type { ActivitySummary, PublicUser } from './types';
 
 function assert(condition: boolean, message: string) {
@@ -36,6 +36,9 @@ assert(summary.jumps > 0, 'özette zıplama olmalı');
 assert(summary.distanceMeters > 0, 'özette mesafe olmalı');
 assert(summary.calories > 0, 'özette kalori olmalı');
 assert(summary.partyScore >= 0 && summary.partyScore <= 100, 'skor 0-100');
+assert(summary.photoUris.length === 0, 'yeni gece fotosuz başlar');
+assert(routeSpanMeters([{ lat: 41, lng: 29, t: 0 }]) === 0, 'tek nokta yayılmaz');
+assert(routeSpanMeters([{ lat: 41.0255, lng: 28.9742, t: 0 }, { lat: 41.02552, lng: 28.97422, t: 1 }]) < 40, 'salon içi çizgi rota sayılmaz');
 assert(summary.calorieMethod === 'heart-rate', 'yaş, kilo ve cinsiyet varsa nabız formülü');
 
 const motionOnly = estimateCalories({

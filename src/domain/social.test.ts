@@ -38,6 +38,7 @@ const night = {
   intensitySeries: [],
   shared: true,
   locationShared: false,
+  photoUris: [],
 } as ActivitySummary;
 
 const badges = badgeBoard(

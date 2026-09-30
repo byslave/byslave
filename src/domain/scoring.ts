@@ -35,6 +35,21 @@ export function countJumps(
   return jumps;
 }
 
+export function routeSpanMeters(route: GeoPoint[]): number {
+  if (route.length < 2) return 0;
+  let minLat = route[0].lat;
+  let maxLat = route[0].lat;
+  let minLng = route[0].lng;
+  let maxLng = route[0].lng;
+  for (const point of route) {
+    minLat = Math.min(minLat, point.lat);
+    maxLat = Math.max(maxLat, point.lat);
+    minLng = Math.min(minLng, point.lng);
+    maxLng = Math.max(maxLng, point.lng);
+  }
+  return haversine({ lat: minLat, lng: minLng, t: 0 }, { lat: maxLat, lng: maxLng, t: 0 });
+}
+
 function haversine(a: GeoPoint, b: GeoPoint): number {
   const earth = 6371000;
   const dLat = ((b.lat - a.lat) * Math.PI) / 180;
@@ -255,5 +270,6 @@ export function buildSummary(input: {
     intensitySeries: downsample(intensities, 32),
     shared: input.shared,
     locationShared: Boolean(input.locationShared),
+    photoUris: [],
   };
 }

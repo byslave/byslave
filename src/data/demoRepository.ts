@@ -14,6 +14,7 @@ type Persisted = {
   followingIds: string[];
   respectedActivityIds: string[];
   notes: { activityId: string; note: string }[];
+  photos: { activityId: string; uris: string[] }[];
   comments: ActivityComment[];
   seenBadgeKeys: string[];
 };
@@ -27,6 +28,7 @@ function blank(): Persisted {
     followingIds: [],
     respectedActivityIds: [],
     notes: [],
+    photos: [],
     comments: [],
     seenBadgeKeys: [],
   };
@@ -73,7 +75,15 @@ export class DemoRepository implements ActivityRepository {
         const mine = respectIds.indexOf(profile.id);
         if (mine >= 0) respectIds.splice(mine, 1);
       }
-      return { ...activity, nightKind: activity.nightKind ?? null, note, respectIds, locationShared: activity.locationShared ?? false };
+      const photoUris = this.persisted.photos.find((item) => item.activityId === activity.id)?.uris ?? activity.photoUris ?? [];
+      return {
+        ...activity,
+        nightKind: activity.nightKind ?? null,
+        note,
+        respectIds,
+        locationShared: activity.locationShared ?? false,
+        photoUris,
+      };
     });
     return {
       profile,
@@ -105,7 +115,7 @@ export class DemoRepository implements ActivityRepository {
     const raw = await this.storage.getItem(STORAGE_KEY);
     const parsed = raw ? (JSON.parse(raw) as Partial<Persisted>) : null;
     this.persisted = parsed
-      ? { ...blank(), ...parsed, comments: parsed.comments ?? [], seenBadgeKeys: parsed.seenBadgeKeys ?? [] }
+      ? { ...blank(), ...parsed, comments: parsed.comments ?? [], seenBadgeKeys: parsed.seenBadgeKeys ?? [], photos: parsed.photos ?? [] }
       : blank();
     return this.snapshot();
   }
@@ -149,6 +159,15 @@ export class DemoRepository implements ActivityRepository {
     if (own) own.note = trimmed || null;
     this.persisted.notes = this.persisted.notes.filter((item) => item.activityId !== activityId);
     if (trimmed) this.persisted.notes.push({ activityId, note: trimmed });
+    await this.persist();
+  }
+
+  async setPhotos(activityId: string, photoUris: string[]) {
+    const uris = photoUris.slice(0, 4);
+    this.persisted.photos = this.persisted.photos.filter((item) => item.activityId !== activityId);
+    if (uris.length) this.persisted.photos.push({ activityId, uris });
+    const own = this.persisted.activities.find((item) => item.id === activityId);
+    if (own) own.photoUris = uris;
     await this.persist();
   }
 

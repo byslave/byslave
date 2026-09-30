@@ -76,6 +76,7 @@ export type ActivitySummary = {
   intensitySeries: number[];
   shared: boolean;
   locationShared: boolean;
+  photoUris: string[];
 };
 
 export type NightEvent = {

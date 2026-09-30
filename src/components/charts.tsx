@@ -1,6 +1,7 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Polyline } from 'react-native-svg';
 import type { GeoPoint } from '../domain/types';
+import { routeSpanMeters } from '../domain/scoring';
 import { mapboxStaticUrl } from '../maps/mapbox';
 import { colors } from '../theme/tokens';
 
@@ -50,6 +51,38 @@ export function Sparkline({ values }: { values: number[] }) {
   );
 }
 
+const routeSpreadMeters = 40;
+
+export function NightTrace({
+  venue,
+  route,
+  intensity,
+  peakOffsetSeconds,
+  locationShared,
+}: {
+  venue: string;
+  route: GeoPoint[];
+  intensity: number[];
+  peakOffsetSeconds: number;
+  locationShared: boolean;
+}) {
+  const moved = locationShared && route.length >= 2 && routeSpanMeters(route) >= routeSpreadMeters;
+  const peakMinute = Math.max(1, Math.round(peakOffsetSeconds / 60));
+  return (
+    <View style={styles.trace}>
+      <Text style={styles.venue}>{venue}</Text>
+      {moved ? (
+        <RouteMap route={route} />
+      ) : (
+        <View style={styles.trace}>
+          <Sparkline values={intensity} />
+          <Text style={styles.muted}>Zıplama zirvesi · {peakMinute}. dk</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export function RouteMap({ route }: { route: GeoPoint[] }) {
   const remote = mapboxStaticUrl(route);
   if (remote) {
@@ -88,4 +121,6 @@ const styles = StyleSheet.create({
   muted: { color: colors.textSecondary, fontSize: 13 },
   map: { width: '100%', height: 180, borderRadius: 12, backgroundColor: colors.bg },
   canvas: { gap: 6 },
+  trace: { gap: 8 },
+  venue: { color: colors.white, fontSize: 16, fontWeight: '700' },
 });

@@ -63,6 +63,7 @@ function asActivity(row: Record<string, unknown>): ActivitySummary {
     intensitySeries: (row.intensity_series as number[]) ?? [],
     shared: Boolean(row.shared),
     locationShared: Boolean(row.location_shared),
+    photoUris: Array.isArray(row.photo_urls) ? row.photo_urls.map(String).slice(0, 4) : [],
   };
 }
 
@@ -217,6 +218,7 @@ export class SupabaseRepository implements ActivityRepository {
       intensity_series: activity.intensitySeries,
       shared: activity.shared,
       location_shared: activity.locationShared,
+      photo_urls: activity.photoUris.slice(0, 4),
     });
     if (error) throw error;
     if (activity.eventId) await this.joinEvent(activity.eventId, activity.userId);
@@ -236,6 +238,11 @@ export class SupabaseRepository implements ActivityRepository {
     const { data } = await this.client.auth.getUser();
     if (!data.user) return;
     const { error } = await this.client.from('notifications').update({ read: true }).eq('user_id', data.user.id).eq('read', false);
+    if (error) throw error;
+  }
+
+  async setPhotos(activityId: string, photoUris: string[]) {
+    const { error } = await this.client.from('activities').update({ photo_urls: photoUris.slice(0, 4) }).eq('id', activityId);
     if (error) throw error;
   }
 

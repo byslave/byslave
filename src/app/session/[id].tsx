@@ -1,9 +1,10 @@
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { brand } from '../../config/brand';
-import { RouteMap, ScoreRing, Sparkline } from '../../components/charts';
+import { NightTrace, ScoreRing, Sparkline } from '../../components/charts';
 import { Button, Card, Field, Screen, Stat } from '../../components/ui';
 import { formatCalories, formatDistance, formatDuration, formatWhen } from '../../domain/format';
 import { compareLine, leaderboard, rankOf } from '../../domain/leaderboard';
@@ -16,11 +17,12 @@ import { colors, space } from '../../theme/tokens';
 export default function SessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { activities, users, profile, comments, toggleRespect, setNote, addComment } = useAppState();
+  const { activities, users, profile, comments, toggleRespect, setNote, addComment, setPhotos } = useAppState();
   const [copied, setCopied] = useState(false);
   const [draftNote, setDraftNote] = useState<string | null>(null);
   const [comment, setComment] = useState('');
   const [scoreOpen, setScoreOpen] = useState(false);
+  const [photoNote, setPhotoNote] = useState<string | null>(null);
   const activity = activities.find((item) => item.id === id);
   if (!activity) {
     return (
@@ -42,7 +44,20 @@ export default function SessionScreen() {
   const respectNames = activity.respectIds
     .map((userId) => users.find((item) => item.id === userId)?.displayName)
     .filter((name): name is string => Boolean(name));
-  const showRoute = activity.locationShared || profile?.id === activity.userId;
+  const ownsNight = profile?.id === activity.userId;
+  const addPhoto = async () => {
+    if (activity.photoUris.length >= 4) return;
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.4, base64: true });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    const uri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+    if (uri.length > 560_000) {
+      setPhotoNote('Fotoğraf 400 KB sınırını aşıyor.');
+      return;
+    }
+    setPhotoNote(null);
+    await setPhotos(activity.id, [...activity.photoUris, uri].slice(0, 4));
+  };
   const share = async () => {
     const text = `${brand.name} · ${activity.title} · Party Score ${activity.partyScore} · ${formatCalories(activity.calories)} kcal · ${activity.jumps} zıplama · ${formatDistance(activity.distanceMeters)}`;
     await Clipboard.setStringAsync(text);
@@ -58,6 +73,41 @@ export default function SessionScreen() {
       <View style={styles.center}>
         <ScoreRing score={activity.partyScore} />
       </View>
+      <Text style={styles.section}>Gece izi</Text>
+      <Card>
+        <NightTrace
+          venue={activity.venue}
+          route={activity.route}
+          intensity={activity.intensitySeries}
+          peakOffsetSeconds={activity.peakOffsetSeconds}
+          locationShared={activity.locationShared}
+        />
+      </Card>
+      <Text style={styles.section}>Fotoğraflar</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photos}>
+        {activity.photoUris.map((uri, index) => (
+          <View key={`${index}-${uri.slice(0, 24)}`} style={styles.photoWrap}>
+            <Image source={{ uri }} style={styles.photo} />
+            {ownsNight ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Fotoğrafı sil"
+                onPress={() => void setPhotos(activity.id, activity.photoUris.filter((_, photoIndex) => photoIndex !== index))}
+                style={styles.photoRemove}
+              >
+                <Text style={styles.photoRemoveText}>×</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ))}
+        {ownsNight && activity.photoUris.length < 4 ? (
+          <Pressable accessibilityRole="button" onPress={() => void addPhoto()} style={styles.photoAdd}>
+            <Text style={styles.photoAddText}>Fotoğraf ekle</Text>
+          </Pressable>
+        ) : null}
+      </ScrollView>
+      {photoNote ? <Text style={styles.meta}>{photoNote}</Text> : null}
+      {!ownsNight && activity.photoUris.length === 0 ? <Text style={styles.meta}>Bu gecede fotoğraf yok.</Text> : null}
       <Text style={styles.meta}>{nightKindLabel(activity.nightKind)}</Text>
       {isRecord ? <Text style={styles.record}>Kişisel rekor</Text> : null}
       {rank ? <Text style={styles.meta}>Bu etkinlikte {rank.rank}. sıra / {rank.total}</Text> : null}
@@ -146,15 +196,7 @@ export default function SessionScreen() {
       <Card>
         <Sparkline values={activity.intensitySeries} />
       </Card>
-      <Text style={styles.section}>Rota</Text>
-      {showRoute ? (
-        <Card>
-          <RouteMap route={activity.route} />
-        </Card>
-      ) : (
-        <Text style={styles.meta}>Konum bu gecede paylaşılmamış.</Text>
-      )}
-      {profile?.id === activity.userId ? null : <Text style={styles.meta}>Başka birinin paylaştığı gece.</Text>}
+      {ownsNight ? null : <Text style={styles.meta}>Başka birinin paylaştığı gece.</Text>}
     </Screen>
   );
 }
@@ -168,4 +210,30 @@ const styles = StyleSheet.create({
   section: { color: colors.white, fontSize: 16, fontWeight: '700' },
   center: { alignItems: 'center' },
   stats: { flexDirection: 'row', gap: space.md },
+  photos: { gap: space.sm, paddingVertical: 4 },
+  photoWrap: { width: 112, height: 112 },
+  photo: { width: 112, height: 112, borderRadius: 14, backgroundColor: colors.card },
+  photoAdd: {
+    width: 112,
+    height: 112,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: space.sm,
+  },
+  photoAddText: { color: colors.white, fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  photoRemove: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoRemoveText: { color: colors.white, fontSize: 16, lineHeight: 18 },
 });
