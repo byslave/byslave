@@ -224,6 +224,25 @@ export class SupabaseRepository implements ActivityRepository {
     if (activity.eventId) await this.joinEvent(activity.eventId, activity.userId);
   }
 
+  async addEvent(event: Omit<NightEvent, 'id' | 'attendeeIds'>): Promise<string> {
+    const { data, error } = await this.client
+      .from('events')
+      .insert({
+        title: event.title,
+        venue: event.venue,
+        city: event.city,
+        starts_at: event.startsAt,
+        music_bpm: event.musicBpm,
+        lineup: event.lineup,
+      })
+      .select('id')
+      .single();
+    if (error) throw error;
+    const { data: userData } = await this.client.auth.getUser();
+    if (userData.user) await this.joinEvent(data.id, userData.user.id);
+    return data.id;
+  }
+
   async joinEvent(eventId: string, userId: string) {
     const { error } = await this.client.from('event_attendees').upsert({ event_id: eventId, user_id: userId });
     if (error) throw error;

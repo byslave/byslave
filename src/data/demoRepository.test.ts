@@ -49,6 +49,16 @@ async function main() {
   const mine = saved.comments.find((item) => item.userId === 'user-1');
   assert(mine != null && mine.text.length <= 60 && !mine.text.startsWith(' '), 'yorum 60 karakter ve kırpık');
   assert(saved.notifications.some((item) => item.title.includes('açık') || item.title.includes('yakında')), 'bildirimler dolu');
+  const created = await repo.addEvent({
+    title: 'Klein',
+    venue: 'Klein',
+    city: 'İstanbul',
+    startsAt: new Date().toISOString(),
+    musicBpm: 130,
+    lineup: null,
+  });
+  const withEvent = await repo.load();
+  assert(withEvent.events.some((item) => item.id === created && item.venue === 'Klein'), 'etkinlik eklenmeli');
   await repo.clearLocal();
   assert((await repo.load()).profile == null, 'sıfırlama profili silmeli');
   console.log('demo repository reset ok');

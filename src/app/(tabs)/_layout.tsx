@@ -19,7 +19,7 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.bgSecondary,
           borderTopColor: colors.border,
-          height: 72,
+          height: 64,
           overflow: 'visible',
         },
         tabBarActiveTintColor: colors.red,
@@ -48,16 +48,16 @@ export default function TabsLayout() {
           tabBarIcon: () => (
             <View
               style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
                 backgroundColor: colors.red,
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginTop: -22,
+                marginBottom: 2,
               }}
             >
-              <Ionicons name="radio-button-on" color={colors.white} size={26} />
+              <Ionicons name="radio-button-on" color={colors.white} size={16} />
             </View>
           ),
         }}

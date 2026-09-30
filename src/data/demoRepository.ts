@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { activityNotices } from '../domain/notices';
-import type { ActivityComment, ActivitySummary, AppSnapshot, Profile, PublicUser } from '../domain/types';
+import type { ActivityComment, ActivitySummary, AppSnapshot, NightEvent, Profile, PublicUser } from '../domain/types';
 import type { ActivityRepository } from './repository';
 import { buildSeed } from './seed';
 
@@ -9,6 +9,7 @@ const STORAGE_KEY = 'nightlife.demo.v2';
 type Persisted = {
   profile: Profile | null;
   activities: ActivitySummary[];
+  events: NightEvent[];
   joinedEventIds: string[];
   readNotificationIds: string[];
   followingIds: string[];
@@ -23,6 +24,7 @@ function blank(): Persisted {
   return {
     profile: null,
     activities: [],
+    events: [],
     joinedEventIds: [],
     readNotificationIds: [],
     followingIds: [],
@@ -59,7 +61,7 @@ export class DemoRepository implements ActivityRepository {
   private snapshot(): AppSnapshot {
     const seed = buildSeed();
     const profile = this.persisted.profile;
-    const events = seed.events.map((event) => {
+    const events = [...this.persisted.events, ...seed.events].map((event) => {
       if (!profile || !this.persisted.joinedEventIds.includes(event.id)) return event;
       return { ...event, attendeeIds: [...new Set([...event.attendeeIds, profile.id])] };
     });
@@ -115,7 +117,14 @@ export class DemoRepository implements ActivityRepository {
     const raw = await this.storage.getItem(STORAGE_KEY);
     const parsed = raw ? (JSON.parse(raw) as Partial<Persisted>) : null;
     this.persisted = parsed
-      ? { ...blank(), ...parsed, comments: parsed.comments ?? [], seenBadgeKeys: parsed.seenBadgeKeys ?? [], photos: parsed.photos ?? [] }
+      ? {
+          ...blank(),
+          ...parsed,
+          comments: parsed.comments ?? [],
+          seenBadgeKeys: parsed.seenBadgeKeys ?? [],
+          photos: parsed.photos ?? [],
+          events: parsed.events ?? [],
+        }
       : blank();
     return this.snapshot();
   }
@@ -131,6 +140,23 @@ export class DemoRepository implements ActivityRepository {
       this.persisted.joinedEventIds = [...this.persisted.joinedEventIds, activity.eventId];
     }
     await this.persist();
+  }
+
+  async addEvent(event: Omit<NightEvent, 'id' | 'attendeeIds'>): Promise<string> {
+    const id = crypto.randomUUID();
+    const profileId = this.persisted.profile?.id;
+    this.persisted.events = [
+      {
+        ...event,
+        id,
+        attendeeIds: profileId ? [profileId] : [],
+        lineup: event.lineup,
+        musicBpm: event.musicBpm,
+      },
+      ...this.persisted.events,
+    ];
+    await this.persist();
+    return id;
   }
 
   async joinEvent(eventId: string, _userId: string) {

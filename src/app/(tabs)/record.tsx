@@ -15,9 +15,11 @@ import { colors, space } from '../../theme/tokens';
 export default function RecordScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ eventId?: string }>();
-  const { profile, events, saveActivity, updateProfile } = useAppState();
+  const { profile, events, saveActivity, updateProfile, addEvent } = useAppState();
   const recording = useRecording();
   const [eventId, setEventId] = useState<string | null>(null);
+  const [eventQuery, setEventQuery] = useState('');
+  const [creatingEvent, setCreatingEvent] = useState(false);
   const [nightKind, setNightKind] = useState<NightKind>('rave');
   const [note, setNote] = useState('');
   const [shared, setShared] = useState(true);
@@ -61,6 +63,34 @@ export default function RecordScreen() {
       heartRateOrigin,
     });
   }, [eventId, events, heartRateOrigin, nightKind, profile, recording.activeSeconds, recording.samples, sharePlace, shared]);
+
+  const selectedEvent = events.find((item) => item.id === eventId) ?? null;
+  const eventNeedle = eventQuery.trim().toLocaleLowerCase('tr-TR');
+  const eventMatches =
+    eventNeedle.length === 0
+      ? []
+      : events
+          .filter((event) => `${event.title} ${event.venue} ${event.city}`.toLocaleLowerCase('tr-TR').includes(eventNeedle))
+          .slice(0, 8);
+
+  const createFromQuery = async () => {
+    const name = eventQuery.trim();
+    if (name.length < 2 || creatingEvent) return;
+    setCreatingEvent(true);
+    const id = await addEvent({
+      title: name,
+      venue: name,
+      city: 'İstanbul',
+      startsAt: new Date().toISOString(),
+      musicBpm: null,
+      lineup: null,
+    });
+    setCreatingEvent(false);
+    if (id) {
+      setEventId(id);
+      setEventQuery('');
+    }
+  };
 
   const save = async () => {
     if (!profile || !preview || saving) return;
@@ -148,16 +178,45 @@ export default function RecordScreen() {
         ))}
       </View>
       <Text style={styles.meta}>Etkinlik</Text>
-      <View style={styles.chips}>
-        <Pressable onPress={() => setEventId(null)} style={[styles.chip, eventId == null && styles.chipOn]}>
-          <Text style={styles.chipText}>Serbest gece</Text>
-        </Pressable>
-        {events.map((event) => (
-          <Pressable key={event.id} onPress={() => setEventId(event.id)} style={[styles.chip, eventId === event.id && styles.chipOn]}>
-            <Text style={styles.chipText}>{event.title}</Text>
+      <Field value={eventQuery} onChangeText={setEventQuery} placeholder="Mekân veya etkinlik ara" autoCorrect={false} />
+      {eventNeedle.length === 0 ? (
+        <View style={styles.chips}>
+          <Pressable accessibilityRole="button" onPress={() => setEventId(null)} style={[styles.chip, eventId == null && styles.chipOn]}>
+            <Text style={styles.chipText}>Serbest gece</Text>
           </Pressable>
-        ))}
-      </View>
+          {selectedEvent ? (
+            <Pressable accessibilityRole="button" onPress={() => setEventId(null)} style={[styles.chip, styles.chipOn]}>
+              <Text style={styles.chipText}>
+                {selectedEvent.venue} · {selectedEvent.title}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : (
+        <View style={styles.chips}>
+          {eventMatches.map((event) => (
+            <Pressable
+              key={event.id}
+              accessibilityRole="button"
+              onPress={() => {
+                setEventId(event.id);
+                setEventQuery('');
+              }}
+              style={[styles.chip, eventId === event.id && styles.chipOn]}
+            >
+              <Text style={styles.chipText}>
+                {event.venue} · {event.title}
+              </Text>
+            </Pressable>
+          ))}
+          {eventMatches.length === 0 && eventNeedle.length >= 2 ? (
+            <Pressable accessibilityRole="button" onPress={() => void createFromQuery()} disabled={creatingEvent} style={styles.chip}>
+              <Text style={styles.chipText}>{creatingEvent ? 'Ekleniyor' : `“${eventQuery.trim()}” etkinliğini ekle`}</Text>
+            </Pressable>
+          ) : null}
+          {eventMatches.length === 0 && eventNeedle.length < 2 ? <Text style={styles.meta}>Biraz daha yaz.</Text> : null}
+        </View>
+      )}
       <Field value={note} onChangeText={(value) => setNote(value.slice(0, 80))} placeholder="Gece notu, 80 karakter" />
       {waterBreak ? (
         <Card>

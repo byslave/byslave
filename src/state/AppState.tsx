@@ -20,6 +20,7 @@ type AppContextValue = {
   completeOnboarding: (draft: OnboardingDraft) => Promise<void>;
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
   saveActivity: (activity: ActivitySummary) => Promise<void>;
+  addEvent: (event: Omit<NightEvent, 'id' | 'attendeeIds'>) => Promise<string>;
   joinEvent: (eventId: string) => Promise<void>;
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
@@ -117,6 +118,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         if (!repo) return;
         await repo.saveActivity(activity);
         apply(await repo.load());
+      },
+      async addEvent(event) {
+        if (!repo) return '';
+        const id = await repo.addEvent(event);
+        apply(await repo.load());
+        return id;
       },
       async joinEvent(eventId) {
         if (!repo || !profile) return;

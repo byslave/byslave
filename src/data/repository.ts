@@ -1,10 +1,11 @@
-import type { ActivitySummary, AppSnapshot, Profile } from '../domain/types';
+import type { ActivitySummary, AppSnapshot, NightEvent, Profile } from '../domain/types';
 
 export interface ActivityRepository {
   readonly mode: 'demo' | 'supabase';
   load(): Promise<AppSnapshot>;
   saveProfile(profile: Profile): Promise<void>;
   saveActivity(activity: ActivitySummary): Promise<void>;
+  addEvent(event: Omit<NightEvent, 'id' | 'attendeeIds'>): Promise<string>;
   joinEvent(eventId: string, userId: string): Promise<void>;
   markNotificationRead(id: string): Promise<void>;
   markAllNotificationsRead(): Promise<void>;
