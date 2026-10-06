@@ -66,6 +66,13 @@ async function main() {
   assert(parseOpenNight('bozuk json') == null, 'bozuk kayıt çökmemeli');
   assert(parseOpenNight(null) == null, 'kayıt yoksa null');
 
+  const legacyTotals = { ...totals } as { movingCount?: number };
+  delete legacyTotals.movingCount;
+  const legacy = JSON.stringify({ ...night, totals: legacyTotals });
+  const parsedLegacy = parseOpenNight(legacy);
+  assert(parsedLegacy != null, 'eski yarım gece okunmalı');
+  assert(parsedLegacy!.totals.movingCount === totals.count, 'eski kayıtta hareket sayısı geri doldurulmalı');
+
   console.log('openNight tests ok');
 }
 

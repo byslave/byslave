@@ -4,6 +4,7 @@ import {
   clamp,
   estimateCalories,
   gForce,
+  movingCalorieWindow,
   sampleIntensity,
   scoreParty,
   downsample,
@@ -34,6 +35,7 @@ const highHeartRateMs = 45_000;
 
 export type LiveTotals = {
   count: number;
+  movingCount: number;
   intensitySum: number;
   peakIntensity: number;
   peakIndex: number;
@@ -59,6 +61,7 @@ export type LiveTotals = {
 export function emptyTotals(): LiveTotals {
   return {
     count: 0,
+    movingCount: 0,
     intensitySum: 0,
     peakIntensity: 0,
     peakIndex: 0,
@@ -116,6 +119,7 @@ export function addSample(totals: LiveTotals, sample: ActivitySample): void {
     totals.peakIndex = totals.count;
   }
   totals.intensitySum += intensity;
+  if (intensity > 0) totals.movingCount += 1;
   pushIntensity(totals, intensity);
 
   const force = gForce(sample);
@@ -192,7 +196,19 @@ export function liveStats({ totals, activeSeconds, body, heartRateOrigin }: Stat
     avgHeartRate == null
       ? avgMotion
       : clamp(avgMotion * (1 - scoringConfig.hrBlend) + hrIntensity * scoringConfig.hrBlend, 0, 1);
-  const calories = estimateCalories({ intensity, activeSeconds, body, avgHeartRate, heartRateOrigin });
+  const calorieWindow = movingCalorieWindow({
+    movingCount: totals.movingCount,
+    sampleCount: totals.count,
+    intensitySum: totals.intensitySum,
+    elapsedSeconds: activeSeconds,
+  });
+  const calories = estimateCalories({
+    intensity: calorieWindow.intensity,
+    activeSeconds: calorieWindow.activeSeconds,
+    body,
+    avgHeartRate,
+    heartRateOrigin,
+  });
   const stride = ((body.heightCm ?? 170) * 0.415) / 100;
   const distanceMeters = Math.max(totals.gpsMeters, totals.maxSteps * stride);
   const peakOffsetSeconds =

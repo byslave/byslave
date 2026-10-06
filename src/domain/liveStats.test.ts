@@ -107,6 +107,49 @@ assert(stillStats.jumps === 0, 'elde duran telefon zıplama saymamalı');
 assert(stillStats.calories === 0, 'hareketsiz gece kalori yazmamalı');
 assert(stillStats.partyScore === 0 || stillStats.partyScore === 1, 'hareketsiz gecede skor süre payından öteye geçmemeli');
 
+const stillHr = fold(
+  Array.from({ length: 300 }, (_, i) => ({ t: i * 200, ax: 0.02, ay: 0.99, az: 0.03, heartRate: 148 })),
+);
+const stillHrStats = liveStats({ totals: stillHr, activeSeconds: 60, body, heartRateOrigin: 'measured' });
+assert(stillHrStats.calories === 0, 'dururken nabız kalori yazmamalı');
+assert(stillHr.movingCount === 0, 'duruş hareket saymamalı');
+
+const danceSample = (i: number): ActivitySample => ({
+  t: i * 200,
+  ax: 0.45,
+  ay: 0.35,
+  az: 1.85,
+});
+const idleSample = (i: number): ActivitySample => ({ t: i * 200, ax: 0.02, ay: 0.99, az: 0.03 });
+const mixed = fold([
+  ...Array.from({ length: 20 }, (_, i) => danceSample(i)),
+  ...Array.from({ length: 280 }, (_, i) => idleSample(20 + i)),
+]);
+const mixedLive = liveStats({ totals: mixed, activeSeconds: 60, body, heartRateOrigin: 'none' });
+const mixedFull = buildSummary({
+  id: 'x',
+  userId: 'u',
+  event: null,
+  activeSeconds: 60,
+  samples: [
+    ...Array.from({ length: 20 }, (_, i) => danceSample(i)),
+    ...Array.from({ length: 280 }, (_, i) => idleSample(20 + i)),
+  ],
+  body,
+  shared: false,
+  heartRateOrigin: 'none',
+});
+assert(close(mixedLive.calories, mixedFull.calories, 1e-9), 'karışık gecede canlı kalori özetle aynı');
+assert(mixed.movingCount === 20, 'yalnız dans örnekleri hareket');
+assert(mixedLive.calories > 0, 'kısa dans kalori yazar');
+const allDance = liveStats({
+  totals: fold(Array.from({ length: 300 }, (_, i) => danceSample(i))),
+  activeSeconds: 60,
+  body,
+  heartRateOrigin: 'none',
+});
+assert(mixedLive.calories < allDance.calories * 0.12, 'sonradan durmak kaloriyi şişirmemeli');
+
 // Uzun gecede bellek sabit kalmalı: seri ve rota sınırlı.
 const long = fold(stream(20000, false));
 assert(long.series.length <= 128, 'yoğunluk serisi sınırlı kalmalı');

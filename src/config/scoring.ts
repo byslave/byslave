@@ -5,7 +5,8 @@
 export const scoringConfig = {
   jumpHighG: 2.2,
   jumpRearmG: 1.35,
-  stillG: 0.12,
+  /** |g−1| bu eşiğin altı duruyor sayılır. Telefon titremesi kalori basmasın. */
+  stillG: 0.2,
   intensityDivisor: 2.5,
   metMin: 4.5,
   metMax: 10,

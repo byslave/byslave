@@ -45,11 +45,15 @@ export function parseOpenNight(raw: string | null, now = Date.now()): OpenNight 
     if (parsed.activeSeconds < 60) return null;
     const savedAt = typeof parsed.savedAt === 'number' ? parsed.savedAt : parsed.startedAt;
     if (now - savedAt > maxAgeMs) return null;
+    const totals = { ...emptyTotals(), ...(parsed.totals ?? {}) };
+    if (parsed.totals && !('movingCount' in parsed.totals)) {
+      totals.movingCount = totals.intensitySum > 0 ? totals.count : 0;
+    }
     return {
       startedAt: parsed.startedAt,
       activeSeconds: parsed.activeSeconds,
       savedAt,
-      totals: { ...emptyTotals(), ...(parsed.totals ?? {}) },
+      totals,
       context: parsed.context ?? null,
     };
   } catch {

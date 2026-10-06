@@ -115,6 +115,25 @@ function keytelPerMinute(hr: number, weightKg: number, age: number, sex: Exclude
   return clamp(raw, 0, 14);
 }
 
+/**
+ * Kalori yalnız hareketli örneklerin payına yazılır.
+ * 10 sn dans + 10 dk duruş, duruş süresini yakım saymaz.
+ */
+export function movingCalorieWindow(input: {
+  movingCount: number;
+  sampleCount: number;
+  intensitySum: number;
+  elapsedSeconds: number;
+}): { intensity: number; activeSeconds: number } {
+  if (input.movingCount <= 0 || input.sampleCount <= 0 || input.elapsedSeconds <= 0) {
+    return { intensity: 0, activeSeconds: 0 };
+  }
+  return {
+    intensity: input.intensitySum / input.movingCount,
+    activeSeconds: (input.movingCount / input.sampleCount) * input.elapsedSeconds,
+  };
+}
+
 export function estimateCalories(input: {
   intensity: number;
   activeSeconds: number;
@@ -125,10 +144,10 @@ export function estimateCalories(input: {
   const assumedWeight = input.body.weightKg == null;
   const weight = input.body.weightKg ?? scoringConfig.defaultWeightKg;
   const fitness: FitnessLevel = input.body.fitnessLevel;
-  const met =
-    input.intensity <= 0
-      ? 0
-      : scoringConfig.metMin + input.intensity * (scoringConfig.metMax - scoringConfig.metMin);
+  if (input.intensity <= 0 || input.activeSeconds <= 0) {
+    return { calories: 0, method: 'motion', assumedWeight };
+  }
+  const met = scoringConfig.metMin + input.intensity * (scoringConfig.metMax - scoringConfig.metMin);
   const motion = met * weight * (input.activeSeconds / 3600) * scoringConfig.fitnessFactor[fitness];
   const sex = input.body.sex;
   const canUseHr =
@@ -210,6 +229,8 @@ export function buildSummary(input: {
   now?: number;
 }): ActivitySummary {
   const intensities = input.samples.map(sampleIntensity);
+  const intensitySum = intensities.reduce((sum, value) => sum + value, 0);
+  const movingCount = intensities.reduce((count, value) => count + (value > 0 ? 1 : 0), 0);
   const avgMotion = average(intensities) ?? 0;
   const hrs =
     input.heartRateOrigin === 'none'
@@ -223,9 +244,15 @@ export function buildSummary(input: {
     input.heartRateOrigin === 'none' || avgHeartRate == null
       ? avgMotion
       : clamp(avgMotion * (1 - scoringConfig.hrBlend) + hrIntensity * scoringConfig.hrBlend, 0, 1);
+  const calorieWindow = movingCalorieWindow({
+    movingCount,
+    sampleCount: intensities.length,
+    intensitySum,
+    elapsedSeconds: input.activeSeconds,
+  });
   const calories = estimateCalories({
-    intensity,
-    activeSeconds: input.activeSeconds,
+    intensity: calorieWindow.intensity,
+    activeSeconds: calorieWindow.activeSeconds,
     body: input.body,
     avgHeartRate,
     heartRateOrigin: input.heartRateOrigin,
