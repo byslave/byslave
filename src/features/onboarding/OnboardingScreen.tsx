@@ -11,19 +11,25 @@ const slides = [
   {
     key: 'night',
     title: 'Geceyi kaydet',
-    body: `${brand.name}, parti, rave, konser ve kulüp geceni tutar. Süre, zıplama ve mesafe bu kayıtta toplanır.`,
+    body: `${brand.name}, rave, kulüp, konser ve after geceni telefonunla tutar. Geceyi başlat deyince ivme okunur: zıplama, tempo ve süre buradan gelir. Otururken veya telefon dururken sayı uydurulmaz. Konumu açarsan gece izi gerçek rotadır; aynı salonda kaldıysan rota çizilmez.`,
     image: require('../../../assets/intro/intro-night.png'),
   },
   {
     key: 'score',
     title: 'Party Score',
-    body: 'Bu gece 0-100 arası bir skor olur. Arkadaşların ve etkinlik tablosuyla kıyaslarsın.',
+    body: 'Gece bitince 0-100 arası bir skor çıkar. Beş parçadan gelir: hareketin sertliği, zıplama, yanan kalori, süre ve mesafe. Kalori tahmindir, tıbbi ölçüm değildir. Müzik BPM’i skora karışmaz; o etkinliğin temposudur. Yoğunluk ne kadar sert zıpladığındır, gece izi nerede durduğundur.',
     image: require('../../../assets/intro/intro-score.png'),
   },
   {
+    key: 'place',
+    title: 'Mekân ve paylaşım',
+    body: 'Kayıtta Volkswagen yazınca altta Volkswagen Arena çıkar. Etkinliği sen eklersin. Gece bitince en fazla dört fotoğraf eklenir. Kaydet, fotoğrafın üstüne süreyi, zıplamayı, mesafeyi ve kaloriyi basar. Şerit, kare veya hikaye indirilir; telefonda Instagram ve WhatsApp paylaşım sayfası açılır.',
+    image: require('../../../assets/intro/intro-night.png'),
+  },
+  {
     key: 'watch',
-    title: 'Nabız saatten gelir',
-    body: 'Akıllı saat bağlıysa nabız kendiliğinden alınır. Saat yoksa nabız istenmez.',
+    title: 'Nabız Bluetooth’tan',
+    body: 'Saat veya nabız kemeri Bluetooth ile bağlanır. Polar, Garmin, Wear OS ve nabız yayımlayan diğer saatler listede görünür. Bağlıysa nabız kayda gerçekten gelir ve kalori formülüne karışır. Bağlanmazsa nabız istenmez, tahmin yazılmaz. Profildeki Saat eşleştir’den tarama açılır.',
     image: require('../../../assets/intro/intro-watch.png'),
   },
 ] as const;
@@ -37,7 +43,7 @@ export function OnboardingScreen() {
   const [error, setError] = useState<string | null>(null);
   const scroller = useRef<ScrollView>(null);
 
-  const enter = async () => {
+  const enter = async (openWatch: boolean) => {
     if (busy) return;
     setBusy(true);
     setError(null);
@@ -61,7 +67,7 @@ export function OnboardingScreen() {
         locationStatus: 'skipped',
         notificationStatus: 'skipped',
       });
-      router.replace('/');
+      router.replace(openWatch ? '/watch' : '/');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Açılamadı.');
       setBusy(false);
@@ -75,14 +81,17 @@ export function OnboardingScreen() {
     if (clamped !== page) setPage(clamped);
   };
 
+  const last = page === slides.length - 1;
+
   return (
     <Screen
       scroll={false}
       footer={
         <View style={{ gap: space.sm }}>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          {page === slides.length - 1 ? <Button label="Başla" onPress={() => void enter()} disabled={busy} /> : null}
-          <Button label="Atla" kind="ghost" onPress={() => void enter()} disabled={busy} />
+          {last ? <Button label="Saati bağla" onPress={() => void enter(true)} disabled={busy} /> : null}
+          {last ? <Button label="Başla" kind="ghost" onPress={() => void enter(false)} disabled={busy} /> : null}
+          <Button label="Atla" kind="ghost" onPress={() => void enter(false)} disabled={busy} />
         </View>
       }
     >
@@ -102,7 +111,9 @@ export function OnboardingScreen() {
               <View key={slide.key} style={[styles.slide, { width }]}>
                 <Image source={slide.image} style={styles.photo} />
                 <Text style={styles.title}>{slide.title}</Text>
-                <Text style={styles.body}>{slide.body}</Text>
+                <ScrollView style={styles.bodyScroll} nestedScrollEnabled>
+                  <Text style={styles.body}>{slide.body}</Text>
+                </ScrollView>
               </View>
             ))}
           </ScrollView>
@@ -112,7 +123,7 @@ export function OnboardingScreen() {
             <View key={slide.key} style={[styles.dot, index === page && styles.dotOn]} />
           ))}
         </View>
-        <Text style={styles.hint}>Yana kaydır</Text>
+        <Text style={styles.hint}>Yana kaydır · {page + 1}/{slides.length}</Text>
       </View>
     </Screen>
   );
@@ -120,10 +131,11 @@ export function OnboardingScreen() {
 
 const styles = StyleSheet.create({
   pager: { flex: 1, gap: space.md },
-  slide: { gap: space.md },
-  photo: { width: '100%', height: 220, borderRadius: 18, backgroundColor: colors.card },
-  title: { color: colors.white, fontSize: 32, fontWeight: '700' },
-  body: { color: colors.textSecondary, fontSize: 16, lineHeight: 24 },
+  slide: { gap: space.sm, flex: 1 },
+  photo: { width: '100%', height: 160, borderRadius: 18, backgroundColor: colors.card },
+  title: { color: colors.white, fontSize: 28, fontWeight: '700' },
+  bodyScroll: { flex: 1 },
+  body: { color: colors.textSecondary, fontSize: 16, lineHeight: 24, paddingBottom: space.lg },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.border },
   dotOn: { backgroundColor: colors.red, width: 18 },

@@ -15,7 +15,9 @@
         "NSMotionUsageDescription": "Hareket verisi zıplama ve tempo tahminini iyileştirir.",
         "NSLocationWhenInUsePermission": "Konum, gece boyunca ne kadar yer değiştirdiğini tahmin etmek için kullanılır.",
         "NSHealthShareUsageDescription": "Nabız, kalori ve yoğunluk tahminini iyileştirmek için okunur.",
-        "NSHealthUpdateUsageDescription": "Aktivite özeti isteğe bağlı olarak Sağlık uygulamasına yazılabilir."
+        "NSHealthUpdateUsageDescription": "Aktivite özeti isteğe bağlı olarak Sağlık uygulamasına yazılabilir.",
+        "NSBluetoothAlwaysUsageDescription": "Akıllı saatin nabzı Bluetooth üzerinden okunur. Saat bağlanmazsa nabız alınmaz.",
+        "NSBluetoothPeripheralUsageDescription": "Akıllı saatin nabzı Bluetooth üzerinden okunur."
       }
     },
     "android": {
@@ -25,7 +27,11 @@
         "ACCESS_FINE_LOCATION",
         "ACTIVITY_RECOGNITION",
         "BODY_SENSORS",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_SCAN",
+        "BLUETOOTH_CONNECT"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#050505",

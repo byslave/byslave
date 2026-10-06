@@ -207,6 +207,7 @@ export default function ProfileScreen() {
           Saat: {profile.watchLabel ?? 'seçilmedi'} · {statusText[profile.watchStatus]}
         </Text>
         {profile.watchNote ? <Text style={styles.meta}>{profile.watchNote}</Text> : null}
+        <Text style={styles.meta}>Nabız Bluetooth ile gelir. Bağlanmazsa yazılmaz.</Text>
         <Button label="Saati eşleştir" kind="ghost" onPress={() => router.push('/watch')} />
         <Text style={styles.meta}>Hareket: {statusText[profile.motionStatus]}</Text>
         <Text style={styles.meta}>Konum: {statusText[profile.locationStatus]}</Text>
