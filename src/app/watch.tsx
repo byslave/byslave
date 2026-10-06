@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, Card, Screen } from '../components/ui';
@@ -14,7 +13,6 @@ const steps = [
 ];
 
 export default function WatchScreen() {
-  const router = useRouter();
   const { profile, updateProfile } = useAppState();
   const [ble, setBle] = useState<BleHeartState>(bleHeartState());
   const [busy, setBusy] = useState(false);
@@ -40,7 +38,7 @@ export default function WatchScreen() {
 
   return (
     <Screen
-      back={{ onPress: () => router.back() }}
+      back
       footer={
         <View style={{ gap: space.sm }}>
           <Button

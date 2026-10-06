@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -15,7 +15,6 @@ import { colors, space } from '../../theme/tokens';
 
 export default function SessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const { activities, users, profile, comments, toggleRespect, setNote, addComment, setPhotos } = useAppState();
   const [shareOpen, setShareOpen] = useState(false);
   const [draftNote, setDraftNote] = useState<string | null>(null);
@@ -25,7 +24,7 @@ export default function SessionScreen() {
   const activity = activities.find((item) => item.id === id);
   if (!activity) {
     return (
-      <Screen back={{ onPress: () => router.back() }}>
+      <Screen back>
         <Text style={styles.title}>Kayıt yok</Text>
       </Screen>
     );
@@ -58,7 +57,7 @@ export default function SessionScreen() {
     await setPhotos(activity.id, [...activity.photoUris, uri].slice(0, 4));
   };
   return (
-    <Screen back={{ onPress: () => router.back() }} footer={<Button label="Kaydet" onPress={() => setShareOpen(true)} />}>
+    <Screen back footer={<Button label="Kaydet" onPress={() => setShareOpen(true)} />}>
       <Text style={styles.kicker}>{user?.displayName ?? 'Sen'}</Text>
       <Text style={styles.title}>{activity.title}</Text>
       <Text style={styles.meta}>

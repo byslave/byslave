@@ -1,7 +1,20 @@
 import type { ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, space } from '../theme/tokens';
+
+function goBack(router: { canGoBack: () => boolean; back: () => void; replace: (href: '/') => void }) {
+  try {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+  } catch {
+    // GO_BACK yakalanmazsa ana sayfaya düş.
+  }
+  router.replace('/');
+}
 
 export function Screen({
   children,
@@ -12,14 +25,17 @@ export function Screen({
   children: ReactNode;
   scroll?: boolean;
   footer?: ReactNode;
-  back?: { onPress: () => void; label?: string };
+  back?: boolean | { label?: string };
 }) {
+  const router = useRouter();
+  const showBack = Boolean(back);
+  const label = typeof back === 'object' ? back.label : undefined;
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      {back ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Geri" onPress={back.onPress} style={styles.back}>
+      {showBack ? (
+        <Pressable accessibilityRole="button" accessibilityLabel="Geri" onPress={() => goBack(router)} style={styles.back}>
           <Text style={styles.backMark}>‹</Text>
-          <Text style={styles.backText}>{back.label ?? 'Geri'}</Text>
+          <Text style={styles.backText}>{label ?? 'Geri'}</Text>
         </Pressable>
       ) : null}
       {scroll ? (
