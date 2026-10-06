@@ -1,9 +1,8 @@
 import { badgeBoard } from './badges';
 import { crossedWith } from './paths';
 import { partyScoreParts } from './scoring';
-import { sustainedHighHeartRate } from './safety';
 import { activityNotices } from './notices';
-import type { ActivitySample, ActivitySummary } from './types';
+import type { ActivitySummary } from './types';
 
 function assert(condition: boolean, message: string) {
   if (!condition) throw new Error(message);
@@ -62,14 +61,6 @@ assert(crossedWith([night, { ...other, eventId: 'baska', venue: 'Başka' }], 'me
 const parts = partyScoreParts({ intensity: 0.8, jumps: 400, calories: 700, activeSeconds: 90 * 60, distanceMeters: 3000 });
 assert(parts.reduce((sum, part) => sum + part.points, 0) === 100, 'dolu gece 100 puan dağılır');
 assert(parts.map((part) => part.label).join(',') === 'Yoğunluk,Zıplama,Kalori,Süre,Mesafe', 'parça adları');
-
-const samples: ActivitySample[] = [
-  { t: 0, ax: 0, ay: 0, az: 1, heartRate: 180 },
-  { t: 50_000, ax: 0, ay: 0, az: 1, heartRate: 180 },
-];
-assert(sustainedHighHeartRate(samples, 'measured'), 'uzun yüksek nabız su molası');
-assert(!sustainedHighHeartRate(samples, 'none'), 'saat yoksa nabız uyarısı yok');
-assert(!sustainedHighHeartRate([{ ...samples[0], t: 0 }, { ...samples[1], t: 1000 }], 'measured'), 'kısa sıçrama yetmez');
 
 const notes = activityNotices({
   profileId: 'me',

@@ -5,10 +5,10 @@ import { PlaceList } from '../../components/PlaceList';
 import { Button, Card, Field, Screen, Stat } from '../../components/ui';
 import { searchPlaces, type PlaceHit } from '../../domain/venues';
 import { nightKindLabel, nightKindOptions } from '../../domain/labels';
-import { buildSummary } from '../../domain/scoring';
+import { liveStats, needsWaterBreak, summaryFromTotals } from '../../domain/liveStats';
 import type { NightKind } from '../../domain/types';
+import { bleHeartState, subscribeBleHeart } from '../../health/bleHeartRate';
 import { heartRateOriginForWatch } from '../../health/providers';
-import { sustainedHighHeartRate } from '../../domain/safety';
 import { formatCalories, formatDistance, formatDuration } from '../../domain/format';
 import { useRecording } from '../../features/record/useRecording';
 import { useAppState } from '../../state/AppState';
@@ -28,6 +28,9 @@ export default function RecordScreen() {
   const [sharePlace, setSharePlace] = useState(false);
   const [askPlace, setAskPlace] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [ble, setBle] = useState(() => bleHeartState());
+
+  useEffect(() => subscribeBleHeart(setBle), []);
 
   useEffect(() => {
     if (typeof params.eventId === 'string') setEventId(params.eventId);
@@ -47,24 +50,22 @@ export default function RecordScreen() {
     });
   }, [profile, recording.permissions, updateProfile]);
 
-  const heartRateOrigin = heartRateOriginForWatch(profile?.watchStatus ?? 'skipped');
-  const waterBreak = sustainedHighHeartRate(recording.samples, heartRateOrigin);
+  const heartRateOrigin = heartRateOriginForWatch(ble.connected ? 'granted' : 'skipped');
+  const waterBreak = needsWaterBreak(recording.totals, heartRateOrigin);
   const preview = useMemo(() => {
     if (!profile) return null;
-    const event = events.find((item) => item.id === eventId) ?? null;
-    return buildSummary({
-      id: 'preview',
-      userId: profile.id,
-      event,
+    return liveStats({
+      totals: recording.totals,
       activeSeconds: recording.activeSeconds,
-      samples: recording.samples,
       body: profile,
-      shared,
-      locationShared: sharePlace,
-      nightKind,
       heartRateOrigin,
     });
-  }, [eventId, events, heartRateOrigin, nightKind, profile, recording.activeSeconds, recording.samples, sharePlace, shared]);
+  }, [heartRateOrigin, profile, recording.activeSeconds, recording.totals]);
+
+  const { setContext } = recording;
+  useEffect(() => {
+    setContext({ eventId, nightKind, note, shared, locationShared: sharePlace });
+  }, [eventId, nightKind, note, setContext, shared, sharePlace]);
 
   useEffect(() => {
     if (!eventQuery.trim() || typeof document === 'undefined') return;
@@ -73,6 +74,16 @@ export default function RecordScreen() {
     }, 40);
     return () => clearTimeout(timer);
   }, [eventQuery, events]);
+
+  const restoreContext = (found: NonNullable<typeof recording.pending>) => {
+    const context = found.context;
+    if (!context) return;
+    setEventId(context.eventId);
+    setNightKind((context.nightKind as NightKind | undefined) ?? 'rave');
+    setNote(context.note);
+    setShared(context.shared);
+    setSharePlace(context.locationShared);
+  };
 
   const selectedEvent = events.find((item) => item.id === eventId) ?? null;
   const eventNeedle = eventQuery.trim();
@@ -125,12 +136,12 @@ export default function RecordScreen() {
     setSaving(true);
     const snapshot = recording.finish();
     const event = events.find((item) => item.id === eventId) ?? null;
-    const summary = buildSummary({
+    const summary = summaryFromTotals({
       id: crypto.randomUUID(),
       userId: profile.id,
       event,
+      totals: snapshot.totals,
       activeSeconds: snapshot.activeSeconds,
-      samples: snapshot.samples,
       body: profile,
       shared,
       locationShared: sharePlace,
@@ -138,6 +149,31 @@ export default function RecordScreen() {
       note,
       heartRateOrigin,
     });
+    await saveActivity(summary);
+    setSaving(false);
+    router.push(`/session/${summary.id}`);
+  };
+
+  const savePending = async (found: NonNullable<typeof recording.pending>) => {
+    if (!profile || saving) return;
+    setSaving(true);
+    const context = found.context;
+    const event = events.find((item) => item.id === (context?.eventId ?? null)) ?? null;
+    const summary = summaryFromTotals({
+      id: crypto.randomUUID(),
+      userId: profile.id,
+      event,
+      totals: found.totals,
+      activeSeconds: found.activeSeconds,
+      body: profile,
+      shared: context?.shared ?? true,
+      locationShared: context?.locationShared ?? false,
+      nightKind: (context?.nightKind as NightKind | undefined) ?? 'rave',
+      note: context?.note ?? null,
+      heartRateOrigin,
+      now: found.savedAt,
+    });
+    recording.dropPending();
     await saveActivity(summary);
     setSaving(false);
     router.push(`/session/${summary.id}`);
@@ -161,6 +197,26 @@ export default function RecordScreen() {
         )
       }
     >
+      {recording.pending && recording.phase === 'idle' ? (
+        <Card>
+          <Text style={styles.pendingTitle}>Yarım kalan gece</Text>
+          <Text style={styles.meta}>
+            {formatDuration(recording.pending.activeSeconds)} kayıtlı. Uygulama kapanmadan önce ölçülenler duruyor.
+          </Text>
+          <Button
+            label="Kayda devam et"
+            onPress={() => {
+              const found = recording.pending;
+              if (found) {
+                restoreContext(found);
+                void recording.continuePending(found);
+              }
+            }}
+          />
+          <Button label="Olduğu gibi kaydet" kind="ghost" onPress={() => recording.pending && void savePending(recording.pending)} />
+          <Button label="Sil" kind="ghost" onPress={recording.dropPending} />
+        </Card>
+      ) : null}
       <Text style={styles.timer}>{formatDuration(recording.activeSeconds)}</Text>
       <Text style={styles.meta}>
         {recording.phase === 'running' ? 'Canlı' : recording.phase === 'paused' ? 'Duraklatıldı' : 'Hazır'}
@@ -174,8 +230,10 @@ export default function RecordScreen() {
         <Text style={styles.meta}>Hareket algılanmıyor. Otururken zıplama ve kalori yazılmaz. iPhone’da Ayarlar, Safari, Hareket ve Yön açık olmalı.</Text>
       ) : null}
       <Text style={styles.meta}>
-        {heartRateOrigin === 'measured' && profile?.watchLabel
-          ? `${profile.watchLabel} bağlı. Nabız kayda geliyor.`
+        {ble.connected
+          ? ble.bpm != null
+            ? `${ble.deviceName ?? 'Saat'} bağlı. Nabız ${ble.bpm}.`
+            : `${ble.deviceName ?? 'Saat'} bağlı. İlk nabız bekleniyor.`
           : 'Saat bağlı değil. Nabız alınmıyor.'}
       </Text>
       {recording.activeSeconds > 0 && recording.activeSeconds < 3 ? (
@@ -194,7 +252,7 @@ export default function RecordScreen() {
           <Stat
             label="Nabız"
             value={heartRateOrigin === 'measured' && preview?.avgHeartRate ? Math.round(preview.avgHeartRate).toString() : '—'}
-            hint={heartRateOrigin === 'measured' ? undefined : 'Saat yok'}
+            hint={heartRateOrigin === 'measured' ? undefined : ble.connected ? 'Nabız bekleniyor' : 'Saat yok'}
           />
           <Stat label="Yoğunluk" value={`${Math.round((preview?.intensity ?? 0) * 100)}`} hint="Hareketin sertliği" />
         </View>
@@ -270,6 +328,7 @@ export default function RecordScreen() {
 
 const styles = StyleSheet.create({
   timer: { color: colors.white, fontSize: 64, fontWeight: '700', letterSpacing: -1 },
+  pendingTitle: { color: colors.white, fontSize: 18, fontWeight: '700' },
   meta: { color: colors.textSecondary, fontSize: 14 },
   stats: { flexDirection: 'row', gap: space.md },
   intensity: { height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: 'hidden' },
