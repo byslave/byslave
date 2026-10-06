@@ -10,42 +10,38 @@ import { colors, space } from '../../theme/tokens';
 const slides = [
   {
     key: 'night',
-    title: 'Geceyi kaydet',
+    title: 'Track your night',
     image: require('../../../assets/intro/intro-night.png'),
     paragraphs: [
-      `${brand.name}, rave, kulüp, konser, festival ve after geceni telefonunla tutar. Ana sayfada arkadaşların geceleri, Etkinlik’te mekânlar, ortadaki kırmızı Kayıt’ta kendi gecen, Aktivite’de geçmiş, Profil’de rekorlar durur.`,
-      'Kayıt’ta Geceyi başlat deyince telefonun ivmesi okunur. Zıplama, tempo ve süre buradan gelir. Otururken, telefon masadayken veya hareket yokken zıplama ve kalori yazılmaz. Sayı uydurulmaz.',
-      'Arkadaşını bul kapalıyken rota saklanmaz. Açarsan ve gerçekten yer değiştirdiysen gece izi çizilir. Aynı salonda kaldıysan rota uydurulmaz; zirve dakikası yazılır.',
+      `From the first song to the last, ${brand.name} keeps the night. Jumps, tempo and time come from your phone — raves, clubs, concerts, festivals, afters.`,
+      'Sit still or leave it on the table and nothing gets logged. Numbers aren’t made up.',
     ],
   },
   {
-    key: 'score',
-    title: 'Party Score',
+    key: 'stats',
+    title: 'See how hard you moved',
     image: require('../../../assets/intro/intro-score.png'),
     paragraphs: [
-      'Gece bitince 0–100 arası bir skor çıkar. Beş parçadan gelir: hareketin sertliği, zıplama sayısı, yanan kalori, süre ve mesafe. Kalori tahmindir, tıbbi ölçüm değildir.',
-      'Yoğunluk, ne kadar sert zıpladığındır. 0 sakin, 100 gecenin en sert anı. Gece izi ise nerede durduğundur. İkisi aynı şey değildir.',
-      'Müzik BPM’i skora karışmaz; o etkinliğin temposudur. Nabız yalnız Bluetooth saat bağlıysa kaloriye karışır. Saat yoksa nabız istenmez.',
+      'How much did you jump? How long were you moving? How many calories did you burn? After the night, the stats are waiting.',
+      'Party Score turns real movement into a night you can look back on. No random numbers.',
     ],
   },
   {
-    key: 'place',
-    title: 'Mekân ve paylaşım',
+    key: 'people',
+    title: 'Find the people. Find the vibe.',
     image: require('../../../assets/intro/intro-night.png'),
     paragraphs: [
-      'Kayıtta mekân ara. Volkswagen yazınca altta Volkswagen Arena çıkar. Listede yoksa aynı yerden eklenir. Etkinlik sekmesinde de kendi geceni açabilirsin; Bugece veya Bubilet’ten otomatik çekilmez.',
-      'Kayıt bitince sıra şöyledir: Party Score, istatistikler, fotoğraf, gece izi, skorun hesabı, yorum. En fazla dört fotoğraf eklenir. Yalnız sen ekler ve silersin; başkaları görür.',
-      'Alttaki Kaydet, fotoğrafın üstüne süre, zıplama, mesafe ve kaloriyi basar. Şerit, kare veya hikaye indirilir. Telefonda Instagram, WhatsApp ve X paylaşım sayfası açılır. Metin kopyalanmaz.',
+      'Home shows who’s out. Events holds venues, lineups and who’s already there. Follow a friend and their nights land on yours.',
+      'From clubs and raves to concerts and festivals, the next night is never far.',
     ],
   },
   {
-    key: 'watch',
-    title: 'Saati Bluetooth ile bağla',
+    key: 'legacy',
+    title: 'Make every night count',
     image: require('../../../assets/intro/intro-watch.png'),
     paragraphs: [
-      'Nabız, Bluetooth üzerinden gelir. Saatini veya göğüs bandını eşleştirme moduna al, bu slayttaki Saati bağla veya Profil’deki Saat eşleştir’e bas, listeden cihazını seç.',
-      'Polar, Garmin, Wear OS, nabız kemeri ve Bluetooth nabız yayımlayan saatler çalışır. Apple Watch bu tarayıcıda nabız vermez. Bağlanmazsa nabız tahmin yazılmaz.',
-      'Bağlantı koparsa kayıt durmaz, nabız kesilir. iPhone Safari Bluetooth açmaz. Android’de Chrome ve HTTPS gerekir. İlk nabız gelmeden sayı 0 kalır.',
+      'Activity keeps every finished night. Profile holds your eight-week rhythm, your records, the people you run into.',
+      'Your route only draws when you actually moved. Pair a watch if you want heart rate. Either way — keep the story.',
     ],
   },
 ] as const;
@@ -59,10 +55,10 @@ export function OnboardingScreen() {
   const [error, setError] = useState<string | null>(null);
   const scroller = useRef<ScrollView>(null);
 
-  const finish = async (openWatch: boolean) => {
+  const finish = async () => {
     if (busy) return;
     if (profile) {
-      router.replace(openWatch ? '/watch' : '/');
+      router.replace('/');
       return;
     }
     setBusy(true);
@@ -87,9 +83,9 @@ export function OnboardingScreen() {
         locationStatus: 'skipped',
         notificationStatus: 'skipped',
       });
-      router.replace(openWatch ? '/watch' : '/');
+      router.replace('/');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Açılamadı.');
+      setError(cause instanceof Error ? cause.message : "Couldn't start.");
       setBusy(false);
     }
   };
@@ -109,9 +105,8 @@ export function OnboardingScreen() {
       footer={
         <View style={{ gap: space.sm }}>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          {last ? <Button label="Saati bağla" onPress={() => void finish(true)} disabled={busy} /> : null}
-          {last ? <Button label="Başla" kind="ghost" onPress={() => void finish(false)} disabled={busy} /> : null}
-          <Button label={profile ? 'Kapat' : 'Atla'} kind="ghost" onPress={() => void finish(false)} disabled={busy} />
+          {last ? <Button label="Start your night" onPress={() => void finish()} disabled={busy} /> : null}
+          <Button label={profile ? 'Close' : 'Skip'} kind="ghost" onPress={() => void finish()} disabled={busy} />
         </View>
       }
     >
@@ -133,7 +128,7 @@ export function OnboardingScreen() {
                 <Text style={styles.title}>{slide.title}</Text>
                 <ScrollView style={styles.bodyScroll} nestedScrollEnabled>
                   {slide.paragraphs.map((paragraph) => (
-                    <Text key={paragraph.slice(0, 24)} style={styles.body}>
+                    <Text key={paragraph.slice(0, 28)} style={styles.body}>
                       {paragraph}
                     </Text>
                   ))}
@@ -147,19 +142,19 @@ export function OnboardingScreen() {
             <View key={slide.key} style={[styles.dot, index === page && styles.dotOn]} />
           ))}
         </View>
-        <Text style={styles.hint}>Yana kaydır · {page + 1}/{slides.length}</Text>
+        <Text style={styles.hint}>Swipe sideways · {page + 1}/{slides.length}</Text>
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  pager: { flex: 1, gap: space.sm },
+  pager: { flex: 1, gap: space.md },
   slide: { gap: space.sm, flex: 1 },
-  photo: { width: '100%', height: 132, borderRadius: 18, backgroundColor: colors.card },
-  title: { color: colors.white, fontSize: 26, fontWeight: '700' },
+  photo: { width: '100%', height: 200, borderRadius: 18, backgroundColor: colors.card },
+  title: { color: colors.white, fontSize: 32, fontWeight: '700' },
   bodyScroll: { flex: 1 },
-  body: { color: colors.textSecondary, fontSize: 15, lineHeight: 22, paddingBottom: space.md },
+  body: { color: colors.textSecondary, fontSize: 16, lineHeight: 24, paddingBottom: space.sm },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.border },
   dotOn: { backgroundColor: colors.red, width: 18 },
