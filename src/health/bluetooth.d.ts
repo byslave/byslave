@@ -8,6 +8,7 @@ declare global {
     requestDevice(options: {
       filters?: { services?: (number | string)[]; name?: string }[];
       optionalServices?: (number | string)[];
+      acceptAllDevices?: boolean;
     }): Promise<BluetoothDevice>;
   }
 

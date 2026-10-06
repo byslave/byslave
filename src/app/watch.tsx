@@ -7,6 +7,12 @@ import { pairWatch, unpairWatch } from '../health/providers';
 import { useAppState } from '../state/AppState';
 import { colors, space } from '../theme/tokens';
 
+const steps = [
+  'Saati veya kemeri eşleştirme / yayın moduna al.',
+  'Bluetooth ile bağlan’a bas. Tarayıcı yakındaki cihazları listeler.',
+  'Kendi saatini seç. Nabız servisi yoksa bağlanır ama nabız yazılmaz.',
+];
+
 export default function WatchScreen() {
   const router = useRouter();
   const { profile, updateProfile } = useAppState();
@@ -48,23 +54,31 @@ export default function WatchScreen() {
     >
       <Text style={styles.title}>Saat eşleştir</Text>
       <Text style={styles.body}>
-        Telefon, nabız yayınlayan Bluetooth saat veya kemeri tarar. Polar, Garmin, Wear OS, Apple Watch (Bluetooth nabız açıkken) veya göğüs bandı çalışır. Liste yalnızca nabız servisi veren cihazları gösterir.
+        Telefon, yakındaki Bluetooth cihazlarını tarar ve nabız servisi varsa kayda bağlar. Polar, Garmin, Wear OS ve göğüs bandı çalışır. Apple Watch bu tarayıcıda nabız vermez.
       </Text>
-      <Text style={styles.body}>
-        Bağlanınca nabız kayda gerçekten gelir. Bağlanmazsa nabız uydurulmaz. iPhone Safari Bluetooth açmaz; Android’de Chrome ve HTTPS gerekir.
-      </Text>
+      <Card>
+        {steps.map((step, index) => (
+          <Text key={step} style={styles.body}>
+            {index + 1}. {step}
+          </Text>
+        ))}
+      </Card>
       {!bluetoothAvailable() ? (
         <Card>
-          <Text style={styles.body}>Bu ortamda Web Bluetooth yok. Saat bağlanamaz, nabız alınmaz.</Text>
+          <Text style={styles.body}>Bu ortamda Web Bluetooth yok. Android’de Chrome ve HTTPS ile aç. Saat bağlanamaz, nabız alınmaz.</Text>
         </Card>
       ) : null}
       <Card>
         <Text style={styles.name}>{ble.connected ? ble.deviceName ?? 'Bluetooth saat' : 'Saat yok'}</Text>
-        <Text style={[styles.bpm, !(ble.connected && ble.bpm != null) && styles.bpmEmpty]}>{ble.connected && ble.bpm != null ? String(ble.bpm) : '—'}</Text>
+        <Text style={[styles.bpm, !(ble.connected && ble.bpm != null) && styles.bpmEmpty]}>
+          {ble.connected && ble.bpm != null ? String(ble.bpm) : '—'}
+        </Text>
         <Text style={styles.body}>{ble.connected ? 'Nabız Bluetooth’tan' : 'Bağlı değil'}</Text>
       </Card>
       {ble.note ? <Text style={styles.body}>{ble.note}</Text> : null}
-      {profile?.watchLabel && !ble.connected ? <Text style={styles.body}>Son seçilen: {profile.watchLabel}. Yeniden bağlanana kadar nabız alınmaz.</Text> : null}
+      {profile?.watchLabel && !ble.connected ? (
+        <Text style={styles.body}>Son seçilen: {profile.watchLabel}. Yeniden bağlanana kadar nabız alınmaz.</Text>
+      ) : null}
     </Screen>
   );
 }

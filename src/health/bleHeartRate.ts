@@ -15,7 +15,6 @@ const idle: BleHeartState = { connected: false, deviceName: null, bpm: null, at:
 let state: BleHeartState = idle;
 let listeners = new Set<Listener>();
 let server: { connected: boolean; disconnect: () => void } | null = null;
-let onDisconnected: (() => void) | null = null;
 
 function emit(next: BleHeartState) {
   state = next;
@@ -64,15 +63,16 @@ export async function connectWatch(): Promise<BleHeartState> {
   if (!api) {
     const next = {
       ...idle,
-      note: 'Bu tarayıcı Bluetooth nabza izin vermiyor. Android’de Chrome, telefonda HTTPS ile dene. iPhone Safari Bluetooth açmaz.',
+      note: 'Bu tarayıcı Bluetooth nabza izin vermiyor. Android’de Chrome ve HTTPS kullan. iPhone Safari Bluetooth açmaz.',
     };
     emit(next);
     return next;
   }
   let device: BluetoothDevice;
   try {
+    // Birçok saat nabız servisini reklamda göstermez. Liste tüm Bluetooth cihazlarını açar, sonra nabız servisi aranır.
     device = await api.requestDevice({
-      filters: [{ services: [heartRateService] }],
+      acceptAllDevices: true,
       optionalServices: [heartRateService],
     });
   } catch (cause) {
@@ -81,16 +81,17 @@ export async function connectWatch(): Promise<BleHeartState> {
       ...idle,
       note: cancelled
         ? 'Eşleşme iptal edildi. Saat bağlı değil, nabız alınmıyor.'
-        : 'Bluetooth listesi açılamadı. Saat nabız servisini yayınlamalı.',
+        : 'Bluetooth listesi açılamadı. Saati eşleştirme moduna alıp tekrar dene.',
     };
     emit(next);
     return next;
   }
   if (!device.gatt) {
-    const next = { ...idle, note: `${device.name ?? 'Saat'} GATT açmıyor. Nabız alınmıyor.` };
+    const next = { ...idle, note: `${device.name ?? 'Cihaz'} GATT açmıyor. Nabız alınmıyor.` };
     emit(next);
     return next;
   }
+  const name = device.name?.trim() || 'Bluetooth saat';
   try {
     const gatt = await device.gatt.connect();
     const service = await gatt.getPrimaryService(heartRateService);
@@ -101,27 +102,26 @@ export async function connectWatch(): Promise<BleHeartState> {
       if (!value) return;
       const bpm = parseHeartRate(value);
       if (bpm == null) return;
-      emit({ connected: true, deviceName: device.name ?? 'Bluetooth saat', bpm, at: Date.now(), note: null });
+      emit({ connected: true, deviceName: name, bpm, at: Date.now(), note: null });
     };
     await characteristic.startNotifications();
     characteristic.addEventListener('characteristicvaluechanged', onValue);
-    onDisconnected = () => {
+    device.addEventListener('gattserverdisconnected', () => {
       characteristic.removeEventListener('characteristicvaluechanged', onValue);
       server = null;
       emit({
         ...idle,
-        deviceName: device.name ?? null,
-        note: 'Saat düştü. Nabız alınmıyor. Aynı ekrandan yeniden bağlan.',
+        deviceName: name,
+        note: `${name} düştü. Nabız alınmıyor. Aynı ekrandan yeniden bağlan.`,
       });
-    };
-    device.addEventListener('gattserverdisconnected', onDisconnected);
+    });
     server = gatt;
     emit({
       connected: true,
-      deviceName: device.name ?? 'Bluetooth saat',
+      deviceName: name,
       bpm: null,
       at: null,
-      note: `${device.name ?? 'Saat'} bağlandı. İlk nabız gelene kadar sayı yazılmaz.`,
+      note: `${name} bağlandı. İlk nabız gelene kadar sayı yazılmaz.`,
     });
     return state;
   } catch {
@@ -132,8 +132,8 @@ export async function connectWatch(): Promise<BleHeartState> {
     }
     const next = {
       ...idle,
-      deviceName: device.name ?? null,
-      note: `${device.name ?? 'Saat'} nabız servisini açmadı. Polar, Garmin, Wear OS veya nabız kemeri dene.`,
+      deviceName: name,
+      note: `${name} bağlandı ama nabız servisi yok. Polar, Garmin, Wear OS veya göğüs bandı dene. Apple Watch bu tarayıcıda nabız vermez.`,
     };
     emit(next);
     return next;
