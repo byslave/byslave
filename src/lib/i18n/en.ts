@@ -66,7 +66,7 @@ const en: Messages = {
     cityTitle: 'City',
     errorTitle: 'Map unavailable',
     errorBody: 'Map tiles failed to load. Check the network and try again.',
-    tiles: '© OpenStreetMap © CARTO',
+    tiles: '© Esri © OpenStreetMap',
     addVenue: 'Add venue',
     addTitle: 'Suggest a venue',
     name: 'Venue name',

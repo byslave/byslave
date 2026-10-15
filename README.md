@@ -11,7 +11,7 @@ npm run ios
 npm run android
 ```
 
-iOS için macOS gerekir. Android ve iOS’ta Expo Go yeterlidir. Harita WebView içindedir: token yoksa CARTO koyu karolar, `EXPO_PUBLIC_MAPBOX_TOKEN` varsa MapLibre ile Mapbox Dark.
+iOS için macOS gerekir. Android ve iOS’ta Expo Go yeterlidir. Harita WebView içindedir: token yoksa Esri koyu karolar, `EXPO_PUBLIC_MAPBOX_TOKEN` varsa MapLibre ile Mapbox Dark.
 
 ## Ortam
 
@@ -19,7 +19,7 @@ iOS için macOS gerekir. Android ve iOS’ta Expo Go yeterlidir. Harita WebView 
 
 - `EXPO_PUBLIC_SUPABASE_URL` — istemci. Supabase proje adresi.
 - `EXPO_PUBLIC_SUPABASE_ANON_KEY` — istemci. Yalnızca anon anahtar.
-- `EXPO_PUBLIC_MAPBOX_TOKEN` — istemci. Doluysa harita Mapbox Dark stilini kullanır. Boşsa CARTO `dark_all`.
+- `EXPO_PUBLIC_MAPBOX_TOKEN` — istemci. Doluysa harita Mapbox Dark stilini kullanır. Boşsa Esri Dark Gray.
 - `SUPABASE_SERVICE_ROLE_KEY` — yalnızca sunucu. Uygulama ikilisine koyma.
 
 ## Veritabanı

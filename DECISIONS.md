@@ -20,7 +20,7 @@ Faz 0 sırasında alınan, sonradan değiştirilebilir seçimler.
 
 ## Harita
 
-- Varsayılan harita CARTO `dark_all` raster karolarıdır. Sokaklar WebGL olmadan da çizilir.
+- Varsayılan harita Esri Dark Gray Canvas raster karolarıdır. CARTO anahtarsız karo artık filigran basıyor. Sokaklar WebGL olmadan da çizilir.
 - `EXPO_PUBLIC_MAPBOX_TOKEN` varsa stil Mapbox Dark v11 olur ve MapLibre GL JS ile açılır. Token yokken sahte harita çizilmez.
 - Web’de harita bir iframe, iOS/Android’de WebView içindedir. Böylece Expo Go içinde ek native harita modülü gerekmez.
 - Kümeleme yakınlaştırmaya bağlıdır. Yakın planda ayrı haplar, uzak planda toplanmış sayı görünür.

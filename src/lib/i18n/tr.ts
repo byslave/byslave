@@ -64,7 +64,7 @@ const tr = {
     cityTitle: 'Şehir',
     errorTitle: 'Harita açılmadı',
     errorBody: 'Harita karoları yüklenemedi. Ağını kontrol edip yeniden dene.',
-    tiles: '© OpenStreetMap © CARTO',
+    tiles: '© Esri © OpenStreetMap',
     addVenue: 'Mekân ekle',
     addTitle: 'Mekân öner',
     name: 'Mekân adı',

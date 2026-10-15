@@ -60,7 +60,7 @@ function rasterDocument(payload: string): string {
 <div id="map">
   <div id="tiles"></div>
   <div id="pins"></div>
-  <div id="attrib">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> © <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO</a></div>
+  <div id="attrib">© <a href="https://www.esri.com/en-us/legal/terms/data-attributions" target="_blank" rel="noreferrer">Esri</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></div>
 </div>
 <script>
   ${slippyRuntime}
@@ -118,30 +118,46 @@ function rasterDocument(payload: string): string {
     var tiles = visibleTiles(view, view.zoom, map.clientWidth, map.clientHeight);
     var seen = {};
     tiles.forEach(function (tile) {
-      var key = tile.z + '/' + tile.x + '/' + tile.y;
-      seen[key] = true;
-      var img = pool[key];
-      if (!img) {
-        img = document.createElement('img');
-        img.alt = '';
-        img.draggable = false;
-        var sub = 'abcd'[(tile.x + tile.y) % 4];
-        img.src = 'https://' + sub + '.basemaps.cartocdn.com/dark_all/' + tile.z + '/' + tile.x + '/' + tile.y + '.png';
-        img.onload = function () { tileOk += 1; };
-        img.onerror = function () {
-          tileFail += 1;
-          if (!failedPosted && tileFail >= 6 && tileOk === 0) {
-            failedPosted = true;
-            post({ type: 'error', message: 'tiles' });
+      var layers = [
+        {
+          name: 'base',
+          src: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/' + tile.z + '/' + tile.y + '/' + tile.x,
+          count: true
+        },
+        {
+          name: 'label',
+          src: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/' + tile.z + '/' + tile.y + '/' + tile.x,
+          count: false
+        }
+      ];
+      layers.forEach(function (layer) {
+        var key = layer.name + ':' + tile.z + '/' + tile.x + '/' + tile.y;
+        seen[key] = true;
+        var img = pool[key];
+        if (!img) {
+          img = document.createElement('img');
+          img.alt = '';
+          img.draggable = false;
+          img.src = layer.src;
+          if (layer.name === 'label') img.style.zIndex = '1';
+          if (layer.count) {
+            img.onload = function () { tileOk += 1; };
+            img.onerror = function () {
+              tileFail += 1;
+              if (!failedPosted && tileFail >= 6 && tileOk === 0) {
+                failedPosted = true;
+                post({ type: 'error', message: 'tiles' });
+              }
+            };
           }
-        };
-        tilesEl.appendChild(img);
-        pool[key] = img;
-      }
-      img.style.left = tile.left + 'px';
-      img.style.top = tile.top + 'px';
-      img.style.width = tile.size + 'px';
-      img.style.height = tile.size + 'px';
+          tilesEl.appendChild(img);
+          pool[key] = img;
+        }
+        img.style.left = tile.left + 'px';
+        img.style.top = tile.top + 'px';
+        img.style.width = tile.size + 'px';
+        img.style.height = tile.size + 'px';
+      });
     });
     Object.keys(pool).forEach(function (key) {
       if (!seen[key]) {
