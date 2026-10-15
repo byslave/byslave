@@ -17,12 +17,13 @@ interface PulseMapProps {
   clusterWord: string;
   styleUrl: string;
   onSelect: (id: string) => void;
+  onMove?: (view: { lng: number; lat: number; zoom: number }) => void;
   onError: () => void;
   onReady: () => void;
 }
 
 export const PulseMap = forwardRef<PulseMapHandle, PulseMapProps>(function PulseMap(
-  { pins, selectedId, center, zoom, clusterWord, styleUrl, onSelect, onError, onReady },
+  { pins, selectedId, center, zoom, clusterWord, styleUrl, onSelect, onMove, onError, onReady },
   ref,
 ) {
   const hostRef = useRef<View>(null);
@@ -54,13 +55,15 @@ export const PulseMap = forwardRef<PulseMapHandle, PulseMapProps>(function Pulse
     frameRef.current = iframe;
     const onMessage = (event: MessageEvent) => {
       if (event.source !== iframe.contentWindow) return;
-      const data = event.data as { type?: string; id?: string };
+      const data = event.data as { type?: string; id?: string; lng?: number; lat?: number; zoom?: number };
       if (data?.type === 'ready') {
         ready.current = true;
         onReady();
         iframe.contentWindow?.postMessage({ type: 'sync', ...latest.current }, '*');
       } else if (data?.type === 'select' && data.id) onSelect(data.id);
-      else if (data?.type === 'error') onError();
+      else if (data?.type === 'move' && typeof data.lng === 'number' && typeof data.lat === 'number' && typeof data.zoom === 'number') {
+        onMove?.({ lng: data.lng, lat: data.lat, zoom: data.zoom });
+      } else if (data?.type === 'error') onError();
     };
     window.addEventListener('message', onMessage);
     return () => {

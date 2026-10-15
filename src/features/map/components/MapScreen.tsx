@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import * as Location from 'expo-location';
-import { Calendar, ChevronDown, LocateFixed, Search } from 'lucide-react-native';
+import { Calendar, ChevronDown, LocateFixed, Plus, Search } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { Chip } from '@/src/components/ui/Chip';
 import { EmptyState, ErrorState } from '@/src/components/ui/States';
+import { AddVenueSheet } from '@/src/features/map/components/AddVenueSheet';
 import { PulseMap, type PulseMapHandle } from '@/src/features/map/components/PulseMap';
 import { confirmedCount } from '@/src/features/attendance/count';
 import { activeDateISO, eventMatchesDate, upcomingDates, type DateFilter } from '@/src/features/events/dates';
@@ -33,6 +34,7 @@ export function MapScreen() {
   const mapRef = useRef<PulseMapHandle>(null);
   const city = useAppStore((state) => state.city);
   const setCity = useAppStore((state) => state.setCity);
+  const customVenues = useAppStore((state) => state.customVenues);
   const attendance = useAttendanceStore((state) => state.byEvent);
   const showToast = useToastStore((state) => state.show);
   const [search, setSearch] = useState('');
@@ -44,6 +46,9 @@ export function MapScreen() {
   const [mapFailed, setMapFailed] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapEpoch, setMapEpoch] = useState(0);
+  const [addOpen, setAddOpen] = useState(false);
+  const [pan, setPan] = useState<{ city: CityId; lng: number; lat: number; zoom: number } | null>(null);
+  const mapView = pan?.city === city ? pan : cities[city];
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase(i18n.language);
@@ -62,7 +67,16 @@ export function MapScreen() {
       });
   }, [city, dateFilter, genres, i18n.language, search]);
 
-  const selected = filtered.find((row) => row.venue.id === selectedId) ?? filtered[0] ?? null;
+  const pending = useMemo(() => {
+    const needle = search.trim().toLocaleLowerCase(i18n.language);
+    return customVenues.filter((venue) => venue.city === city).filter((venue) => {
+      if (!needle) return true;
+      return [venue.name, venue.district].join(' ').toLocaleLowerCase(i18n.language).includes(needle);
+    });
+  }, [city, customVenues, i18n.language, search]);
+
+  const selectedPending = pending.find((venue) => venue.id === selectedId) ?? null;
+  const selected = selectedPending ? null : (filtered.find((row) => row.venue.id === selectedId) ?? filtered[0] ?? null);
   const center = cities[city];
   const dateLabel = formatDayLabel(activeDateISO(dateFilter, new Date()), i18n.language);
 
@@ -94,19 +108,29 @@ export function MapScreen() {
         <PulseMap
           key={`${city}-${mapEpoch}`}
           ref={mapRef}
-          pins={filtered.map((row) => ({
-            id: row.venue.id,
-            lng: row.venue.lng,
-            lat: row.venue.lat,
-            label: row.venue.name,
-            count: confirmedCount(row.event.going, attendance[row.event.id] ?? null),
-          }))}
-          selectedId={selected?.venue.id ?? null}
+          pins={[
+            ...filtered.map((row) => ({
+              id: row.venue.id,
+              lng: row.venue.lng,
+              lat: row.venue.lat,
+              label: row.venue.name,
+              count: confirmedCount(row.event.going, attendance[row.event.id] ?? null),
+            })),
+            ...pending.map((venue) => ({
+              id: venue.id,
+              lng: venue.lng,
+              lat: venue.lat,
+              label: venue.name,
+              count: 0,
+            })),
+          ]}
+          selectedId={selectedPending?.id ?? selected?.venue.id ?? null}
           center={center}
           zoom={center.zoom}
           clusterWord={t('map.cluster')}
           styleUrl={mapStyleUrl()}
           onSelect={setSelectedId}
+          onMove={(next) => setPan({ city, lng: next.lng, lat: next.lat, zoom: next.zoom })}
           onError={() => setMapFailed(true)}
           onReady={() => setMapReady(true)}
         />
@@ -150,15 +174,36 @@ export function MapScreen() {
 
       <View pointerEvents="box-none" style={[styles.bottom, { bottom: tabClearance }]}>
         <View style={styles.metaRow}>
-          <AppText variant="muted">
-            {t('map.sampleCounts')} · {t('map.locationPrivate')}
-          </AppText>
-          <Pressable accessibilityRole="button" accessibilityLabel={t('map.locate')} onPress={() => void locate()} style={styles.locate}>
-            <LocateFixed color={colors.text} size={18} />
-          </Pressable>
+          <View style={styles.metaCopy}>
+            <AppText variant="muted">
+              {t('map.sampleCounts')} · {t('map.locationPrivate')}
+            </AppText>
+            <AppText variant="muted">{t('map.tiles')}</AppText>
+          </View>
+          <View style={styles.mapActions}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('map.addVenue')} onPress={() => setAddOpen(true)} style={styles.locate}>
+              <Plus color={colors.text} size={18} />
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('map.locate')} onPress={() => void locate()} style={styles.locate}>
+              <LocateFixed color={colors.text} size={18} />
+            </Pressable>
+          </View>
         </View>
         {!mapReady && !mapFailed ? <View style={styles.loadingBar} /> : null}
-        {selected ? (
+        {selectedPending ? (
+          <Card>
+            <View style={styles.cardTop}>
+              <Badge label={t('map.pending')} tone="accent" />
+            </View>
+            <AppText variant="heading">{selectedPending.name}</AppText>
+            <AppText variant="muted">
+              {t(`venueTypes.${selectedPending.type}`)} · {selectedPending.district}
+            </AppText>
+            <AppText variant="muted">{t('map.pendingBody')}</AppText>
+            {selectedPending.rules ? <AppText variant="body">{selectedPending.rules}</AppText> : null}
+            <AppText variant="bodyMedium">0 {t('map.going')}</AppText>
+          </Card>
+        ) : selected ? (
           <Card>
             <View style={styles.cardTop}>
               <Badge label={selected.event.genres.map((genre) => t(`genres.${genre}`)).join(' · ')} tone="accent" />
@@ -235,6 +280,13 @@ export function MapScreen() {
           />
         ))}
       </BottomSheet>
+      <AddVenueSheet
+        visible={addOpen}
+        city={city}
+        center={mapView}
+        onClose={() => setAddOpen(false)}
+        onCreated={setSelectedId}
+      />
     </View>
   );
 }
@@ -269,7 +321,9 @@ const styles = StyleSheet.create({
   input: { flex: 1, color: colors.text, fontFamily: fonts.body, fontSize: 15, minHeight: 44 },
   chips: { gap: 8, paddingRight: 12 },
   bottom: { position: 'absolute', left: 12, right: 12, gap: 8 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  metaCopy: { flex: 1, gap: 2 },
+  mapActions: { flexDirection: 'row', gap: 8 },
   locate: {
     width: 44,
     height: 44,

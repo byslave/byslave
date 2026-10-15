@@ -13,7 +13,7 @@ export function mapStyleUrl(): string {
   if (token) {
     return `https://api.mapbox.com/styles/v1/mapbox/dark-v11?access_token=${encodeURIComponent(token)}`;
   }
-  return 'https://tiles.openfreemap.org/styles/dark';
+  return '';
 }
 
 export async function sendMagicLink(email: string): Promise<'sent' | 'demo' | 'error'> {

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import type { CityId, Genre } from '@/src/data/demo';
+import type { CityId, Genre, VenueType } from '@/src/data/demo';
 
 export type PrivacyMode = 'public' | 'friends' | 'ghost';
 export type LanguageCode = 'tr' | 'en';
@@ -26,6 +26,18 @@ interface LocalReport {
   createdAt: string;
 }
 
+export interface CustomVenue {
+  id: string;
+  name: string;
+  city: CityId;
+  district: string;
+  lat: number;
+  lng: number;
+  type: VenueType;
+  rules: string;
+  status: 'pending';
+}
+
 interface AppState {
   hydrated: boolean;
   onboarded: boolean;
@@ -37,6 +49,7 @@ interface AppState {
   city: CityId;
   posts: LocalPost[];
   reports: LocalReport[];
+  customVenues: CustomVenue[];
   setHydrated: (value: boolean) => void;
   setBirthDate: (birthDate: string) => void;
   completeOnboarding: (input: { birthDate: string; user: DemoUser }) => void;
@@ -46,6 +59,7 @@ interface AppState {
   setCity: (city: CityId) => void;
   addPost: (caption: string) => void;
   addReport: (eventId: string, reason: string) => void;
+  addVenue: (input: Omit<CustomVenue, 'id' | 'status'>) => string;
   signOut: () => void;
   deleteAccount: () => void;
 }
@@ -63,6 +77,7 @@ export const useAppStore = create<AppState>()(
       city: 'istanbul',
       posts: [],
       reports: [],
+      customVenues: [],
       setHydrated: (value) => set({ hydrated: value }),
       setBirthDate: (birthDate: string) => set({ birthDate }),
       completeOnboarding: ({ birthDate, user }) => set({ onboarded: true, birthDate, user }),
@@ -94,6 +109,11 @@ export const useAppStore = create<AppState>()(
             { id: `report-${Date.now()}`, eventId, reason, createdAt: new Date().toISOString() },
           ],
         }),
+      addVenue: (input) => {
+        const id = `venue-${Date.now()}`;
+        set({ customVenues: [{ ...input, id, status: 'pending' }, ...get().customVenues] });
+        return id;
+      },
       signOut: () => set({ onboarded: false, user: null }),
       deleteAccount: () =>
         set({
@@ -104,6 +124,7 @@ export const useAppStore = create<AppState>()(
           genres: ['techno', 'electro'],
           posts: [],
           reports: [],
+          customVenues: [],
         }),
     }),
     {
@@ -119,6 +140,7 @@ export const useAppStore = create<AppState>()(
         city: state.city,
         posts: state.posts,
         reports: state.reports,
+        customVenues: state.customVenues,
       }),
     },
   ),

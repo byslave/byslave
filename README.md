@@ -1,6 +1,6 @@
 # PULSE
 
-Gece hayatı için harita merkezli mobil uygulama. Faz 0: tasarım sistemi, beş sekmeli kabuk, demo veriyle Harita / Akış / Gecem, 18+ kapısı ve Supabase hazırlığı.
+Gece hayatı için harita merkezli mobil uygulama. Faz 0 kabuğunun üstüne koyu raster harita, mekân önerme ve Supabase şeması geldi.
 
 ## Çalıştırma
 
@@ -11,7 +11,7 @@ npm run ios
 npm run android
 ```
 
-iOS için macOS gerekir. Android ve iOS’ta Expo Go yeterlidir; harita WebView içinde MapLibre kullanır.
+iOS için macOS gerekir. Android ve iOS’ta Expo Go yeterlidir. Harita WebView içindedir: token yoksa CARTO koyu karolar, `EXPO_PUBLIC_MAPBOX_TOKEN` varsa MapLibre ile Mapbox Dark.
 
 ## Ortam
 
@@ -19,12 +19,16 @@ iOS için macOS gerekir. Android ve iOS’ta Expo Go yeterlidir; harita WebView 
 
 - `EXPO_PUBLIC_SUPABASE_URL` — istemci. Supabase proje adresi.
 - `EXPO_PUBLIC_SUPABASE_ANON_KEY` — istemci. Yalnızca anon anahtar.
-- `EXPO_PUBLIC_MAPBOX_TOKEN` — istemci. Doluysa harita Mapbox Dark stilini kullanır.
+- `EXPO_PUBLIC_MAPBOX_TOKEN` — istemci. Doluysa harita Mapbox Dark stilini kullanır. Boşsa CARTO `dark_all`.
 - `SUPABASE_SERVICE_ROLE_KEY` — yalnızca sunucu. Uygulama ikilisine koyma.
+
+## Veritabanı
+
+`supabase/migrations/20261015120000_phase1_venues.sql` dosyasını Supabase SQL editöründe çalıştır. Servis rolü anahtarı uygulamaya girmez. İstemci bu fazda etkinlikleri hâlâ demo veriden okur; şema pin sayısı, katılım ve bekleyen mekân kurallarını hazırlar.
 
 ## Demo
 
-İlk açılışta 18+ kapısından geç. “Demoya gir” örnek İstanbul / Ankara / İzmir gecelerini açar. Katılım sayıları, sıralama ve gece kartı örnek diye işaretlidir. “Gidiyorum” sayacı bu cihazda artar.
+İlk açılışta 18+ kapısından geç. “Demoya gir” örnek İstanbul / Ankara / İzmir gecelerini açar. Katılım sayıları, sıralama ve gece kartı örnek diye işaretlidir. “Gidiyorum” sayacı bu cihazda artar. Haritadaki artı, baktığın noktaya bekleyen bir mekân ekler; bu kayıt da yalnızca cihazdadır ve etkinlik üretmez.
 
 ## Kalite
 
@@ -34,7 +38,7 @@ npm run lint
 npm test
 ```
 
-Testler yaş kapısı, katılım sayacı, hafta sonu tarihi ve harita kümelemesini kapsar. Sıçrama algılama Faz 3’tedir.
+Testler yaş kapısı, katılım sayacı, hafta sonu tarihi, harita kümelemesi, karo izdüşümü ve mekân formunu kapsar. Sıçrama algılama sonraki fazdadır.
 
 ## Fotoğraflar
 

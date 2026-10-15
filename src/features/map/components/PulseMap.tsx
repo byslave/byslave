@@ -18,12 +18,13 @@ interface PulseMapProps {
   clusterWord: string;
   styleUrl: string;
   onSelect: (id: string) => void;
+  onMove?: (view: { lng: number; lat: number; zoom: number }) => void;
   onError: () => void;
   onReady: () => void;
 }
 
 export const PulseMap = forwardRef<PulseMapHandle, PulseMapProps>(function PulseMap(
-  { pins, selectedId, center, zoom, clusterWord, styleUrl, onSelect, onError, onReady },
+  { pins, selectedId, center, zoom, clusterWord, styleUrl, onSelect, onMove, onError, onReady },
   ref,
 ) {
   const webRef = useRef<WebView>(null);
@@ -52,14 +53,22 @@ export const PulseMap = forwardRef<PulseMapHandle, PulseMapProps>(function Pulse
 
   function onMessage(event: WebViewMessageEvent) {
     try {
-      const data = JSON.parse(event.nativeEvent.data) as { type: string; id?: string };
+      const data = JSON.parse(event.nativeEvent.data) as {
+        type: string;
+        id?: string;
+        lng?: number;
+        lat?: number;
+        zoom?: number;
+      };
       if (data.type === 'ready') {
         ready.current = true;
         onReady();
         const payload = JSON.stringify(latest.current);
         webRef.current?.injectJavaScript(`window.__pulse && window.__pulse.sync(${payload}); true;`);
       } else if (data.type === 'select' && data.id) onSelect(data.id);
-      else if (data.type === 'error') onError();
+      else if (data.type === 'move' && typeof data.lng === 'number' && typeof data.lat === 'number' && typeof data.zoom === 'number') {
+        onMove?.({ lng: data.lng, lat: data.lat, zoom: data.zoom });
+      } else if (data.type === 'error') onError();
     } catch {
       onError();
     }
