@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     padding: 4,
     gap: 4,
   },
-  item: { flex: 1, minHeight: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  item: { flex: 1, minHeight: 44, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   selected: { backgroundColor: colors.surface2 },
   label: { fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.textMuted },
   selectedLabel: { color: colors.text },

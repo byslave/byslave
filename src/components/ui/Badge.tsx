@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
-    color: colors.textMuted,
+    color: colors.textFaint,
   },
   successLabel: { color: colors.success },
 });

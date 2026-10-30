@@ -31,7 +31,7 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
 
 const styles = StyleSheet.create({
   chip: {
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: 14,
     borderRadius: radii.pill,
     alignItems: 'center',

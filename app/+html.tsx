@@ -31,4 +31,17 @@ export default function Root({ children }: { children: ReactNode }) {
 const responsiveBackground = `
 body {
   background-color: #05040A;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3348 transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: #3a3348; border-radius: 99px; }
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #D9CCFF;
+  outline-offset: 2px;
 }`;

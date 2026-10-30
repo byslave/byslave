@@ -48,7 +48,7 @@ export const text = StyleSheet.create({
     lineHeight: 14,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    color: colors.textMuted,
+    color: colors.textFaint,
   },
   stat: {
     fontFamily: fonts.display,
