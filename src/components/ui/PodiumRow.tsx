@@ -11,11 +11,12 @@ interface PodiumRowProps {
   value: string;
   portrait?: PortraitKey | 'you';
   highlight?: boolean;
+  podium?: boolean;
 }
 
-export function PodiumRow({ rank, name, value, portrait, highlight = false }: PodiumRowProps) {
+export function PodiumRow({ rank, name, value, portrait, highlight = false, podium = false }: PodiumRowProps) {
   return (
-    <View style={[styles.row, highlight && styles.highlight]}>
+    <View style={[styles.row, podium && styles.podium, highlight && styles.highlight]}>
       <AppText variant="bodyMedium" style={styles.rank}>
         {rank}
       </AppText>
@@ -40,6 +41,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   highlight: { backgroundColor: 'rgba(217,204,255,0.12)' },
+  podium: { borderWidth: 1, borderColor: 'rgba(217,204,255,0.45)' },
   rank: { width: 22, fontFamily: fonts.display, color: colors.accent },
   name: { flex: 1 },
   value: { fontVariant: ['tabular-nums'] },

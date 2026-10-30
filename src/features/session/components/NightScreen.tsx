@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -7,16 +8,27 @@ import { AppText } from '@/src/components/ui/AppText';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
+import { OfflineBanner } from '@/src/components/ui/OfflineBanner';
 import { StatBlock } from '@/src/components/ui/StatBlock';
 import { NightChart } from '@/src/features/session/components/NightChart';
+import { downloadNightStory } from '@/src/features/session/storyCard';
 import { eventById, sampleNight, venueById } from '@/src/data/demo';
 import { formatDayLabel, formatNumber } from '@/src/lib/format';
+import { toHref } from '@/src/lib/nav';
 import { shareText } from '@/src/lib/shareText';
 import { useToastStore } from '@/src/stores/toastStore';
 import { colors, tabClearance } from '@/src/theme/tokens';
 
+function clockPlus(clock: string, minutes: number): string {
+  const [hour, minute] = clock.split(':').map(Number);
+  const total = (hour ?? 0) * 60 + (minute ?? 0) + minutes;
+  const wrapped = ((total % 1440) + 1440) % 1440;
+  return `${String(Math.floor(wrapped / 60)).padStart(2, '0')}:${String(wrapped % 60).padStart(2, '0')}`;
+}
+
 export function NightScreen() {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const showToast = useToastStore((state) => state.show);
   const [open, setOpen] = useState(false);
@@ -25,9 +37,27 @@ export function NightScreen() {
   const hours = Math.floor(sampleNight.minutes / 60);
   const minutes = sampleNight.minutes % 60;
   const duration = t('night.durationValue', { hours, minutes });
+  const labels = sampleNight.series.map((_, index) => clockPlus(sampleNight.arrival, index * 15));
+  const peakIndex = sampleNight.series.indexOf(Math.max(...sampleNight.series));
+  const tooltip = t('night.bucket', {
+    time: labels[peakIndex] ?? sampleNight.peak,
+    count: formatNumber(sampleNight.series[peakIndex] ?? 0, i18n.language),
+  });
 
   async function share() {
     if (!event || !venue) return;
+    const image = await downloadNightStory({
+      title: event.title,
+      venue: venue.name,
+      duration,
+      jumps: formatNumber(sampleNight.jumps, i18n.language),
+      sample: t('common.sampleData'),
+      brand: t('brand'),
+    });
+    if (image === 'saved') {
+      showToast(t('night.storySaved'));
+      return;
+    }
     const result = await shareText(
       t('night.shareMessage', {
         event: event.title,
@@ -36,7 +66,7 @@ export function NightScreen() {
         jumps: formatNumber(sampleNight.jumps, i18n.language),
       }),
     );
-    showToast(result === 'copied' ? t('night.copied') : t('night.shared'));
+    showToast(result === 'copied' ? t('night.copied') : t('night.storyFallback'));
   }
 
   return (
@@ -44,8 +74,10 @@ export function NightScreen() {
       style={styles.screen}
       contentContainerStyle={{ paddingTop: insets.top + 18, paddingHorizontal: 16, paddingBottom: tabClearance + 24, gap: 16 }}
     >
+      <OfflineBanner />
       <AppText variant="muted">{event ? formatDayLabel(event.date, i18n.language) : ''}</AppText>
       <AppText variant="display">{t('night.title')}</AppText>
+      <Button label={t('night.startRecord')} onPress={() => router.push(toHref('/session'))} />
       <Card style={styles.card}>
         <View style={styles.cardHead}>
           <View style={styles.cardTitles}>
@@ -62,9 +94,6 @@ export function NightScreen() {
           <StatBlock label={t('night.jumps')} value={formatNumber(sampleNight.jumps, i18n.language)} />
         </View>
         <AppText variant="muted">{t('night.jumpsHint')}</AppText>
-        <Button label={t('night.share')} onPress={() => void share()} />
-      </Card>
-      <Card>
         <Button label={t('night.details')} variant="secondary" onPress={() => setOpen((value) => !value)} />
         {open ? (
           <View style={styles.details}>
@@ -73,12 +102,13 @@ export function NightScreen() {
             <Detail label={t('night.departure')} value={sampleNight.departure} />
           </View>
         ) : null}
+        <Button label={t('night.share')} onPress={() => void share()} />
       </Card>
       <Card>
         <AppText variant="label">{t('night.chart')}</AppText>
         <AppText variant="heading">{t('night.chartTitle')}</AppText>
         <AppText variant="muted">{t('night.chartHint')}</AppText>
-        <NightChart values={sampleNight.series} />
+        <NightChart values={sampleNight.series} labels={labels} tooltip={tooltip} />
       </Card>
     </ScrollView>
   );
@@ -99,6 +129,6 @@ const styles = StyleSheet.create({
   cardHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   cardTitles: { flex: 1, gap: 6 },
   stats: { flexDirection: 'row', gap: 12 },
-  details: { marginTop: 16, gap: 10 },
+  details: { gap: 10 },
   detail: { flexDirection: 'row', justifyContent: 'space-between' },
 });

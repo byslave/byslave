@@ -12,29 +12,38 @@ import { Badge } from '@/src/components/ui/Badge';
 import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
+import { OfflineBanner } from '@/src/components/ui/OfflineBanner';
 import { EmptyState } from '@/src/components/ui/States';
+import { SafetySheet } from '@/src/components/SafetySheet';
 import { Segmented } from '@/src/components/ui/Segmented';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { covers } from '@/src/data/images';
 import { eventById, loc, personById, posts, venueById } from '@/src/data/demo';
 import { formatDayLabel } from '@/src/lib/format';
+import { toHref } from '@/src/lib/nav';
 import { useAppStore } from '@/src/stores/appStore';
+import { useToastStore } from '@/src/stores/toastStore';
 import { colors, fonts, radii, tabClearance } from '@/src/theme/tokens';
 
-type FeedTab = 'forYou' | 'nearby' | 'prefs';
+type FeedTab = 'forYou' | 'nearby' | 'friends';
 
 export function FeedScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const city = useAppStore((state) => state.city);
-  const genres = useAppStore((state) => state.genres);
   const localPosts = useAppStore((state) => state.posts);
   const addPost = useAppStore((state) => state.addPost);
+  const friendIds = useAppStore((state) => state.friendIds);
+  const blockedIds = useAppStore((state) => state.blockedIds);
+  const addReport = useAppStore((state) => state.addReport);
+  const blockPerson = useAppStore((state) => state.blockPerson);
+  const showToast = useToastStore((state) => state.show);
   const [tab, setTab] = useState<FeedTab>('forYou');
   const [composeOpen, setComposeOpen] = useState(false);
   const [caption, setCaption] = useState('');
   const [storyId, setStoryId] = useState<string | null>(null);
+  const [safetyId, setSafetyId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<Record<string, boolean>>({});
 
   const sample = useMemo(() => {
@@ -42,11 +51,12 @@ export function FeedScreen() {
       const event = eventById(post.eventId);
       const venue = event ? venueById(event.venueId) : undefined;
       if (!event || !venue) return false;
+      if (blockedIds.includes(post.authorId)) return false;
       if (tab === 'nearby' && venue.city !== city) return false;
-      if (tab === 'prefs' && !event.genres.some((genre) => genres.includes(genre))) return false;
+      if (tab === 'friends' && !friendIds.includes(post.authorId)) return false;
       return true;
     });
-  }, [city, genres, tab]);
+  }, [blockedIds, city, friendIds, tab]);
 
   const stories = sample.filter((post) => post.story);
   const story = stories.find((post) => post.id === storyId) ?? null;
@@ -55,12 +65,13 @@ export function FeedScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: tabClearance + 24, paddingHorizontal: 16, gap: 16 }}>
+        <OfflineBanner />
         <AppText variant="muted">{formatDayLabel(new Date().toISOString().slice(0, 10), i18n.language)}</AppText>
         <View style={styles.titleRow}>
           <AppText variant="display" style={styles.title}>
             {t('feed.title', { city: t(`cities.${city}In`) })}
           </AppText>
-          <Pressable accessibilityRole="button" accessibilityLabel={t('feed.composeTitle')} onPress={() => setComposeOpen(true)} style={styles.plus}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('feed.composeA11y')} onPress={() => setComposeOpen(true)} style={styles.plus}>
             <Plus color={colors.accentInk} size={22} />
           </Pressable>
         </View>
@@ -70,7 +81,7 @@ export function FeedScreen() {
           values={[
             { id: 'forYou', label: t('feed.forYou') },
             { id: 'nearby', label: t('feed.nearby') },
-            { id: 'prefs', label: t('feed.prefs') },
+            { id: 'friends', label: t('feed.friends') },
           ]}
         />
         <View style={styles.storyHeader}>
@@ -88,7 +99,9 @@ export function FeedScreen() {
             );
           })}
         </ScrollView>
-        {localVisible.length === 0 && sample.length === 0 ? (
+        {tab === 'friends' && friendIds.length === 0 ? (
+          <EmptyState title={t('feed.friendsEmptyTitle')} body={t('feed.friendsEmptyBody')} actionLabel={t('feed.findFriends')} onAction={() => router.push(toHref('/friends'))} />
+        ) : localVisible.length === 0 && sample.length === 0 ? (
           <EmptyState title={t('feed.emptyTitle')} body={t('feed.emptyBody')} />
         ) : null}
         {localVisible.map((post) => (
@@ -113,6 +126,14 @@ export function FeedScreen() {
                     <AppText variant="muted">{t('feed.ago', { count: post.minutesAgo })}</AppText>
                   </View>
                   <Badge label={t('feed.sampleBadge')} />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.report')}
+                    onPress={() => setSafetyId(post.authorId)}
+                    style={styles.report}
+                  >
+                    <AppText variant="muted">{t('common.report')}</AppText>
+                  </Pressable>
                 </View>
                 <View style={styles.media}>
                   {!loaded[post.id] ? <Skeleton style={StyleSheet.absoluteFill} /> : null}
@@ -151,6 +172,23 @@ export function FeedScreen() {
         />
       </BottomSheet>
 
+      <SafetySheet
+        visible={safetyId !== null}
+        onClose={() => setSafetyId(null)}
+        onReport={(reason) => {
+          if (!safetyId) return;
+          addReport({ target: 'person', targetId: safetyId, reason });
+          setSafetyId(null);
+          showToast(t('event.reportSaved'));
+        }}
+        onBlock={() => {
+          if (!safetyId) return;
+          blockPerson(safetyId);
+          setSafetyId(null);
+          showToast(t('feed.blocked'));
+        }}
+      />
+
       {story ? (
         <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={() => setStoryId(null)} style={styles.storyViewer}>
           <Image source={covers[story.cover]} style={styles.storyImage} contentFit="cover" />
@@ -174,6 +212,7 @@ const styles = StyleSheet.create({
   post: { gap: 12, padding: 12 },
   author: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   authorText: { flex: 1 },
+  report: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 6 },
   media: { height: 360, borderRadius: radii.lg, overflow: 'hidden', backgroundColor: colors.surface2 },
   image: { width: '100%', height: '100%' },
   caption: { marginTop: 8 },

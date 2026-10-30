@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { AppCanvas } from '@/src/components/AppCanvas';
 import { AppProviders } from '@/src/components/AppProviders';
 import { ToastHost } from '@/src/components/ui/Toast';
+import { toHref } from '@/src/lib/nav';
 import { useAppStore } from '@/src/stores/appStore';
 import { colors } from '@/src/theme/tokens';
 
@@ -25,17 +26,23 @@ function SessionGate() {
   const hydrated = useAppStore((state) => state.hydrated);
   const onboarded = useAppStore((state) => state.onboarded);
   const birthDate = useAppStore((state) => state.birthDate);
+  const profileReady = useAppStore((state) => state.profileReady);
 
   useEffect(() => {
     if (!hydrated) return;
     const group = segments[0];
-    if (onboarded && (group === '(onboarding)' || pathname === '/')) {
-      router.replace('/(tabs)');
-    }
     if (!onboarded && group === '(tabs)') {
       router.replace(birthDate ? '/(onboarding)/auth' : '/(onboarding)/welcome');
+      return;
     }
-  }, [birthDate, hydrated, onboarded, pathname, router, segments]);
+    if (onboarded && profileReady === false && !pathname.startsWith('/setup') && group !== '(onboarding)') {
+      router.replace(toHref('/setup'));
+      return;
+    }
+    if (onboarded && profileReady !== false && (group === '(onboarding)' || pathname === '/')) {
+      router.replace('/(tabs)');
+    }
+  }, [birthDate, hydrated, onboarded, pathname, profileReady, router, segments]);
 
   return null;
 }
@@ -65,6 +72,13 @@ export default function RootLayout() {
             <Stack.Screen name="(onboarding)" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="event/[id]" />
+            <Stack.Screen name="venue/[id]" />
+            <Stack.Screen name="session" />
+            <Stack.Screen name="notifications" />
+            <Stack.Screen name="friends" />
+            <Stack.Screen name="setup" />
+            <Stack.Screen name="help" />
+            <Stack.Screen name="legal/[page]" />
             <Stack.Screen name="dev/ui" />
           </Stack>
           <ToastHost />

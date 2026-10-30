@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'rea
 import { haptic } from '@/src/lib/haptics';
 import { colors, fonts, radii } from '@/src/theme/tokens';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 interface ButtonProps {
   label: string;
@@ -34,14 +34,14 @@ export function Button({
       }}
       style={({ pressed }) => [
         styles.base,
-        variant === 'primary' ? styles.primary : variant === 'secondary' ? styles.secondary : styles.ghost,
+        variant === 'primary' ? styles.primary : variant === 'secondary' ? styles.secondary : variant === 'danger' ? styles.danger : styles.ghost,
         disabled && styles.disabled,
         pressed && !disabled && styles.pressed,
         style,
       ]}
     >
       <Text
-        style={[styles.label, variant === 'primary' ? styles.primaryLabel : styles.secondaryLabel]}
+        style={[styles.label, variant === 'primary' ? styles.primaryLabel : variant === 'danger' ? styles.dangerLabel : styles.secondaryLabel]}
         maxFontSizeMultiplier={1.3}
       >
         {label}
@@ -65,9 +65,11 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   ghost: { backgroundColor: 'transparent' },
+  danger: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.danger },
   disabled: { opacity: 0.4 },
   pressed: { transform: [{ scale: 0.98 }], opacity: 0.9 },
   label: { fontFamily: fonts.bodySemibold, fontSize: 15 },
   primaryLabel: { color: colors.accentInk },
   secondaryLabel: { color: colors.text },
+  dangerLabel: { color: colors.danger },
 });

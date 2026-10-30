@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState } from 'react';
 import * as Location from 'expo-location';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, ChevronDown, LocateFixed, Plus, Search } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -13,13 +14,15 @@ import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { Chip } from '@/src/components/ui/Chip';
+import { OfflineBanner } from '@/src/components/ui/OfflineBanner';
 import { EmptyState, ErrorState } from '@/src/components/ui/States';
 import { AddVenueSheet } from '@/src/features/map/components/AddVenueSheet';
 import { PulseMap, type PulseMapHandle } from '@/src/features/map/components/PulseMap';
 import { confirmedCount } from '@/src/features/attendance/count';
-import { activeDateISO, eventMatchesDate, upcomingDates, type DateFilter } from '@/src/features/events/dates';
-import { cities, events, personById, venueById, type CityId, type Genre } from '@/src/data/demo';
+import { activeDateISO, eventMatchesDate, nearestEventDate, upcomingDates, type DateFilter } from '@/src/features/events/dates';
+import { cities, events, personById, venueById, venues, type CityId, type Genre } from '@/src/data/demo';
 import { formatClockRange, formatDayLabel, formatNumber } from '@/src/lib/format';
+import { toHref } from '@/src/lib/nav';
 import { mapStyleUrl } from '@/src/lib/supabase/client';
 import { useAppStore, useAttendanceStore } from '@/src/stores/appStore';
 import { useToastStore } from '@/src/stores/toastStore';
@@ -35,10 +38,13 @@ export function MapScreen() {
   const city = useAppStore((state) => state.city);
   const setCity = useAppStore((state) => state.setCity);
   const customVenues = useAppStore((state) => state.customVenues);
+  const locationConsent = useAppStore((state) => state.consents.location?.granted);
+  const setConsent = useAppStore((state) => state.setConsent);
   const attendance = useAttendanceStore((state) => state.byEvent);
   const showToast = useToastStore((state) => state.show);
+  const { width } = useWindowDimensions();
   const [search, setSearch] = useState('');
-  const [dateFilter, setDateFilter] = useState<DateFilter>({ kind: 'weekend' });
+  const [dateFilter, setDateFilter] = useState<DateFilter>({ kind: 'tonight' });
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>('klein');
   const [cityOpen, setCityOpen] = useState(false);
@@ -75,10 +81,16 @@ export function MapScreen() {
     });
   }, [city, customVenues, i18n.language, search]);
 
+  const cityVenues = useMemo(() => venues.filter((venue) => venue.city === city), [city]);
+  const nearest = useMemo(
+    () => nearestEventDate(events.filter((event) => venueById(event.venueId)?.city === city).map((event) => event.date), new Date()),
+    [city],
+  );
   const selectedPending = pending.find((venue) => venue.id === selectedId) ?? null;
   const selected = selectedPending ? null : (filtered.find((row) => row.venue.id === selectedId) ?? filtered[0] ?? null);
+  const fallbackVenue = filtered.length === 0 ? (cityVenues.find((venue) => venue.id === selectedId) ?? cityVenues[0] ?? null) : null;
   const center = cities[city];
-  const focus = selectedPending ?? selected?.venue ?? null;
+  const focus = selectedPending ?? selected?.venue ?? fallbackVenue ?? null;
   const mapCenter = focus ? { lng: focus.lng, lat: focus.lat } : center;
   const mapZoom = focus ? 15 : center.zoom;
 
@@ -86,18 +98,25 @@ export function MapScreen() {
     setSelectedId(id);
     const pendingPlace = pending.find((venue) => venue.id === id);
     const eventPlace = filtered.find((row) => row.venue.id === id)?.venue;
-    const place = pendingPlace ?? eventPlace;
+    const listed = cityVenues.find((venue) => venue.id === id);
+    const place = pendingPlace ?? eventPlace ?? listed;
     if (place) mapRef.current?.recenter(place.lng, place.lat, 15);
   }
   const dateLabel = formatDayLabel(activeDateISO(dateFilter, new Date()), i18n.language);
 
   async function locate() {
-    const current = await Location.getForegroundPermissionsAsync();
-    const next = current.granted ? current : await Location.requestForegroundPermissionsAsync();
-    if (!next.granted) {
+    if (locationConsent === false) {
       showToast(t('map.locateDenied'));
       return;
     }
+    const current = await Location.getForegroundPermissionsAsync();
+    const next = current.granted ? current : await Location.requestForegroundPermissionsAsync();
+    if (!next.granted) {
+      setConsent('location', false);
+      showToast(t('map.locateDenied'));
+      return;
+    }
+    setConsent('location', true);
     const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     mapRef.current?.recenter(position.coords.longitude, position.coords.latitude);
   }
@@ -120,12 +139,12 @@ export function MapScreen() {
           key={`${city}-${mapEpoch}`}
           ref={mapRef}
           pins={[
-            ...filtered.map((row) => ({
+            ...(filtered.length > 0 ? filtered : cityVenues.map((venue) => ({ event: null, venue }))).map((row) => ({
               id: row.venue.id,
               lng: row.venue.lng,
               lat: row.venue.lat,
               label: row.venue.name,
-              count: confirmedCount(row.event.going, attendance[row.event.id] ?? null),
+              count: row.event ? confirmedCount(row.event.going, attendance[row.event.id] ?? null) : 0,
             })),
             ...pending.map((venue) => ({
               id: venue.id,
@@ -135,7 +154,7 @@ export function MapScreen() {
               count: 0,
             })),
           ]}
-          selectedId={selectedPending?.id ?? selected?.venue.id ?? null}
+          selectedId={selectedPending?.id ?? selected?.venue.id ?? fallbackVenue?.id ?? null}
           center={mapCenter}
           zoom={mapZoom}
           clusterWord={t('map.cluster')}
@@ -169,6 +188,7 @@ export function MapScreen() {
             accessibilityLabel={t('map.search')}
           />
         </View>
+        <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           <Chip label={t('map.tonight')} selected={dateFilter.kind === 'tonight'} onPress={() => setDateFilter({ kind: 'tonight' })} />
           <Chip label={t('map.weekend')} selected={dateFilter.kind === 'weekend'} onPress={() => setDateFilter({ kind: 'weekend' })} />
@@ -181,20 +201,24 @@ export function MapScreen() {
             />
           ))}
         </ScrollView>
+        <LinearGradient pointerEvents="none" colors={['rgba(7,6,12,0)', 'rgba(7,6,12,0.95)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.chipFade} />
+        </View>
       </View>
 
       <View pointerEvents="box-none" style={[styles.bottom, { bottom: tabClearance }]}>
         <View style={styles.metaRow}>
           <View style={styles.metaCopy}>
+            <OfflineBanner />
             <AppText variant="muted">
               {t('map.sampleCounts')} · {t('map.locationPrivate')}
             </AppText>
-            <AppText variant="muted">{t('map.tiles')}</AppText>
           </View>
           <View style={styles.mapActions}>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('map.addVenue')} onPress={() => setAddOpen(true)} style={styles.locate}>
-              <Plus color={colors.text} size={18} />
-            </Pressable>
+            {width >= 768 ? (
+              <Pressable accessibilityRole="button" accessibilityLabel={t('map.addVenue')} onPress={() => setAddOpen(true)} style={styles.locate}>
+                <Plus color={colors.text} size={18} />
+              </Pressable>
+            ) : null}
             <Pressable accessibilityRole="button" accessibilityLabel={t('map.locate')} onPress={() => void locate()} style={styles.locate}>
               <LocateFixed color={colors.text} size={18} />
             </Pressable>
@@ -251,6 +275,18 @@ export function MapScreen() {
           </Card>
         ) : (
           <Card>
+            {fallbackVenue ? (
+              <View style={styles.cardTop}>
+                <Badge label={t('common.sampleData')} tone="accent" />
+                <AppText variant="heading">{fallbackVenue.name}</AppText>
+                <AppText variant="muted">
+                  {fallbackVenue.district}
+                  {fallbackVenue.street ? ` · ${fallbackVenue.street}` : ''}
+                </AppText>
+                <AppText variant="body">{t('map.noEventHere')}</AppText>
+                <Button label={t('map.openVenue')} variant="secondary" onPress={() => router.push(toHref(`/venue/${fallbackVenue.id}`))} />
+              </View>
+            ) : null}
             <EmptyState
               title={t('map.emptyTitle')}
               body={t('map.emptyBody')}
@@ -258,9 +294,12 @@ export function MapScreen() {
               onAction={() => {
                 setSearch('');
                 setGenres([]);
-                setDateFilter({ kind: 'weekend' });
+                setDateFilter({ kind: 'tonight' });
               }}
             />
+            {nearest ? (
+              <Button label={t('map.nearest')} variant="ghost" onPress={() => setDateFilter({ kind: 'day', iso: nearest })} />
+            ) : null}
           </Card>
         )}
       </View>
@@ -319,7 +358,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(22,19,30,0.9)',
     borderRadius: radii.pill,
     paddingHorizontal: 12,
-    minHeight: 40,
+    minHeight: 44,
     borderWidth: 1,
     borderColor: colors.line,
   },
@@ -335,7 +374,8 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   input: { flex: 1, color: colors.text, fontFamily: fonts.body, fontSize: 15, minHeight: 44 },
-  chips: { gap: 8, paddingRight: 12 },
+  chips: { gap: 8, paddingRight: 36 },
+  chipFade: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 36 },
   bottom: { position: 'absolute', left: 12, right: 12, gap: 8 },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   metaCopy: { flex: 1, gap: 2 },

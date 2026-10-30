@@ -17,9 +17,9 @@ const pinCss = `
   #pins { pointer-events: none; }
   #tiles img { position: absolute; }
   #attrib {
-    position: absolute; left: 8px; bottom: 300px; z-index: 2;
-    font: 10px/1.3 Inter, system-ui, sans-serif; color: #A79FB4;
-    background: rgba(7,6,12,0.7); padding: 3px 6px; border-radius: 6px;
+    position: absolute; top: 220px; left: 8px; z-index: 2; max-width: 70%;
+    font: 10px/1.3 Inter, system-ui, sans-serif; color: #C4BDD2;
+    background: rgba(7,6,12,0.82); padding: 4px 6px; border-radius: 6px;
   }
   #attrib a { color: #D9CCFF; text-decoration: none; }
   button.pin {

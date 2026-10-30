@@ -7,17 +7,20 @@ import { colors, fonts } from '@/src/theme/tokens';
 interface AvatarProps {
   name: string;
   portrait?: PortraitKey | 'you';
+  imageUri?: string | null;
   size?: number;
 }
 
-export function Avatar({ name, portrait, size = 36 }: AvatarProps) {
+export function Avatar({ name, portrait, imageUri, size = 36 }: AvatarProps) {
   const source = portrait && portrait !== 'you' ? portraits[portrait] : null;
   return (
     <View
       accessibilityLabel={name}
       style={[styles.ring, { width: size, height: size, borderRadius: size / 2 }]}
     >
-      {source ? (
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={{ width: size - 2, height: size - 2, borderRadius: size / 2 }} contentFit="cover" />
+      ) : source ? (
         <Image source={source} style={{ width: size - 2, height: size - 2, borderRadius: size / 2 }} contentFit="cover" />
       ) : (
         <Text style={[styles.letter, { fontSize: size * 0.36 }]} maxFontSizeMultiplier={1.2}>

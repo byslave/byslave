@@ -18,7 +18,10 @@ import { confirmedCount } from '@/src/features/attendance/count';
 import { covers } from '@/src/data/images';
 import { eventById, loc, personById, venueById } from '@/src/data/demo';
 import { formatClockRange, formatDayLabel, formatNumber } from '@/src/lib/format';
+import { toHref } from '@/src/lib/nav';
 import { shareText } from '@/src/lib/shareText';
+import { visiblePrivacy } from '@/src/features/profile/privacy';
+import { isSupabaseConfigured } from '@/src/lib/supabase/client';
 import { useAppStore, useAttendanceStore } from '@/src/stores/appStore';
 import { useToastStore } from '@/src/stores/toastStore';
 import { colors } from '@/src/theme/tokens';
@@ -33,11 +36,17 @@ export function EventScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const privacy = useAppStore((state) => state.privacy);
+  const privacyOnServer = useAppStore((state) => state.privacyOnServer);
+  const user = useAppStore((state) => state.user);
+  const blockedIds = useAppStore((state) => state.blockedIds);
   const addReport = useAppStore((state) => state.addReport);
+  const blockPerson = useAppStore((state) => state.blockPerson);
+  const shownPrivacy = visiblePrivacy({ privacy, privacyOnServer, userId: user?.id ?? null, serverConfigured: isSupabaseConfigured });
   const status = useAttendanceStore((state) => (event ? state.byEvent[event.id] : undefined));
   const setStatus = useAttendanceStore((state) => state.setStatus);
   const showToast = useToastStore((state) => state.show);
   const [reportOpen, setReportOpen] = useState(false);
+  const [personId, setPersonId] = useState<string | null>(null);
 
   if (!event || !venue) {
     return (
@@ -72,6 +81,8 @@ export function EventScreen() {
           <AppText variant="muted">
             {loc(event.price, i18n.language)} · {t('event.age', { count: event.ageLimit })}
           </AppText>
+          <AppText variant="muted">{t('event.noTicket')}</AppText>
+          <Button label={t('event.openVenue')} variant="secondary" onPress={() => router.push(toHref(`/venue/${venue.id}`))} />
           <AppText variant="stat">
             {formatNumber(confirmedCount(event.going, status ?? null), i18n.language)} {t('map.going')}
           </AppText>
@@ -92,19 +103,20 @@ export function EventScreen() {
             />
           </View>
           <AppText variant="label">{t('event.samplePeople')}</AppText>
-          {privacy === 'ghost' && (going || interested) ? <AppText variant="muted">{t('event.ghostNote')}</AppText> : null}
+          <Badge label={t('event.sampleNote')} tone="accent" />
+          {shownPrivacy === 'ghost' && (going || interested) ? <AppText variant="muted">{t('event.ghostNote')}</AppText> : null}
           <View style={styles.people}>
-            {event.attendeeIds.map((personId) => {
-              const person = personById(personId);
-              if (!person) return null;
+            {event.attendeeIds.map((attendeeId) => {
+              const person = personById(attendeeId);
+              if (!person || blockedIds.includes(person.id)) return null;
               return (
-                <View key={person.id} style={styles.person}>
+                <Pressable key={person.id} accessibilityRole="button" accessibilityLabel={t('event.blockPerson')} onPress={() => setPersonId(person.id)} style={styles.person}>
                   <Avatar name={person.name} portrait={person.portrait} />
                   <AppText variant="muted">{person.name}</AppText>
-                </View>
+                </Pressable>
               );
             })}
-            {privacy !== 'ghost' && going ? (
+            {shownPrivacy !== 'ghost' && going ? (
               <View style={styles.person}>
                 <Avatar name={t('profile.name')} />
                 <AppText variant="muted">{t('board.you')}</AppText>
@@ -149,12 +161,32 @@ export function EventScreen() {
             key={reason}
             label={t(`reasons.${reason}`)}
             onPress={() => {
-              addReport(event.id, reason);
+              addReport({ target: 'event', targetId: event.id, reason });
               setReportOpen(false);
               showToast(t('event.reportSaved'));
             }}
           />
         ))}
+      </BottomSheet>
+      <BottomSheet visible={personId !== null} title={t('event.blockPerson')} onClose={() => setPersonId(null)}>
+        <Chip
+          label={t('common.report')}
+          onPress={() => {
+            if (!personId) return;
+            addReport({ target: 'person', targetId: personId, reason: 'unsafe' });
+            setPersonId(null);
+            showToast(t('event.reportSaved'));
+          }}
+        />
+        <Chip
+          label={t('common.block')}
+          onPress={() => {
+            if (!personId) return;
+            blockPerson(personId);
+            setPersonId(null);
+            showToast(t('feed.blocked'));
+          }}
+        />
       </BottomSheet>
     </View>
   );
