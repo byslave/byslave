@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/src/components/ui/AppText';
@@ -7,7 +7,9 @@ import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Button } from '@/src/components/ui/Button';
 import { Chip } from '@/src/components/ui/Chip';
 import type { CityId, VenueType } from '@/src/data/demo';
+import { searchVenueDirectory, type DirectoryPlace } from '@/src/features/venues/directory';
 import { venueDraftSchema, venueTypeValues } from '@/src/features/venues/draft';
+import { foldPlaceName } from '@/src/features/venues/search';
 import { useAppStore } from '@/src/stores/appStore';
 import { useToastStore } from '@/src/stores/toastStore';
 import { colors, fonts, radii } from '@/src/theme/tokens';
@@ -18,9 +20,10 @@ interface AddVenueSheetProps {
   center: { lng: number; lat: number };
   onClose: () => void;
   onCreated: (id: string) => void;
+  onPreview: (lng: number, lat: number) => void;
 }
 
-export function AddVenueSheet({ visible, city, center, onClose, onCreated }: AddVenueSheetProps) {
+export function AddVenueSheet({ visible, city, center, onClose, onCreated, onPreview }: AddVenueSheetProps) {
   const { t } = useTranslation();
   const addVenue = useAppStore((state) => state.addVenue);
   const showToast = useToastStore((state) => state.show);
@@ -29,6 +32,9 @@ export function AddVenueSheet({ visible, city, center, onClose, onCreated }: Add
   const [type, setType] = useState<VenueType>('club');
   const [rules, setRules] = useState('');
   const [invalid, setInvalid] = useState(false);
+  const [picked, setPicked] = useState<DirectoryPlace | null>(null);
+  const matches = useMemo(() => searchVenueDirectory(name, city), [name, city]);
+  const activePick = picked && foldPlaceName(picked.name) === foldPlaceName(name) ? picked : null;
 
   function close() {
     setInvalid(false);
@@ -42,18 +48,20 @@ export function AddVenueSheet({ visible, city, center, onClose, onCreated }: Add
       return;
     }
     const id = addVenue({
-      name: parsed.data.name,
-      district: parsed.data.district,
+      name: activePick?.name ?? parsed.data.name,
+      district: activePick?.district ?? parsed.data.district,
+      street: activePick?.street ?? '',
       type: parsed.data.type,
       rules: parsed.data.rules,
       city,
-      lat: center.lat,
-      lng: center.lng,
+      lat: activePick?.lat ?? center.lat,
+      lng: activePick?.lng ?? center.lng,
     });
     setName('');
     setDistrict('');
     setRules('');
     setType('club');
+    setPicked(null);
     setInvalid(false);
     showToast(t('map.saved'));
     onCreated(id);
@@ -65,13 +73,41 @@ export function AddVenueSheet({ visible, city, center, onClose, onCreated }: Add
       <AppText variant="muted">{t('map.pinHint')}</AppText>
       <TextInput
         value={name}
-        onChangeText={setName}
+        onChangeText={(value) => {
+          setName(value);
+          setInvalid(false);
+        }}
         placeholder={t('map.name')}
         placeholderTextColor={colors.textFaint}
         style={styles.input}
         accessibilityLabel={t('map.name')}
         maxLength={80}
       />
+      {matches.length > 0 ? (
+        <View style={styles.matches}>
+          {matches.map((place) => (
+            <Pressable
+              key={place.id}
+              accessibilityRole="button"
+              onPress={() => {
+                setName(place.name);
+                setDistrict(place.district);
+                setPicked(place);
+                setInvalid(false);
+                onPreview(place.lng, place.lat);
+              }}
+              style={[styles.match, activePick?.id === place.id && styles.matchSelected]}
+            >
+              <AppText variant="bodyMedium">{place.name}</AppText>
+              <AppText variant="muted">
+                {place.street ? t('map.listedPlace', { district: place.district, street: place.street }) : place.district}
+              </AppText>
+            </Pressable>
+          ))}
+        </View>
+      ) : name.trim().length >= 2 ? (
+        <AppText variant="muted">{t('map.directoryEmpty')}</AppText>
+      ) : null}
       <TextInput
         value={district}
         onChangeText={setDistrict}
@@ -116,4 +152,15 @@ const styles = StyleSheet.create({
   },
   rules: { minHeight: 88, paddingTop: 12, textAlignVertical: 'top' },
   types: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  matches: { gap: 8 },
+  match: {
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.bg,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 2,
+  },
+  matchSelected: { borderColor: colors.accent },
 });

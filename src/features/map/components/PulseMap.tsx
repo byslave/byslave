@@ -7,7 +7,7 @@ import type { MapPin } from '@/src/features/map/cluster';
 import { colors } from '@/src/theme/tokens';
 
 export interface PulseMapHandle {
-  recenter: (lng: number, lat: number) => void;
+  recenter: (lng: number, lat: number, zoom?: number) => void;
 }
 
 interface PulseMapProps {
@@ -40,8 +40,8 @@ export const PulseMap = forwardRef<PulseMapHandle, PulseMapProps>(function Pulse
   const html = useMemo(() => buildMapDocument(boot), [boot]);
 
   useImperativeHandle(ref, () => ({
-    recenter(lng, lat) {
-      webRef.current?.injectJavaScript(`window.__pulse && window.__pulse.fly(${lng}, ${lat}, 13); true;`);
+    recenter(lng, lat, zoom = 15) {
+      webRef.current?.injectJavaScript(`window.__pulse && window.__pulse.fly(${lng}, ${lat}, ${zoom}); true;`);
     },
   }));
 

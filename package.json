@@ -56,7 +56,7 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/features/profile/age.test.ts src/features/attendance/count.test.ts src/features/events/dates.test.ts src/features/map/cluster.test.ts src/features/map/slippy.test.ts src/features/map/mapDocument.test.ts src/features/venues/draft.test.ts"
+    "test": "node --experimental-strip-types --test src/features/profile/age.test.ts src/features/attendance/count.test.ts src/features/events/dates.test.ts src/features/map/cluster.test.ts src/features/map/slippy.test.ts src/features/map/mapDocument.test.ts src/features/venues/draft.test.ts src/features/venues/search.test.ts"
   },
   "private": true
 }

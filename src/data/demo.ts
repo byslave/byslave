@@ -14,6 +14,7 @@ export interface Venue {
   name: string;
   city: CityId;
   district: string;
+  street?: string;
   lat: number;
   lng: number;
   type: VenueType;
@@ -77,7 +78,16 @@ export const people: DemoPerson[] = [
 ];
 
 export const venues: Venue[] = [
-  { id: 'klein', name: 'Klein Phönix', city: 'istanbul', district: 'Maslak', lat: 41.1128, lng: 29.0204, type: 'club' },
+  {
+    id: 'klein',
+    name: 'Klein Phönix',
+    city: 'istanbul',
+    district: 'Maslak',
+    street: 'AOS 52. Sokak No:12, Atatürk Oto Sanayi Sitesi',
+    lat: 41.118384,
+    lng: 29.022423,
+    type: 'club',
+  },
   { id: 'rx', name: 'RX Istanbul', city: 'istanbul', district: 'Karaköy', lat: 41.0256, lng: 28.9774, type: 'warehouse' },
   { id: 'banger', name: 'Banger', city: 'istanbul', district: 'Kadıköy', lat: 40.9918, lng: 29.0276, type: 'club' },
   { id: 'silo', name: 'Silo', city: 'istanbul', district: 'Bomonti', lat: 41.0562, lng: 28.9788, type: 'warehouse' },

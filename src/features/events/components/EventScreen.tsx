@@ -63,7 +63,8 @@ export function EventScreen() {
           <Badge label={event.genres.map((genre) => t(`genres.${genre}`)).join(' · ')} tone="accent" />
           <AppText variant="display">{event.title}</AppText>
           <AppText variant="muted">
-            {venue.name} · {venue.district} · {t(`venueTypes.${venue.type}`)}
+            {venue.name} · {venue.district}
+            {venue.street ? ` · ${venue.street}` : ''} · {t(`venueTypes.${venue.type}`)}
           </AppText>
           <AppText variant="bodyMedium">
             {formatDayLabel(event.date, i18n.language)} · {formatClockRange(event.startTime, event.endTime)}

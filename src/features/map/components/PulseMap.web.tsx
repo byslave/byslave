@@ -6,7 +6,7 @@ import { buildMapDocument } from '@/src/features/map/mapDocument';
 import { colors } from '@/src/theme/tokens';
 
 export interface PulseMapHandle {
-  recenter: (lng: number, lat: number) => void;
+  recenter: (lng: number, lat: number, zoom?: number) => void;
 }
 
 interface PulseMapProps {
@@ -39,8 +39,8 @@ export const PulseMap = forwardRef<PulseMapHandle, PulseMapProps>(function Pulse
   );
 
   useImperativeHandle(ref, () => ({
-    recenter(lng, lat) {
-      frameRef.current?.contentWindow?.postMessage({ type: 'fly', lng, lat, zoom: 13 }, '*');
+    recenter(lng, lat, zoom = 15) {
+      frameRef.current?.contentWindow?.postMessage({ type: 'fly', lng, lat, zoom }, '*');
     },
   }));
 

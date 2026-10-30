@@ -25,7 +25,8 @@ Faz 0 sırasında alınan, sonradan değiştirilebilir seçimler.
 - Web’de harita bir iframe, iOS/Android’de WebView içindedir. Böylece Expo Go içinde ek native harita modülü gerekmez.
 - Kümeleme yakınlaştırmaya bağlıdır. Yakın planda ayrı haplar, uzak planda toplanmış sayı görünür.
 - Konum yalnızca “konumuma git”e basınca istenir ve yalnızca haritayı kaydırır. Saklanmaz, kimseyle paylaşılmaz.
-- Önerilen mekân pini, haritanın o an baktığı merkezden alınır.
+- Önerilen mekân, `src/data/venueDirectory.json` listesinden seçilirse o kaydın koordinatını kullanır. Liste OpenStreetMap gece mekânları ve yayımlanmış Klein Phönix adresidir: Maslak, Atatürk Oto Sanayi Sitesi, AOS 52. Sokak No:12. Adres listede yoksa pin haritanın merkezine düşer.
+- Seçili mekân haritayı kendi noktasına, yakın plana alır. Şehir merkezi kadrajı Üsküdar’ı Klein’ın yeri gibi göstermez.
 
 ## Veritabanı
 

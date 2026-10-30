@@ -31,6 +31,7 @@ export interface CustomVenue {
   name: string;
   city: CityId;
   district: string;
+  street: string;
   lat: number;
   lng: number;
   type: VenueType;

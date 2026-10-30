@@ -78,6 +78,17 @@ export function MapScreen() {
   const selectedPending = pending.find((venue) => venue.id === selectedId) ?? null;
   const selected = selectedPending ? null : (filtered.find((row) => row.venue.id === selectedId) ?? filtered[0] ?? null);
   const center = cities[city];
+  const focus = selectedPending ?? selected?.venue ?? null;
+  const mapCenter = focus ? { lng: focus.lng, lat: focus.lat } : center;
+  const mapZoom = focus ? 15 : center.zoom;
+
+  function choosePin(id: string) {
+    setSelectedId(id);
+    const pendingPlace = pending.find((venue) => venue.id === id);
+    const eventPlace = filtered.find((row) => row.venue.id === id)?.venue;
+    const place = pendingPlace ?? eventPlace;
+    if (place) mapRef.current?.recenter(place.lng, place.lat, 15);
+  }
   const dateLabel = formatDayLabel(activeDateISO(dateFilter, new Date()), i18n.language);
 
   async function locate() {
@@ -125,11 +136,11 @@ export function MapScreen() {
             })),
           ]}
           selectedId={selectedPending?.id ?? selected?.venue.id ?? null}
-          center={center}
-          zoom={center.zoom}
+          center={mapCenter}
+          zoom={mapZoom}
           clusterWord={t('map.cluster')}
           styleUrl={mapStyleUrl()}
-          onSelect={setSelectedId}
+          onSelect={choosePin}
           onMove={(next) => setPan({ city, lng: next.lng, lat: next.lat, zoom: next.zoom })}
           onError={() => setMapFailed(true)}
           onReady={() => setMapReady(true)}
@@ -198,6 +209,7 @@ export function MapScreen() {
             <AppText variant="heading">{selectedPending.name}</AppText>
             <AppText variant="muted">
               {t(`venueTypes.${selectedPending.type}`)} · {selectedPending.district}
+              {selectedPending.street ? ` · ${selectedPending.street}` : ''}
             </AppText>
             <AppText variant="muted">{t('map.pendingBody')}</AppText>
             {selectedPending.rules ? <AppText variant="body">{selectedPending.rules}</AppText> : null}
@@ -211,6 +223,7 @@ export function MapScreen() {
             <AppText variant="heading">{selected.event.title}</AppText>
             <AppText variant="muted">
               {selected.venue.name} · {selected.venue.district}
+              {selected.venue.street ? ` · ${selected.venue.street}` : ''}
             </AppText>
             <AppText variant="muted">
               {formatDayLabel(selected.event.date, i18n.language)} · {formatClockRange(selected.event.startTime, selected.event.endTime)}
@@ -285,7 +298,10 @@ export function MapScreen() {
         city={city}
         center={mapView}
         onClose={() => setAddOpen(false)}
-        onCreated={setSelectedId}
+        onCreated={(id) => {
+          setSelectedId(id);
+        }}
+        onPreview={(lng, lat) => mapRef.current?.recenter(lng, lat, 15)}
       />
     </View>
   );

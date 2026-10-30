@@ -209,7 +209,7 @@ grant select, insert, update, delete on public.attendances to authenticated;
 grant execute on function public.event_pin_count(text) to anon, authenticated;
 
 insert into public.venues (id, name, city, district, location, venue_type, status) values
-  ('klein', 'Klein Phönix', 'istanbul', 'Maslak', extensions.ST_SetSRID(extensions.ST_MakePoint(29.0204, 41.1128), 4326)::extensions.geography, 'club', 'approved'),
+  ('klein', 'Klein Phönix', 'istanbul', 'Maslak', extensions.ST_SetSRID(extensions.ST_MakePoint(29.022423, 41.118384), 4326)::extensions.geography, 'club', 'approved'),
   ('rx', 'RX Istanbul', 'istanbul', 'Karaköy', extensions.ST_SetSRID(extensions.ST_MakePoint(28.9774, 41.0256), 4326)::extensions.geography, 'warehouse', 'approved'),
   ('banger', 'Banger', 'istanbul', 'Kadıköy', extensions.ST_SetSRID(extensions.ST_MakePoint(29.0276, 40.9918), 4326)::extensions.geography, 'club', 'approved'),
   ('silo', 'Silo', 'istanbul', 'Bomonti', extensions.ST_SetSRID(extensions.ST_MakePoint(28.9788, 41.0562), 4326)::extensions.geography, 'warehouse', 'approved'),
