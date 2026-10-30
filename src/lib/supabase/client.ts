@@ -24,3 +24,12 @@ export async function sendMagicLink(email: string): Promise<'sent' | 'demo' | 'e
   });
   return error ? 'error' : 'sent';
 }
+
+export async function signInWithProvider(provider: 'google' | 'apple'): Promise<'started' | 'unavailable' | 'error'> {
+  if (!supabase) return 'unavailable';
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: 'pulse://auth' },
+  });
+  return error ? 'error' : 'started';
+}

@@ -29,6 +29,26 @@ export function activeDateISO(filter: DateFilter, now: Date): string {
   return weekendDates(now)[0] ?? localISODate(now);
 }
 
+export function nearestEventDate(dates: string[], now: Date): string | null {
+  if (dates.length === 0) return null;
+  const today = localISODate(now);
+  const upcoming = dates.filter((date) => date >= today).sort();
+  if (upcoming[0]) return upcoming[0];
+  return [...dates].sort().at(-1) ?? null;
+}
+
+/** Monday-start week, in the local calendar. */
+export function isInCurrentWeek(iso: string, now: Date): boolean {
+  const date = new Date(now);
+  const day = date.getDay();
+  const delta = day === 0 ? 6 : day - 1;
+  date.setDate(date.getDate() - delta);
+  const start = localISODate(date);
+  const end = new Date(date);
+  end.setDate(date.getDate() + 6);
+  return iso >= start && iso <= localISODate(end);
+}
+
 export function upcomingDates(now: Date, count: number): string[] {
   const dates: string[] = [];
   for (let index = 0; index < count; index += 1) {

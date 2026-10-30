@@ -61,6 +61,7 @@ export interface BoardRow {
   portrait: PortraitKey | 'you';
   jumps: number;
   minutes: number;
+  venues: number;
   you?: boolean;
 }
 
@@ -330,11 +331,11 @@ export const posts: DemoPost[] = [
 ];
 
 export const boardRows: BoardRow[] = [
-  { id: 'ece', name: 'Ece Yılmaz', portrait: 'p1', jumps: 1820, minutes: 246 },
-  { id: 'kerem', name: 'Kerem Aydın', portrait: 'p2', jumps: 1512, minutes: 204 },
-  { id: 'you', name: '', portrait: 'you', jumps: 1248, minutes: 138, you: true },
-  { id: 'mert', name: 'Mert Koç', portrait: 'p4', jumps: 980, minutes: 166 },
-  { id: 'selin', name: 'Selin Uçar', portrait: 'p3', jumps: 860, minutes: 188 },
+  { id: 'ece', name: 'Ece Yılmaz', portrait: 'p1', jumps: 1820, minutes: 246, venues: 4 },
+  { id: 'kerem', name: 'Kerem Aydın', portrait: 'p2', jumps: 1512, minutes: 204, venues: 3 },
+  { id: 'you', name: '', portrait: 'you', jumps: 1248, minutes: 138, venues: 1, you: true },
+  { id: 'mert', name: 'Mert Koç', portrait: 'p4', jumps: 980, minutes: 166, venues: 2 },
+  { id: 'selin', name: 'Selin Uçar', portrait: 'p3', jumps: 860, minutes: 188, venues: 3 },
 ];
 
 export const sampleNight = {
