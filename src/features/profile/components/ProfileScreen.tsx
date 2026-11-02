@@ -6,11 +6,13 @@ import { useRouter } from 'expo-router';
 
 import { AppText } from '@/src/components/ui/AppText';
 import { Avatar } from '@/src/components/ui/Avatar';
+import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { Chip } from '@/src/components/ui/Chip';
 import { OfflineBanner } from '@/src/components/ui/OfflineBanner';
 import { StatBlock } from '@/src/components/ui/StatBlock';
+import { showAdminTools } from '@/src/features/events/adminGate';
 import { stripPhotoFile } from '@/src/features/photos/stripExif';
 import { persistPrivacy } from '@/src/features/profile/savePrivacy';
 import { visiblePrivacy } from '@/src/features/profile/privacy';
@@ -123,7 +125,10 @@ export function ProfileScreen() {
     input.click();
   }
 
-  const links = [
+  const organizer = useAppStore((state) => state.organizer);
+  const links: [string, string][] = [
+    [t('profile.addEvent'), '/event/new'],
+    [t('profile.organizer'), '/organizer'],
     [t('profile.edit'), '/setup'],
     [t('profile.notifications'), '/notifications'],
     [t('profile.friendsLink'), '/friends'],
@@ -132,7 +137,8 @@ export function ProfileScreen() {
     [t('help.privacy'), '/legal/privacy'],
     [t('help.terms'), '/legal/terms'],
     [t('help.consent'), '/legal/consent'],
-  ] as const;
+  ];
+  if (showAdminTools()) links.splice(2, 0, [t('profile.admin'), '/admin']);
 
   return (
     <ScrollView
@@ -145,6 +151,7 @@ export function ProfileScreen() {
         <View style={styles.identityText}>
           <AppText variant="heading">{name}</AppText>
           <AppText variant="muted">{handle}</AppText>
+          {organizer?.status === 'approved' ? <Badge label={t('profile.organizerBadge')} tone="success" /> : null}
         </View>
       </View>
       <AppText variant="body">{bio || t('profile.bio')}</AppText>

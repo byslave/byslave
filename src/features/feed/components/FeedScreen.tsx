@@ -18,7 +18,10 @@ import { SafetySheet } from '@/src/components/SafetySheet';
 import { Segmented } from '@/src/components/ui/Segmented';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { covers } from '@/src/data/images';
-import { eventById, loc, personById, posts, venueById } from '@/src/data/demo';
+import { loc, personById, posts, venueById } from '@/src/data/demo';
+import { assembleEvents, toSchedule } from '@/src/features/events/catalog';
+import { isPubliclyListed } from '@/src/features/events/schedule';
+import { useServerNow } from '@/src/features/events/useServerNow';
 import { formatDayLabel } from '@/src/lib/format';
 import { toHref } from '@/src/lib/nav';
 import { useAppStore } from '@/src/stores/appStore';
@@ -36,6 +39,9 @@ export function FeedScreen() {
   const addPost = useAppStore((state) => state.addPost);
   const friendIds = useAppStore((state) => state.friendIds);
   const blockedIds = useAppStore((state) => state.blockedIds);
+  const localEvents = useAppStore((state) => state.localEvents);
+  const eventOverrides = useAppStore((state) => state.eventOverrides);
+  const now = useServerNow();
   const addReport = useAppStore((state) => state.addReport);
   const blockPerson = useAppStore((state) => state.blockPerson);
   const showToast = useToastStore((state) => state.show);
@@ -46,9 +52,19 @@ export function FeedScreen() {
   const [safetyId, setSafetyId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<Record<string, boolean>>({});
 
+  const catalog = useMemo(() => assembleEvents(localEvents, eventOverrides), [eventOverrides, localEvents]);
+  const listedIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const event of catalog) {
+      if (isPubliclyListed(toSchedule(event), now)) ids.add(event.id);
+    }
+    return ids;
+  }, [catalog, now]);
+
   const sample = useMemo(() => {
     return posts.filter((post) => {
-      const event = eventById(post.eventId);
+      if (!listedIds.has(post.eventId)) return false;
+      const event = catalog.find((item) => item.id === post.eventId);
       const venue = event ? venueById(event.venueId) : undefined;
       if (!event || !venue) return false;
       if (blockedIds.includes(post.authorId)) return false;
@@ -56,7 +72,7 @@ export function FeedScreen() {
       if (tab === 'friends' && !friendIds.includes(post.authorId)) return false;
       return true;
     });
-  }, [blockedIds, city, friendIds, tab]);
+  }, [blockedIds, catalog, city, friendIds, listedIds, tab]);
 
   const stories = sample.filter((post) => post.story);
   const story = stories.find((post) => post.id === storyId) ?? null;
@@ -114,7 +130,7 @@ export function FeedScreen() {
         ))}
         {sample.map((post) => {
           const author = personById(post.authorId);
-          const event = eventById(post.eventId);
+          const event = catalog.find((item) => item.id === post.eventId);
           const venue = event ? venueById(event.venueId) : undefined;
           return (
             <Pressable key={post.id} accessibilityRole="button" onPress={() => event && router.push(`/event/${event.id}`)}>

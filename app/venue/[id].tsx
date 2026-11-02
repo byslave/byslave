@@ -9,8 +9,12 @@ import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { ErrorState } from '@/src/components/ui/States';
-import { events, venueById } from '@/src/data/demo';
-import { formatClockRange, formatDayLabel } from '@/src/lib/format';
+import { venueById } from '@/src/data/demo';
+import { assembleEvents, toSchedule } from '@/src/features/events/catalog';
+import { isPubliclyListed } from '@/src/features/events/schedule';
+import { formatIstanbul } from '@/src/features/events/time';
+import { useServerNow } from '@/src/features/events/useServerNow';
+import { toHref } from '@/src/lib/nav';
 import { useAppStore } from '@/src/stores/appStore';
 import { colors } from '@/src/theme/tokens';
 
@@ -20,6 +24,9 @@ export default function VenueScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const customVenues = useAppStore((state) => state.customVenues);
+  const localEvents = useAppStore((state) => state.localEvents);
+  const eventOverrides = useAppStore((state) => state.eventOverrides);
+  const now = useServerNow();
   const listed = typeof id === 'string' ? venueById(id) : undefined;
   const custom = typeof id === 'string' ? customVenues.find((venue) => venue.id === id) : undefined;
   const venue = listed ?? custom;
@@ -32,7 +39,9 @@ export default function VenueScreen() {
     );
   }
 
-  const nights = events.filter((event) => event.venueId === venue.id);
+  const nights = assembleEvents(localEvents, eventOverrides).filter(
+    (event) => event.venueId === venue.id && isPubliclyListed(toSchedule(event), now),
+  );
 
   return (
     <ScrollView contentContainerStyle={[styles.screen, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28 }]}>
@@ -47,15 +56,16 @@ export default function VenueScreen() {
       </AppText>
       <AppText variant="label">{t('venue.about')}</AppText>
       <AppText variant="body">{custom?.rules ? custom.rules : t('event.rulesBody')}</AppText>
+      <Button label={t('venue.claim')} variant="secondary" onPress={() => router.push(toHref(`/claim?venue=${venue.id}`))} />
       <AppText variant="label">{t('venue.events')}</AppText>
       {nights.length === 0 ? <AppText variant="muted">{t('venue.empty')}</AppText> : null}
       {nights.map((event) => (
         <Card key={event.id} style={styles.card}>
           <AppText variant="heading">{event.title}</AppText>
           <AppText variant="muted">
-            {formatDayLabel(event.date, i18n.language)} · {formatClockRange(event.startTime, event.endTime)} · {t('event.age', { count: event.ageLimit })}
+            {formatIstanbul(new Date(event.startAt), i18n.language)} · {t('event.age', { count: event.ageLimit })}
           </AppText>
-          <Button label={t('map.viewEvent')} variant="secondary" onPress={() => router.push(`/event/${event.id}`)} />
+          <Button label={t('map.viewEvent')} variant="secondary" onPress={() => router.push(toHref(`/event/${event.id}`))} />
         </Card>
       ))}
     </ScrollView>

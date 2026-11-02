@@ -20,6 +20,7 @@ export default function NotificationsScreen() {
   const notifyEvents = useAppStore((state) => state.notifyEvents);
   const notifyWaves = useAppStore((state) => state.notifyWaves);
   const setNotify = useAppStore((state) => state.setNotify);
+  const inbox = useAppStore((state) => state.inbox);
 
   return (
     <ScrollView contentContainerStyle={[styles.screen, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 24 }]}>
@@ -33,6 +34,11 @@ export default function NotificationsScreen() {
         <Chip label={t('inbox.events')} selected={notifyEvents} onPress={() => setNotify('notifyEvents', !notifyEvents)} />
         <Chip label={t('inbox.waves')} selected={notifyWaves} onPress={() => setNotify('notifyWaves', !notifyWaves)} />
       </View>
+      {inbox.map((item) => (
+        <Card key={item.id} style={styles.card}>
+          <AppText variant="body">{t(item.kind === 'cancelled' ? 'inbox.cancelled' : 'inbox.postponed', { title: item.title })}</AppText>
+        </Card>
+      ))}
       <EmptyState title={t('inbox.emptyTitle')} body={t('inbox.emptyBody')} />
       <Badge label={t('inbox.sample')} tone="accent" />
       <Card style={styles.card}>

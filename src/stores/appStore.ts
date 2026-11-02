@@ -3,6 +3,9 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { CityId, Genre, VenueType } from '@/src/data/demo';
+import type { EventOverride, InboxItem, ModerationEntry, OrganizerApplication, PulseEvent, VenueClaim } from '@/src/features/events/model';
+import { expireIfEnded } from '@/src/features/events/schedule';
+import { applyReport } from '@/src/features/events/verification';
 
 export type PrivacyMode = 'public' | 'friends' | 'ghost';
 export type LanguageCode = 'tr' | 'en';
@@ -81,6 +84,14 @@ interface AppState {
   notifyWaves: boolean;
   seenRecordHint: boolean;
   finishedNights: NightRecord[];
+  accountCreatedAt: string | null;
+  localEvents: PulseEvent[];
+  eventOverrides: Record<string, EventOverride>;
+  organizer: OrganizerApplication | null;
+  venueClaims: VenueClaim[];
+  moderationLog: ModerationEntry[];
+  inbox: InboxItem[];
+  recordingEventId: string | null;
   setHydrated: (value: boolean) => void;
   setBirthDate: (birthDate: string) => void;
   completeOnboarding: (input: { birthDate: string; user: DemoUser }) => void;
@@ -102,6 +113,18 @@ interface AppState {
   setNotify: (key: 'notifyFriends' | 'notifyEvents' | 'notifyWaves', value: boolean) => void;
   markRecordHint: () => void;
   addFinishedNight: (record: NightRecord) => void;
+  addLocalEvent: (event: PulseEvent) => void;
+  reportEvent: (eventId: string, reporterId: string) => { held: boolean };
+  moderateEvent: (input: { eventId: string; actorId: string; action: 'approve' | 'reject' | 'hide'; reason: string }) => void;
+  submitOrganizer: (input: Omit<OrganizerApplication, 'status' | 'note'>) => void;
+  reviewOrganizer: (input: { actorId: string; status: 'approved' | 'rejected'; reason: string }) => void;
+  submitVenueClaim: (input: { venueId: string; contact: string }) => void;
+  reviewVenueClaim: (input: { claimId: string; actorId: string; status: 'approved' | 'rejected'; reason: string }) => void;
+  cancelOwnedEvent: (eventId: string) => PulseEvent | null;
+  postponeOwnedEvent: (event: PulseEvent) => void;
+  expireDue: (now: Date) => void;
+  pushInbox: (item: Omit<InboxItem, 'id' | 'at'>) => void;
+  setRecording: (eventId: string | null) => void;
   signOut: () => void;
   deleteAccount: () => void;
 }
@@ -125,6 +148,14 @@ const emptyPersonal = {
   blockedIds: [] as string[],
   consents: {} as Partial<Record<ConsentKind, ConsentRecord>>,
   finishedNights: [] as NightRecord[],
+  accountCreatedAt: null as string | null,
+  localEvents: [] as PulseEvent[],
+  eventOverrides: {} as Record<string, EventOverride>,
+  organizer: null as OrganizerApplication | null,
+  venueClaims: [] as VenueClaim[],
+  moderationLog: [] as ModerationEntry[],
+  inbox: [] as InboxItem[],
+  recordingEventId: null as string | null,
 };
 
 export const useAppStore = create<AppState>()(
@@ -141,7 +172,15 @@ export const useAppStore = create<AppState>()(
       setHydrated: (value) => set({ hydrated: value }),
       setBirthDate: (birthDate: string) => set({ birthDate }),
       completeOnboarding: ({ birthDate, user }) =>
-        set({ onboarded: true, birthDate, user, profileReady: false, privacy: 'friends', privacyOnServer: false }),
+        set({
+          onboarded: true,
+          birthDate,
+          user,
+          profileReady: false,
+          privacy: 'friends',
+          privacyOnServer: false,
+          accountCreatedAt: get().accountCreatedAt ?? new Date().toISOString(),
+        }),
       finishSetup: ({ displayName, username, bio, avatarDataUrl }) =>
         set({ profileReady: true, displayName, username, bio, avatarDataUrl }),
       setAvatar: (avatarDataUrl) => set({ avatarDataUrl }),
@@ -195,6 +234,117 @@ export const useAppStore = create<AppState>()(
       setNotify: (key, value) => set({ [key]: value }),
       markRecordHint: () => set({ seenRecordHint: true }),
       addFinishedNight: (record) => set({ finishedNights: [record, ...get().finishedNights] }),
+      addLocalEvent: (event) => set({ localEvents: [event, ...get().localEvents] }),
+      reportEvent: (eventId, reporterId) => {
+        const local = get().localEvents.find((event) => event.id === eventId);
+        if (local) {
+          const next = applyReport({ reporters: local.reporters, reporterId, verification: local.verificationStatus });
+          set({
+            localEvents: get().localEvents.map((event) =>
+              event.id === eventId ? { ...event, reporters: next.reporters, verificationStatus: next.verification, held: next.held } : event,
+            ),
+          });
+          return { held: next.held };
+        }
+        const current = get().eventOverrides[eventId] ?? { reporters: [], held: false };
+        const next = applyReport({
+          reporters: current.reporters,
+          reporterId,
+          verification: current.verificationStatus ?? 'unverified',
+        });
+        set({
+          eventOverrides: {
+            ...get().eventOverrides,
+            [eventId]: { ...current, reporters: next.reporters, verificationStatus: next.verification, held: next.held },
+          },
+        });
+        return { held: next.held };
+      },
+      moderateEvent: ({ eventId, actorId, action, reason }) => {
+        const at = new Date().toISOString();
+        const entry: ModerationEntry = { id: `mod-${Date.now()}`, at, actorId, action, targetId: eventId, reason };
+        const local = get().localEvents.find((event) => event.id === eventId);
+        const patch =
+          action === 'approve'
+            ? { verificationStatus: 'verified' as const, held: false, verifiedAt: at, verifiedBy: actorId, verificationNote: reason }
+            : action === 'reject'
+              ? { verificationStatus: 'rejected' as const, held: true, verificationNote: reason }
+              : { verificationStatus: 'pending' as const, held: true, verificationNote: reason };
+        if (local) {
+          set({
+            localEvents: get().localEvents.map((event) => (event.id === eventId ? { ...event, ...patch } : event)),
+            moderationLog: [entry, ...get().moderationLog],
+          });
+          return;
+        }
+        const current = get().eventOverrides[eventId] ?? { reporters: [], held: false };
+        set({
+          eventOverrides: { ...get().eventOverrides, [eventId]: { ...current, ...patch } },
+          moderationLog: [entry, ...get().moderationLog],
+        });
+      },
+      submitOrganizer: (input) => set({ organizer: { ...input, status: 'pending', note: '' } }),
+      reviewOrganizer: ({ actorId, status, reason }) => {
+        const current = get().organizer;
+        if (!current) return;
+        const entry: ModerationEntry = {
+          id: `mod-${Date.now()}`,
+          at: new Date().toISOString(),
+          actorId,
+          action: status === 'approved' ? 'approve-organizer' : 'reject-organizer',
+          targetId: current.email,
+          reason,
+        };
+        set({ organizer: { ...current, status, note: reason }, moderationLog: [entry, ...get().moderationLog] });
+      },
+      submitVenueClaim: ({ venueId, contact }) =>
+        set({
+          venueClaims: [{ id: `claim-${Date.now()}`, venueId, contact, status: 'pending', note: '' }, ...get().venueClaims],
+        }),
+      reviewVenueClaim: ({ claimId, actorId, status, reason }) => {
+        const entry: ModerationEntry = {
+          id: `mod-${Date.now()}`,
+          at: new Date().toISOString(),
+          actorId,
+          action: status === 'approved' ? 'approve-claim' : 'reject-claim',
+          targetId: claimId,
+          reason,
+        };
+        set({
+          venueClaims: get().venueClaims.map((claim) => (claim.id === claimId ? { ...claim, status, note: reason } : claim)),
+          moderationLog: [entry, ...get().moderationLog],
+        });
+      },
+      cancelOwnedEvent: (eventId) => {
+        const event = get().localEvents.find((item) => item.id === eventId);
+        if (!event) return null;
+        const next = { ...event, status: 'cancelled' as const };
+        set({ localEvents: get().localEvents.map((item) => (item.id === eventId ? next : item)) });
+        return next;
+      },
+      postponeOwnedEvent: (event) => set({ localEvents: get().localEvents.map((item) => (item.id === event.id ? event : item)) }),
+      expireDue: (now) => {
+        let changed = false;
+        const localEvents = get().localEvents.map((event) => {
+          const next = expireIfEnded(
+            {
+              status: event.status,
+              startAt: event.startAt,
+              endAt: event.endAt,
+              sessions: event.sessions,
+              verificationStatus: event.verificationStatus,
+              held: event.held,
+            },
+            now,
+          );
+          if (next.status === event.status) return event;
+          changed = true;
+          return { ...event, status: next.status };
+        });
+        if (changed) set({ localEvents });
+      },
+      pushInbox: (item) => set({ inbox: [{ ...item, id: `note-${Date.now()}`, at: new Date().toISOString() }, ...get().inbox] }),
+      setRecording: (eventId) => set({ recordingEventId: eventId }),
       signOut: () => set({ onboarded: false, user: null }),
       deleteAccount: () =>
         set({
@@ -231,6 +381,14 @@ export const useAppStore = create<AppState>()(
         notifyWaves: state.notifyWaves,
         seenRecordHint: state.seenRecordHint,
         finishedNights: state.finishedNights,
+        accountCreatedAt: state.accountCreatedAt,
+        localEvents: state.localEvents,
+        eventOverrides: state.eventOverrides,
+        organizer: state.organizer,
+        venueClaims: state.venueClaims,
+        moderationLog: state.moderationLog,
+        inbox: state.inbox,
+        recordingEventId: state.recordingEventId,
       }),
     },
   ),

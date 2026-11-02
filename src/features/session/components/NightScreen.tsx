@@ -12,8 +12,10 @@ import { OfflineBanner } from '@/src/components/ui/OfflineBanner';
 import { StatBlock } from '@/src/components/ui/StatBlock';
 import { NightChart } from '@/src/features/session/components/NightChart';
 import { downloadNightStory } from '@/src/features/session/storyCard';
-import { eventById, sampleNight, venueById } from '@/src/data/demo';
+import { sampleNight, venueById } from '@/src/data/demo';
+import { findPulseEvent } from '@/src/features/events/catalog';
 import { formatDayLabel, formatNumber } from '@/src/lib/format';
+import { useAppStore } from '@/src/stores/appStore';
 import { toHref } from '@/src/lib/nav';
 import { shareText } from '@/src/lib/shareText';
 import { useToastStore } from '@/src/stores/toastStore';
@@ -31,8 +33,12 @@ export function NightScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const showToast = useToastStore((state) => state.show);
+  const recordingEventId = useAppStore((state) => state.recordingEventId);
+  const localEvents = useAppStore((state) => state.localEvents);
+  const eventOverrides = useAppStore((state) => state.eventOverrides);
   const [open, setOpen] = useState(false);
-  const event = eventById(sampleNight.eventId);
+  const event = findPulseEvent(sampleNight.eventId, localEvents, eventOverrides);
+  const recording = recordingEventId ? findPulseEvent(recordingEventId, localEvents, eventOverrides) : undefined;
   const venue = event ? venueById(event.venueId) : undefined;
   const hours = Math.floor(sampleNight.minutes / 60);
   const minutes = sampleNight.minutes % 60;
@@ -78,6 +84,13 @@ export function NightScreen() {
       <AppText variant="muted">{event ? formatDayLabel(event.date, i18n.language) : ''}</AppText>
       <AppText variant="display">{t('night.title')}</AppText>
       <Button label={t('night.startRecord')} onPress={() => router.push(toHref('/session'))} />
+      {recording ? (
+        <Card style={styles.card}>
+          <AppText variant="heading">{recording.title}</AppText>
+          <AppText variant="muted">{t('night.recordingOpen')}</AppText>
+          <Button label={t('map.viewEvent')} variant="secondary" onPress={() => router.push(toHref(`/event/${recording.id}`))} />
+        </Card>
+      ) : null}
       <Card style={styles.card}>
         <View style={styles.cardHead}>
           <View style={styles.cardTitles}>

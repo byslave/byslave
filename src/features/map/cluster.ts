@@ -4,6 +4,7 @@ export interface MapPin {
   lat: number;
   label: string;
   count: number;
+  hollow?: boolean;
 }
 
 export interface ClusterGroup {
@@ -13,6 +14,7 @@ export interface ClusterGroup {
   count: number;
   label: string;
   pinIds: string[];
+  hollow?: boolean;
 }
 
 export function clusterPins(pins: MapPin[], zoom: number): ClusterGroup[] {
@@ -24,6 +26,7 @@ export function clusterPins(pins: MapPin[], zoom: number): ClusterGroup[] {
       count: pin.count,
       label: pin.label,
       pinIds: [pin.id],
+      hollow: pin.hollow === true,
     }));
   }
 
@@ -55,6 +58,7 @@ export function clusterPins(pins: MapPin[], zoom: number): ClusterGroup[] {
       count,
       label: list.length === 1 ? list[0].label : '',
       pinIds,
+      hollow: list.length === 1 && list[0].hollow === true,
     });
   }
   return groups;

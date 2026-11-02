@@ -41,6 +41,8 @@ const pinCss = `
     box-shadow: 0 0 0 4px rgba(217,204,255,0.18);
   }
   button.pin.is-selected .wave { background: #1A1230; box-shadow: none; }
+  button.pin.is-hollow { background: rgba(18,14,28,0.55); color: #A79FB4; box-shadow: 0 0 0 1px rgba(217,204,255,0.35); }
+  button.pin.is-hollow .wave { background: transparent; box-shadow: inset 0 0 0 2px rgba(217,204,255,0.75); }
   @media (prefers-reduced-motion: reduce) { button.pin { transition: none; } }
 `;
 
@@ -68,7 +70,7 @@ function rasterDocument(payload: string): string {
   function clusterPins(pins, zoom) {
     if (zoom >= 11 || pins.length === 0) {
       return pins.map(function (pin) {
-        return { id: pin.id, lng: pin.lng, lat: pin.lat, count: pin.count, label: pin.label, pinIds: [pin.id] };
+        return { id: pin.id, lng: pin.lng, lat: pin.lat, count: pin.count, label: pin.label, pinIds: [pin.id], hollow: !!pin.hollow };
       });
     }
     var cell = zoom >= 9.5 ? 0.22 : 0.7;
@@ -88,7 +90,8 @@ function rasterDocument(payload: string): string {
         lat: lat / list.length,
         count: count,
         label: list.length === 1 ? list[0].label : '',
-        pinIds: pinIds
+        pinIds: pinIds,
+        hollow: list.length === 1 && !!list[0].hollow
       };
     });
   }
@@ -175,7 +178,7 @@ function rasterDocument(payload: string): string {
       var point = screenPoint({ lng: group.lng, lat: group.lat }, view, view.zoom, width, height);
       var button = document.createElement('button');
       button.type = 'button';
-      button.className = 'pin' + (clustered ? ' is-cluster' : '') + (!clustered && group.id === selectedId ? ' is-selected' : '');
+      button.className = 'pin' + (clustered ? ' is-cluster' : '') + (!clustered && group.hollow ? ' is-hollow' : '') + (!clustered && group.id === selectedId ? ' is-selected' : '');
       button.innerHTML = clustered
         ? '<span class="count">' + group.count + '</span><span>' + group.pinIds.length + ' ' + escapeHtml(boot.clusterWord) + '</span>'
         : '<span class="wave"></span><span>' + escapeHtml(group.label) + '</span><span class="count">' + group.count + '</span>';
@@ -305,7 +308,7 @@ function mapboxDocument(payload: string): string {
   function clusterPins(pins, zoom) {
     if (zoom >= 11 || pins.length === 0) {
       return pins.map(function (pin) {
-        return { id: pin.id, lng: pin.lng, lat: pin.lat, count: pin.count, label: pin.label, pinIds: [pin.id] };
+        return { id: pin.id, lng: pin.lng, lat: pin.lat, count: pin.count, label: pin.label, pinIds: [pin.id], hollow: !!pin.hollow };
       });
     }
     var cell = zoom >= 9.5 ? 0.22 : 0.7;
@@ -325,7 +328,8 @@ function mapboxDocument(payload: string): string {
         lat: lat / list.length,
         count: count,
         label: list.length === 1 ? list[0].label : '',
-        pinIds: pinIds
+        pinIds: pinIds,
+        hollow: list.length === 1 && !!list[0].hollow
       };
     });
   }
@@ -358,7 +362,7 @@ function mapboxDocument(payload: string): string {
       var clustered = group.pinIds.length > 1;
       var button = document.createElement('button');
       button.type = 'button';
-      button.className = 'pin' + (clustered ? ' is-cluster' : '') + (!clustered && group.id === selectedId ? ' is-selected' : '');
+      button.className = 'pin' + (clustered ? ' is-cluster' : '') + (!clustered && group.hollow ? ' is-hollow' : '') + (!clustered && group.id === selectedId ? ' is-selected' : '');
       button.innerHTML = clustered
         ? '<span class="count">' + group.count + '</span><span>' + group.pinIds.length + ' ' + escapeHtml(boot.clusterWord) + '</span>'
         : '<span class="wave"></span><span>' + escapeHtml(group.label) + '</span><span class="count">' + group.count + '</span>';

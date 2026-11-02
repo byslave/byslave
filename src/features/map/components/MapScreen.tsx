@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Location from 'expo-location';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, ChevronDown, LocateFixed, Plus, Search } from 'lucide-react-native';
@@ -19,9 +19,13 @@ import { EmptyState, ErrorState } from '@/src/components/ui/States';
 import { AddVenueSheet } from '@/src/features/map/components/AddVenueSheet';
 import { PulseMap, type PulseMapHandle } from '@/src/features/map/components/PulseMap';
 import { confirmedCount } from '@/src/features/attendance/count';
-import { activeDateISO, eventMatchesDate, nearestEventDate, upcomingDates, type DateFilter } from '@/src/features/events/dates';
-import { cities, events, personById, venueById, venues, type CityId, type Genre } from '@/src/data/demo';
-import { formatClockRange, formatDayLabel, formatNumber } from '@/src/lib/format';
+import { assembleEvents, matchesListing, nextListedDate } from '@/src/features/events/catalog';
+import { type DateFilter } from '@/src/features/events/dates';
+import { nightPhase } from '@/src/features/events/schedule';
+import { formatIstanbul, istanbulDateISO, upcomingIstanbulDates } from '@/src/features/events/time';
+import { useServerNow } from '@/src/features/events/useServerNow';
+import { cities, personById, venueById, venues, type CityId, type Genre } from '@/src/data/demo';
+import { formatDayLabel, formatNumber } from '@/src/lib/format';
 import { toHref } from '@/src/lib/nav';
 import { mapStyleUrl } from '@/src/lib/supabase/client';
 import { useAppStore, useAttendanceStore } from '@/src/stores/appStore';
@@ -38,6 +42,10 @@ export function MapScreen() {
   const city = useAppStore((state) => state.city);
   const setCity = useAppStore((state) => state.setCity);
   const customVenues = useAppStore((state) => state.customVenues);
+  const localEvents = useAppStore((state) => state.localEvents);
+  const eventOverrides = useAppStore((state) => state.eventOverrides);
+  const expireDue = useAppStore((state) => state.expireDue);
+  const now = useServerNow();
   const locationConsent = useAppStore((state) => state.consents.location?.granted);
   const setConsent = useAppStore((state) => state.setConsent);
   const attendance = useAttendanceStore((state) => state.byEvent);
@@ -56,13 +64,19 @@ export function MapScreen() {
   const [pan, setPan] = useState<{ city: CityId; lng: number; lat: number; zoom: number } | null>(null);
   const mapView = pan?.city === city ? pan : cities[city];
 
+  const catalog = useMemo(() => assembleEvents(localEvents, eventOverrides), [eventOverrides, localEvents]);
+
+  useEffect(() => {
+    expireDue(now);
+  }, [expireDue, now]);
+
   const filtered = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase(i18n.language);
-    return events
+    return catalog
       .map((event) => ({ event, venue: venueById(event.venueId) }))
-      .filter((row): row is { event: (typeof events)[number]; venue: NonNullable<ReturnType<typeof venueById>> } => Boolean(row.venue))
+      .filter((row): row is { event: (typeof catalog)[number]; venue: NonNullable<ReturnType<typeof venueById>> } => Boolean(row.venue))
       .filter((row) => row.venue.city === city)
-      .filter((row) => eventMatchesDate(row.event.date, dateFilter, new Date()))
+      .filter((row) => matchesListing(row.event, dateFilter, now))
       .filter((row) => genres.length === 0 || row.event.genres.some((genre) => genres.includes(genre)))
       .filter((row) => {
         if (!needle) return true;
@@ -71,7 +85,7 @@ export function MapScreen() {
           .toLocaleLowerCase(i18n.language);
         return haystack.includes(needle);
       });
-  }, [city, dateFilter, genres, i18n.language, search]);
+  }, [catalog, city, dateFilter, genres, i18n.language, now, search]);
 
   const pending = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase(i18n.language);
@@ -83,8 +97,8 @@ export function MapScreen() {
 
   const cityVenues = useMemo(() => venues.filter((venue) => venue.city === city), [city]);
   const nearest = useMemo(
-    () => nearestEventDate(events.filter((event) => venueById(event.venueId)?.city === city).map((event) => event.date), new Date()),
-    [city],
+    () => nextListedDate(catalog.filter((event) => venueById(event.venueId)?.city === city), now),
+    [catalog, city, now],
   );
   const selectedPending = pending.find((venue) => venue.id === selectedId) ?? null;
   const selected = selectedPending ? null : (filtered.find((row) => row.venue.id === selectedId) ?? filtered[0] ?? null);
@@ -102,7 +116,7 @@ export function MapScreen() {
     const place = pendingPlace ?? eventPlace ?? listed;
     if (place) mapRef.current?.recenter(place.lng, place.lat, 15);
   }
-  const dateLabel = formatDayLabel(activeDateISO(dateFilter, new Date()), i18n.language);
+  const dateLabel = formatDayLabel(dateFilter.kind === 'day' ? dateFilter.iso : istanbulDateISO(now), i18n.language);
 
   async function locate() {
     if (locationConsent === false) {
@@ -145,6 +159,7 @@ export function MapScreen() {
               lat: row.venue.lat,
               label: row.venue.name,
               count: row.event ? confirmedCount(row.event.going, attendance[row.event.id] ?? null) : 0,
+              hollow: row.event?.verificationStatus === 'unverified',
             })),
             ...pending.map((venue) => ({
               id: venue.id,
@@ -243,6 +258,12 @@ export function MapScreen() {
           <Card>
             <View style={styles.cardTop}>
               <Badge label={selected.event.genres.map((genre) => t(`genres.${genre}`)).join(' · ')} tone="accent" />
+              <Badge
+                label={selected.event.verificationStatus === 'verified' ? t('event.verified') : t('event.unverified')}
+                tone={selected.event.verificationStatus === 'verified' ? 'success' : 'neutral'}
+              />
+              {nightPhase(new Date(selected.event.startAt), new Date(selected.event.endAt), now) === 'soon' ? <Badge label={t('event.soon')} tone="accent" /> : null}
+              {nightPhase(new Date(selected.event.startAt), new Date(selected.event.endAt), now) === 'live' ? <Badge label={t('event.live')} tone="success" /> : null}
             </View>
             <AppText variant="heading">{selected.event.title}</AppText>
             <AppText variant="muted">
@@ -250,7 +271,7 @@ export function MapScreen() {
               {selected.venue.street ? ` · ${selected.venue.street}` : ''}
             </AppText>
             <AppText variant="muted">
-              {formatDayLabel(selected.event.date, i18n.language)} · {formatClockRange(selected.event.startTime, selected.event.endTime)}
+              {formatIstanbul(new Date(selected.event.startAt), i18n.language)} – {formatIstanbul(new Date(selected.event.endAt), i18n.language)}
             </AppText>
             <View style={styles.counts}>
               <AppText variant="bodyMedium">
@@ -287,6 +308,7 @@ export function MapScreen() {
                 <Button label={t('map.openVenue')} variant="secondary" onPress={() => router.push(toHref(`/venue/${fallbackVenue.id}`))} />
               </View>
             ) : null}
+            <Button label={t('verify.add')} variant="secondary" onPress={() => router.push(toHref('/event/new'))} />
             <EmptyState
               title={t('map.emptyTitle')}
               body={t('map.emptyBody')}
@@ -320,7 +342,7 @@ export function MapScreen() {
       <BottomSheet visible={dateOpen} title={t('map.dateTitle')} onClose={() => setDateOpen(false)}>
         <Chip label={t('map.tonight')} selected={dateFilter.kind === 'tonight'} onPress={() => { setDateFilter({ kind: 'tonight' }); setDateOpen(false); }} />
         <Chip label={t('map.weekend')} selected={dateFilter.kind === 'weekend'} onPress={() => { setDateFilter({ kind: 'weekend' }); setDateOpen(false); }} />
-        {upcomingDates(new Date(), 7).map((iso) => (
+        {upcomingIstanbulDates(now, 7).map((iso) => (
           <Chip
             key={iso}
             label={formatDayLabel(iso, i18n.language)}
@@ -391,7 +413,7 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   loadingBar: { height: 3, borderRadius: 2, backgroundColor: colors.accentDeep },
-  cardTop: { marginBottom: 8 },
+  cardTop: { marginBottom: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   counts: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
   cardFooter: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 14 },
   mutuals: { flex: 1, gap: 6 },

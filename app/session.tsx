@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react-native';
@@ -19,6 +19,8 @@ export default function SessionScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addFinishedNight = useAppStore((state) => state.addFinishedNight);
+  const setRecording = useAppStore((state) => state.setRecording);
+  const params = useLocalSearchParams<{ event?: string }>();
   const setConsent = useAppStore((state) => state.setConsent);
   const [running, setRunning] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -112,6 +114,7 @@ export default function SessionScreen() {
       }
     }
     if (!startedAt.current) startedAt.current = new Date().toISOString();
+    if (typeof params.event === 'string') setRecording(params.event);
     const stamp = Date.now();
     anchorRef.current = stamp;
     setAnchor(stamp);
@@ -136,6 +139,7 @@ export default function SessionScreen() {
     anchorRef.current = null;
     setAnchor(null);
     setDone(true);
+    setRecording(null);
     if (wakeLock.current) {
       await wakeLock.current.release().catch(() => undefined);
       wakeLock.current = null;
