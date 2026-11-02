@@ -274,7 +274,7 @@ const tr = {
     email: 'E-posta',
     magic: 'Giriş bağlantısı gönder',
     magicSent: 'Bağlantıyı {{email}} adresine gönderdik. Gelen kutunu ve gerekirse spam klasörünü kontrol et.',
-    magicMissing: 'Şu an bağlantı gönderemiyoruz. İnternetini kontrol et ya da önce göz at.',
+    magicMissing: 'Giriş bağlantısını şu an gönderemiyoruz. Bu e-postayla içeri alıyoruz.',
     magicError: 'Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.',
     resend: 'Tekrar gönder',
     resendWait: 'Tekrar gönder ({{seconds}})',

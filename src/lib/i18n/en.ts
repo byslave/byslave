@@ -275,7 +275,7 @@ const en: Messages = {
     email: 'Email',
     magic: 'Send sign-in link',
     magicSent: 'We sent the link to {{email}}. Check your inbox, and spam if you need to.',
-    magicMissing: 'We can’t send a link right now. Check your internet, or look around first.',
+    magicMissing: 'We can’t send a sign-in link right now. We’re letting you in with this email.',
     magicError: 'Couldn’t connect. Check your internet and try again.',
     resend: 'Resend',
     resendWait: 'Resend ({{seconds}})',

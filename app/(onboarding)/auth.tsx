@@ -34,12 +34,12 @@ export default function AuthScreen() {
     return () => clearTimeout(timer);
   }, [seconds]);
 
-  function lookAround() {
-    const parsed = emailSchema.safeParse(email);
+  function continueLocally(nextEmail: string) {
     completeOnboarding({
       birthDate: birthDate ?? '2000-01-01',
-      user: { id: `local-${Date.now()}`, email: parsed.success ? parsed.data : '' },
+      user: { id: `local-${Date.now()}`, email: nextEmail },
     });
+    router.replace(toHref('/setup'));
   }
 
   async function sendLink() {
@@ -56,8 +56,13 @@ export default function AuthScreen() {
       setSeconds(60);
       return;
     }
+    if (result === 'demo') {
+      showToast(t('onboarding.magicMissing'));
+      continueLocally(parsed.data);
+      return;
+    }
     setSentTo(null);
-    setMessage(result === 'demo' ? t('onboarding.magicMissing') : t('onboarding.magicError'));
+    setMessage(t('onboarding.magicError'));
   }
 
   async function provider(kind: 'google' | 'apple') {
@@ -94,7 +99,11 @@ export default function AuthScreen() {
       />
       <Button label={t('onboarding.oauthGoogle')} variant="secondary" onPress={() => void provider('google')} />
       <Button label={t('onboarding.oauthApple')} variant="secondary" onPress={() => void provider('apple')} />
-      <Button label={t('onboarding.browse')} variant="ghost" onPress={lookAround} />
+      <Button
+        label={t('onboarding.browse')}
+        variant="ghost"
+        onPress={() => continueLocally(emailSchema.safeParse(email).success ? email.trim() : '')}
+      />
       <AppText variant="muted">
         {t('onboarding.legalLead')}
         <Text style={styles.link} accessibilityRole="link" onPress={() => router.push(toHref('/legal/terms'))}>

@@ -35,7 +35,7 @@ function SessionGate() {
       router.replace(birthDate ? '/(onboarding)/auth' : '/(onboarding)/welcome');
       return;
     }
-    if (onboarded && profileReady === false && !pathname.startsWith('/setup') && group !== '(onboarding)') {
+    if (onboarded && profileReady === false && !pathname.startsWith('/setup')) {
       router.replace(toHref('/setup'));
       return;
     }

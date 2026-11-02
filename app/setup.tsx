@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -7,6 +8,7 @@ import { AppText } from '@/src/components/ui/AppText';
 import { Avatar } from '@/src/components/ui/Avatar';
 import { Button } from '@/src/components/ui/Button';
 import { stripPhotoFile } from '@/src/features/photos/stripExif';
+import { toHref } from '@/src/lib/nav';
 import { useAppStore } from '@/src/stores/appStore';
 import { useToastStore } from '@/src/stores/toastStore';
 import { colors, fonts, radii } from '@/src/theme/tokens';
@@ -15,15 +17,18 @@ const usernamePattern = /^[a-z0-9_]{3,20}$/i;
 
 export default function SetupScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const showToast = useToastStore((state) => state.show);
   const currentName = useAppStore((state) => state.displayName);
   const currentUser = useAppStore((state) => state.username);
   const currentBio = useAppStore((state) => state.bio);
+  const email = useAppStore((state) => state.user?.email ?? '');
+  const suggested = email.split('@')[0]?.replace(/[^a-z0-9_]/gi, '').slice(0, 20) ?? '';
   const avatarDataUrl = useAppStore((state) => state.avatarDataUrl);
   const finishSetup = useAppStore((state) => state.finishSetup);
   const [name, setName] = useState(currentName);
-  const [username, setUsername] = useState(currentUser);
+  const [username, setUsername] = useState(currentUser || suggested);
   const [bio, setBio] = useState(currentBio);
   const [photo, setPhoto] = useState<string | null>(avatarDataUrl);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +65,7 @@ export default function SetupScreen() {
       bio: bio.trim(),
       avatarDataUrl: photo,
     });
+    router.replace(toHref('/(tabs)'));
   }
 
   return (
