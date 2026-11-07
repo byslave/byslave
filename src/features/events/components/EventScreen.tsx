@@ -56,6 +56,7 @@ export function EventScreen() {
   const cancelOwnedEvent = useAppStore((state) => state.cancelOwnedEvent);
   const postponeOwnedEvent = useAppStore((state) => state.postponeOwnedEvent);
   const pushInbox = useAppStore((state) => state.pushInbox);
+  const requestMessage = useAppStore((state) => state.requestMessage);
   const shownPrivacy = visiblePrivacy({ privacy, privacyOnServer, userId: user?.id ?? null, serverConfigured: isSupabaseConfigured });
   const status = useAttendanceStore((state) => (event ? state.byEvent[event.id] : undefined));
   const setStatus = useAttendanceStore((state) => state.setStatus);
@@ -83,6 +84,7 @@ export function EventScreen() {
   const ticket = event.ticketUrl ? checkTicketUrl(event.ticketUrl) : null;
   const official = Boolean(ticket && ticket.ok && ticket.official);
   const owner = Boolean(user && event.createdBy === user.id);
+  const canAttend = event.status === 'scheduled' && event.verificationStatus === 'verified' && phase !== 'over';
   const when = `${formatIstanbul(new Date(event.startAt), i18n.language)} – ${formatIstanbul(new Date(event.endAt), i18n.language)}`;
 
   function notify(kind: 'cancelled' | 'postponed') {
@@ -141,6 +143,7 @@ export function EventScreen() {
             {phase === 'live' ? <Badge label={t('event.live')} tone="success" /> : null}
           </View>
           <AppText variant="display">{event.title}</AppText>
+          <AppText variant="bodyMedium">{event.concept || event.genres.map((genre) => t(`genres.${genre}`)).join(' · ')}</AppText>
           <AppText variant="muted">
             {venue.name} · {venue.district}
             {venue.street ? ` · ${venue.street}` : ''} · {t(`venueTypes.${venue.type}`)}
@@ -170,23 +173,25 @@ export function EventScreen() {
           <AppText variant="stat">
             {formatNumber(confirmedCount(event.going, status ?? null), i18n.language)} {t('map.going')}
           </AppText>
-          <View style={styles.actions}>
-            <Button
-              label={going ? t('event.goingDone') : t('event.going')}
-              onPress={() => {
-                setStatus(event.id, going ? null : 'going');
-                showToast(t('event.savedGoing'));
-              }}
-              style={styles.action}
-            />
-            <Button
-              label={interested ? t('event.interestedDone') : t('event.interested')}
-              variant="secondary"
-              onPress={() => setStatus(event.id, interested ? null : 'interested')}
-              style={styles.action}
-            />
-          </View>
-          {going ? <Button label={t('event.record')} variant="secondary" onPress={() => router.push(toHref(`/session?event=${event.id}`))} /> : null}
+          {canAttend ? (
+            <View style={styles.actions}>
+              <Button
+                label={going ? t('event.goingDone') : t('event.going')}
+                onPress={() => {
+                  setStatus(event.id, going ? null : 'going');
+                  showToast(t('event.savedGoing'));
+                }}
+                style={styles.action}
+              />
+              <Button
+                label={interested ? t('event.interestedDone') : t('event.interested')}
+                variant="secondary"
+                onPress={() => setStatus(event.id, interested ? null : 'interested')}
+                style={styles.action}
+              />
+            </View>
+          ) : null}
+          {canAttend && going ? <Button label={t('event.record')} variant="secondary" onPress={() => router.push(toHref(`/session?event=${event.id}`))} /> : null}
           {owner && event.status === 'scheduled' ? (
             <View style={styles.actions}>
               <Button
@@ -217,6 +222,7 @@ export function EventScreen() {
           ) : null}
           <AppText variant="label">{t('event.samplePeople')}</AppText>
           {event.sample ? <Badge label={t('event.sampleNote')} tone="accent" /> : null}
+          <AppText variant="muted">{t('messages.attendeeHint')}</AppText>
           {shownPrivacy === 'ghost' && (going || interested) ? <AppText variant="muted">{t('event.ghostNote')}</AppText> : null}
           <View style={styles.people}>
             {event.attendeeIds.map((attendeeId) => {
@@ -288,7 +294,24 @@ export function EventScreen() {
         {postponeError ? <AppText variant="muted">{postponeError}</AppText> : null}
         <Button label={t('event.postponeSave')} onPress={savePostpone} />
       </BottomSheet>
-      <BottomSheet visible={personId !== null} title={t('event.blockPerson')} onClose={() => setPersonId(null)}>
+      <BottomSheet visible={personId !== null} title={t('messages.personActions')} onClose={() => setPersonId(null)}>
+        <Chip
+          label={t('messages.request')}
+          onPress={() => {
+            if (!personId) return;
+            if (!canAttend) {
+              showToast(t('messages.eventUnavailable'));
+              return;
+            }
+            if (!going) {
+              showToast(t('messages.goingRequired'));
+              return;
+            }
+            const result = requestMessage({ recipientId: personId, eventId: event.id });
+            setPersonId(null);
+            showToast(t(`messages.${result}`));
+          }}
+        />
         <Chip
           label={t('common.report')}
           onPress={() => {

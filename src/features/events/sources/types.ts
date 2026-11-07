@@ -3,6 +3,7 @@ import type { EventSource, VerificationStatus } from '../verification';
 export interface ExternalEvent {
   externalId: string;
   title: string;
+  concept?: string;
   venueName: string;
   startAt: string;
   endAt: string;
@@ -17,6 +18,7 @@ export interface PulseEventDraft {
   sourceName: string;
   externalId: string;
   title: string;
+  concept: string;
   startAt: string;
   endAt: string;
   ticketUrl: string;

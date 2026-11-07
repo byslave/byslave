@@ -20,6 +20,7 @@ export function demoToPulse(event: DemoEvent): PulseEvent {
   const span = windowFromClocks(event.date, event.startTime, event.endTime);
   return {
     ...event,
+    concept: event.genres.join(' · '),
     endDate: istanbulDateISO(span.end),
     startAt: span.start.toISOString(),
     endAt: span.end.toISOString(),

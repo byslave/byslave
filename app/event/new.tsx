@@ -14,7 +14,7 @@ import type { ScheduleError } from '@/src/features/events/schedule';
 import { validateWindow } from '@/src/features/events/schedule';
 import { istanbulClock, istanbulDateISO } from '@/src/features/events/time';
 import { useServerNow } from '@/src/features/events/useServerNow';
-import { checkTicketUrl, initialVerification, isDuplicateSlot, ticketRequired, titlesTooSimilar, withinDailyCap } from '@/src/features/events/verification';
+import { checkTicketUrl, initialVerification, isDuplicateSlot, titlesTooSimilar, withinDailyCap } from '@/src/features/events/verification';
 import type { PulseEvent } from '@/src/features/events/model';
 import { useAppStore } from '@/src/stores/appStore';
 import { useToastStore } from '@/src/stores/toastStore';
@@ -41,6 +41,7 @@ export default function NewEventScreen() {
     [city, customVenues],
   );
   const [title, setTitle] = useState('');
+  const [concept, setConcept] = useState('');
   const [venueId, setVenueId] = useState(places[0]?.id ?? '');
   const [date, setDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -66,8 +67,8 @@ export default function NewEventScreen() {
 
   function save() {
     setError('');
-    if (!title.trim() || !venueId) {
-      fail('verify.needDate');
+    if (!title.trim() || !concept.trim() || !venueId) {
+      fail('verify.requiredDetails');
       return;
     }
     const main = validateWindow({
@@ -108,8 +109,7 @@ export default function NewEventScreen() {
       fail('verify.similar');
       return;
     }
-    const needsTicket = ticketRequired(verifiedHost, initialVerification(verifiedHost));
-    if (needsTicket && !ticket.trim()) {
+    if (!ticket.trim()) {
       fail('verify.ticketRequired');
       return;
     }
@@ -136,6 +136,7 @@ export default function NewEventScreen() {
       id: `evt-${Date.now()}`,
       venueId,
       title: title.trim(),
+      concept: concept.trim(),
       date: istanbulDateISO(start),
       endDate: istanbulDateISO(end),
       startTime: timeUnknown ? istanbulClock(start) : startTime,
@@ -196,6 +197,7 @@ export default function NewEventScreen() {
           setSimilarArmed(false);
         }}
       />
+      <Field label={t('verify.concept')} value={concept} onChange={setConcept} />
       <AppText variant="label">{t('verify.venue')}</AppText>
       <View style={styles.wrap}>
         {places.map((place) => (
@@ -238,7 +240,7 @@ export default function NewEventScreen() {
         </View>
       ) : null}
       {error ? <AppText variant="body">{error}</AppText> : null}
-      <Button label={t('common.save')} onPress={save} />
+      <Button label={t('verify.submit')} onPress={save} />
     </ScrollView>
   );
 }

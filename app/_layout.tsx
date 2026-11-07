@@ -73,12 +73,15 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="event/[id]" />
             <Stack.Screen name="event/new" />
+            <Stack.Screen name="event/submissions" />
             <Stack.Screen name="venue/[id]" />
             <Stack.Screen name="organizer" />
             <Stack.Screen name="claim" />
             <Stack.Screen name="admin" />
             <Stack.Screen name="session" />
             <Stack.Screen name="notifications" />
+            <Stack.Screen name="messages/index" />
+            <Stack.Screen name="messages/[id]" />
             <Stack.Screen name="friends" />
             <Stack.Screen name="setup" />
             <Stack.Screen name="help" />

@@ -3,7 +3,16 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { CityId, Genre, VenueType } from '@/src/data/demo';
-import type { EventOverride, InboxItem, ModerationEntry, OrganizerApplication, PulseEvent, VenueClaim } from '@/src/features/events/model';
+import type {
+  ChatMessage,
+  EventOverride,
+  InboxItem,
+  MessageRequest,
+  ModerationEntry,
+  OrganizerApplication,
+  PulseEvent,
+  VenueClaim,
+} from '@/src/features/events/model';
 import { expireIfEnded } from '@/src/features/events/schedule';
 import { applyReport } from '@/src/features/events/verification';
 
@@ -91,6 +100,8 @@ interface AppState {
   venueClaims: VenueClaim[];
   moderationLog: ModerationEntry[];
   inbox: InboxItem[];
+  messageRequests: MessageRequest[];
+  chatMessages: ChatMessage[];
   recordingEventId: string | null;
   setHydrated: (value: boolean) => void;
   setBirthDate: (birthDate: string) => void;
@@ -124,6 +135,9 @@ interface AppState {
   postponeOwnedEvent: (event: PulseEvent) => void;
   expireDue: (now: Date) => void;
   pushInbox: (item: Omit<InboxItem, 'id' | 'at'>) => void;
+  requestMessage: (input: { recipientId: string; eventId: string }) => 'sent' | 'duplicate' | 'blocked';
+  reviewMessageRequest: (requestId: string, status: 'accepted' | 'declined') => void;
+  sendChatMessage: (requestId: string, body: string) => boolean;
   setRecording: (eventId: string | null) => void;
   signOut: () => void;
   deleteAccount: () => void;
@@ -155,6 +169,8 @@ const emptyPersonal = {
   venueClaims: [] as VenueClaim[],
   moderationLog: [] as ModerationEntry[],
   inbox: [] as InboxItem[],
+  messageRequests: [] as MessageRequest[],
+  chatMessages: [] as ChatMessage[],
   recordingEventId: null as string | null,
 };
 
@@ -224,6 +240,7 @@ export const useAppStore = create<AppState>()(
         set({
           blockedIds: get().blockedIds.includes(id) ? get().blockedIds : [...get().blockedIds, id],
           friendIds: get().friendIds.filter((friend) => friend !== id),
+          messageRequests: get().messageRequests.filter((request) => request.senderId !== id && request.recipientId !== id),
         }),
       unblockPerson: (id) => set({ blockedIds: get().blockedIds.filter((item) => item !== id) }),
       addFriend: (id) => {
@@ -344,6 +361,46 @@ export const useAppStore = create<AppState>()(
         if (changed) set({ localEvents });
       },
       pushInbox: (item) => set({ inbox: [{ ...item, id: `note-${Date.now()}`, at: new Date().toISOString() }, ...get().inbox] }),
+      requestMessage: ({ recipientId, eventId }) => {
+        const senderId = get().user?.id;
+        if (!senderId || get().blockedIds.includes(recipientId)) return 'blocked';
+        const duplicate = get().messageRequests.some(
+          (request) =>
+            request.eventId === eventId &&
+            ((request.senderId === senderId && request.recipientId === recipientId) ||
+              (request.senderId === recipientId && request.recipientId === senderId)) &&
+            request.status !== 'declined',
+        );
+        if (duplicate) return 'duplicate';
+        const request: MessageRequest = {
+          id: `message-request-${Date.now()}`,
+          senderId,
+          recipientId,
+          eventId,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        };
+        set({ messageRequests: [request, ...get().messageRequests] });
+        return 'sent';
+      },
+      reviewMessageRequest: (requestId, status) =>
+        set({
+          messageRequests: get().messageRequests.map((request) => (request.id === requestId ? { ...request, status } : request)),
+        }),
+      sendChatMessage: (requestId, body) => {
+        const request = get().messageRequests.find((item) => item.id === requestId);
+        const senderId = get().user?.id;
+        const clean = body.trim();
+        if (!request || request.status !== 'accepted' || !senderId || !clean) return false;
+        if (get().blockedIds.includes(request.senderId) || get().blockedIds.includes(request.recipientId)) return false;
+        set({
+          chatMessages: [
+            { id: `message-${Date.now()}`, requestId, senderId, body: clean.slice(0, 1000), createdAt: new Date().toISOString() },
+            ...get().chatMessages,
+          ],
+        });
+        return true;
+      },
       setRecording: (eventId) => set({ recordingEventId: eventId }),
       signOut: () => set({ onboarded: false, user: null }),
       deleteAccount: () =>
@@ -388,6 +445,8 @@ export const useAppStore = create<AppState>()(
         venueClaims: state.venueClaims,
         moderationLog: state.moderationLog,
         inbox: state.inbox,
+        messageRequests: state.messageRequests,
+        chatMessages: state.chatMessages,
         recordingEventId: state.recordingEventId,
       }),
     },

@@ -7,6 +7,7 @@ Bu metin bir başvuru taslağıdır. Herkese açık bir sayfayı kazımayız. Et
 ## Sizden istediğimiz alanlar
 
 - Etkinlik adı
+- Etkinlik konsepti
 - Tarih ve saat (başlangıç ve bitiş; saat belli değilse bunu da işaretleyebileceğiniz bir alan)
 - Mekân adı ve adresi
 - Tür (müzik / gece türü)
@@ -38,6 +39,7 @@ This is an application draft. We do not scrape public pages. Event data is accep
 ## Fields we ask for
 
 - Event name
+- Event concept
 - Date and time (start and end; a flag when the hour is not set yet)
 - Venue name and address
 - Genre
