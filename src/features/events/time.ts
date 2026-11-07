@@ -198,11 +198,11 @@ export function activeSessions(event: Pick<Schedulable, 'startAt' | 'endAt' | 's
   return sessions.filter((session) => new Date(session.endAt).getTime() > now.getTime());
 }
 
-/** Map, feed, and search. Past, cancelled, rejected, and held nights stay out. */
+/** Map, feed, and search. Only a verified night can send someone somewhere. */
 export function isPubliclyListed(event: Schedulable, now: Date): boolean {
   if (event.held) return false;
   if (event.status !== 'scheduled') return false;
-  if (event.verificationStatus !== 'verified' && event.verificationStatus !== 'unverified') return false;
+  if (event.verificationStatus !== 'verified') return false;
   return activeSessions(event, now).length > 0;
 }
 

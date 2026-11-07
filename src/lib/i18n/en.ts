@@ -376,7 +376,7 @@ const en: Messages = {
   },
   verify: {
     add: 'Add your event',
-    addHint: 'Once the event is verified it is visible to everyone on the map. Until then it is published with an Unverified label.',
+    addHint: 'Only a verified event appears on the map. Until it is approved, nobody is sent to that night.',
     ticketHint: 'Add a ticket link and your event is verified faster.',
     duplicate: 'An event with these details already exists. Let’s not add the same night twice.',
     similar: 'This title is very close to another event. Tap save again if you still want to add it.',

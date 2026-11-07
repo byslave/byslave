@@ -8,8 +8,9 @@ export const REPORTS_BEFORE_HOLD = 3;
 export type VerificationStatus = 'verified' | 'pending' | 'unverified' | 'rejected';
 export type EventSource = 'official_feed' | 'organizer' | 'community';
 
+/** A new community night waits for review. A verified organiser is trusted. */
 export function initialVerification(organizerVerified: boolean): VerificationStatus {
-  return organizerVerified ? 'verified' : 'unverified';
+  return organizerVerified ? 'verified' : 'pending';
 }
 
 export function checkTicketUrl(value: string): { ok: true; official: boolean } | { ok: false; error: 'https' | 'shortener' | 'format' } {

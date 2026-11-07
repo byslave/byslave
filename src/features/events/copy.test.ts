@@ -7,7 +7,7 @@ const en = readFileSync(new URL('../../lib/i18n/en.ts', import.meta.url), 'utf8'
 
 const turkish = [
   'Etkinliğini ekle',
-  "Etkinlik doğrulanınca haritada herkese görünür. Doğrulanana kadar 'Doğrulanmadı' etiketiyle yayınlanır.",
+  'Haritaya yalnızca doğrulanmış etkinlik çıkar. Onaylanmadan kimse yanlış bir geceye yönlendirilmez.',
   'Bilet linkini eklersen etkinliğin daha hızlı doğrulanır.',
   'Bu etkinlikte bir sorun mu var? Bize bildir.',
   'Teşekkürler, bildirimini aldık. İnceleyeceğiz.',

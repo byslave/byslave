@@ -101,13 +101,13 @@ test('the same venue and start cannot be saved twice', () => {
   assert.equal(titlesTooSimilar('Pulse 01', 'pulse 01'), true);
 });
 
-test('unverified nights stay hollow and a verified organiser is verified', () => {
+test('a community night waits for review and only a verified night is on the map', () => {
   const now = istanbulLocalToUtc('2026-11-01', '02:00');
-  assert.equal(initialVerification(false), 'unverified');
+  assert.equal(initialVerification(false), 'pending');
   assert.equal(initialVerification(true), 'verified');
-  assert.equal(isPubliclyListed(night('23:00', '05:00', 'unverified'), now), true);
-  assert.equal(isPubliclyListed(night('23:00', '05:00', 'verified'), now), true);
+  assert.equal(isPubliclyListed(night('23:00', '05:00', 'unverified'), now), false);
   assert.equal(isPubliclyListed(night('23:00', '05:00', 'pending'), now), false);
+  assert.equal(isPubliclyListed(night('23:00', '05:00', 'verified'), now), true);
 });
 
 test('three different reports pull the event off the map and into review', () => {

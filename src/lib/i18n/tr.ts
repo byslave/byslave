@@ -375,7 +375,7 @@ const tr = {
   },
   verify: {
     add: 'Etkinliğini ekle',
-    addHint: "Etkinlik doğrulanınca haritada herkese görünür. Doğrulanana kadar 'Doğrulanmadı' etiketiyle yayınlanır.",
+    addHint: 'Haritaya yalnızca doğrulanmış etkinlik çıkar. Onaylanmadan kimse yanlış bir geceye yönlendirilmez.',
     ticketHint: 'Bilet linkini eklersen etkinliğin daha hızlı doğrulanır.',
     duplicate: 'Bu bilgilerle zaten bir etkinlik var. Aynı etkinliği iki kez eklemeyelim.',
     similar: 'Bu başlık başka bir etkinliğe çok benziyor. Yine de kaydetmek istersen bir kez daha dokun.',

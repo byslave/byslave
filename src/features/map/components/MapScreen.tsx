@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Location from 'expo-location';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, ChevronDown, LocateFixed, Plus, Search } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -14,25 +13,21 @@ import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { Chip } from '@/src/components/ui/Chip';
-import { OfflineBanner } from '@/src/components/ui/OfflineBanner';
-import { EmptyState, ErrorState } from '@/src/components/ui/States';
+import { ErrorState } from '@/src/components/ui/States';
 import { AddVenueSheet } from '@/src/features/map/components/AddVenueSheet';
 import { PulseMap, type PulseMapHandle } from '@/src/features/map/components/PulseMap';
 import { confirmedCount } from '@/src/features/attendance/count';
-import { assembleEvents, matchesListing, nextListedDate } from '@/src/features/events/catalog';
+import { assembleEvents, matchesListing } from '@/src/features/events/catalog';
 import { type DateFilter } from '@/src/features/events/dates';
 import { nightPhase } from '@/src/features/events/schedule';
 import { formatIstanbul, istanbulDateISO, upcomingIstanbulDates } from '@/src/features/events/time';
 import { useServerNow } from '@/src/features/events/useServerNow';
-import { cities, personById, venueById, venues, type CityId, type Genre } from '@/src/data/demo';
+import { cities, personById, venueById, venues, type CityId } from '@/src/data/demo';
 import { formatDayLabel, formatNumber } from '@/src/lib/format';
-import { toHref } from '@/src/lib/nav';
 import { mapStyleUrl } from '@/src/lib/supabase/client';
 import { useAppStore, useAttendanceStore } from '@/src/stores/appStore';
 import { useToastStore } from '@/src/stores/toastStore';
 import { colors, fonts, radii, tabClearance } from '@/src/theme/tokens';
-
-const genreOrder: Genre[] = ['techno', 'house', 'electro', 'trance', 'dnb', 'hiphop', 'pop'];
 
 export function MapScreen() {
   const { t, i18n } = useTranslation();
@@ -53,8 +48,7 @@ export function MapScreen() {
   const { width } = useWindowDimensions();
   const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState<DateFilter>({ kind: 'tonight' });
-  const [genres, setGenres] = useState<Genre[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>('klein');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [cityOpen, setCityOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const [mapFailed, setMapFailed] = useState(false);
@@ -77,7 +71,6 @@ export function MapScreen() {
       .filter((row): row is { event: (typeof catalog)[number]; venue: NonNullable<ReturnType<typeof venueById>> } => Boolean(row.venue))
       .filter((row) => row.venue.city === city)
       .filter((row) => matchesListing(row.event, dateFilter, now))
-      .filter((row) => genres.length === 0 || row.event.genres.some((genre) => genres.includes(genre)))
       .filter((row) => {
         if (!needle) return true;
         const haystack = [row.event.title, row.venue.name, row.venue.district, ...row.event.lineup]
@@ -85,7 +78,7 @@ export function MapScreen() {
           .toLocaleLowerCase(i18n.language);
         return haystack.includes(needle);
       });
-  }, [catalog, city, dateFilter, genres, i18n.language, now, search]);
+  }, [catalog, city, dateFilter, i18n.language, now, search]);
 
   const pending = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase(i18n.language);
@@ -96,15 +89,11 @@ export function MapScreen() {
   }, [city, customVenues, i18n.language, search]);
 
   const cityVenues = useMemo(() => venues.filter((venue) => venue.city === city), [city]);
-  const nearest = useMemo(
-    () => nextListedDate(catalog.filter((event) => venueById(event.venueId)?.city === city), now),
-    [catalog, city, now],
-  );
   const selectedPending = pending.find((venue) => venue.id === selectedId) ?? null;
-  const selected = selectedPending ? null : (filtered.find((row) => row.venue.id === selectedId) ?? filtered[0] ?? null);
-  const fallbackVenue = filtered.length === 0 ? (cityVenues.find((venue) => venue.id === selectedId) ?? cityVenues[0] ?? null) : null;
+  const selected = selectedPending ? null : (filtered.find((row) => row.venue.id === selectedId) ?? null);
+  const pickedVenue = selectedId ? (cityVenues.find((venue) => venue.id === selectedId) ?? null) : null;
   const center = cities[city];
-  const focus = selectedPending ?? selected?.venue ?? fallbackVenue ?? null;
+  const focus = selectedPending ?? selected?.venue ?? pickedVenue ?? null;
   const mapCenter = focus ? { lng: focus.lng, lat: focus.lat } : center;
   const mapZoom = focus ? 15 : center.zoom;
 
@@ -153,13 +142,13 @@ export function MapScreen() {
           key={`${city}-${mapEpoch}`}
           ref={mapRef}
           pins={[
-            ...(filtered.length > 0 ? filtered : cityVenues.map((venue) => ({ event: null, venue }))).map((row) => ({
+            ...filtered.map((row) => ({
               id: row.venue.id,
               lng: row.venue.lng,
               lat: row.venue.lat,
               label: row.venue.name,
-              count: row.event ? confirmedCount(row.event.going, attendance[row.event.id] ?? null) : 0,
-              hollow: row.event?.verificationStatus === 'unverified',
+              count: confirmedCount(row.event.going, attendance[row.event.id] ?? null),
+              hollow: false,
             })),
             ...pending.map((venue) => ({
               id: venue.id,
@@ -169,7 +158,7 @@ export function MapScreen() {
               count: 0,
             })),
           ]}
-          selectedId={selectedPending?.id ?? selected?.venue.id ?? fallbackVenue?.id ?? null}
+          selectedId={selectedId}
           center={mapCenter}
           zoom={mapZoom}
           clusterWord={t('map.cluster')}
@@ -203,58 +192,21 @@ export function MapScreen() {
             accessibilityLabel={t('map.search')}
           />
         </View>
-        <View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-          <Chip label={t('map.tonight')} selected={dateFilter.kind === 'tonight'} onPress={() => setDateFilter({ kind: 'tonight' })} />
-          <Chip label={t('map.weekend')} selected={dateFilter.kind === 'weekend'} onPress={() => setDateFilter({ kind: 'weekend' })} />
-          {genreOrder.map((genre) => (
-            <Chip
-              key={genre}
-              label={t(`genres.${genre}`)}
-              selected={genres.includes(genre)}
-              onPress={() => setGenres((current) => (current.includes(genre) ? current.filter((item) => item !== genre) : [...current, genre]))}
-            />
-          ))}
-        </ScrollView>
-        <LinearGradient pointerEvents="none" colors={['rgba(7,6,12,0)', 'rgba(7,6,12,0.95)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.chipFade} />
-        </View>
       </View>
 
       <View pointerEvents="box-none" style={[styles.bottom, { bottom: tabClearance }]}>
-        <View style={styles.metaRow}>
-          <View style={styles.metaCopy}>
-            <OfflineBanner />
-            <AppText variant="muted">
-              {t('map.sampleCounts')} · {t('map.locationPrivate')}
-            </AppText>
-          </View>
-          <View style={styles.mapActions}>
-            {width >= 768 ? (
-              <Pressable accessibilityRole="button" accessibilityLabel={t('map.addVenue')} onPress={() => setAddOpen(true)} style={styles.locate}>
-                <Plus color={colors.text} size={18} />
-              </Pressable>
-            ) : null}
-            <Pressable accessibilityRole="button" accessibilityLabel={t('map.locate')} onPress={() => void locate()} style={styles.locate}>
-              <LocateFixed color={colors.text} size={18} />
+        <View style={styles.mapActions}>
+          {width >= 768 ? (
+            <Pressable accessibilityRole="button" accessibilityLabel={t('map.addVenue')} onPress={() => setAddOpen(true)} style={styles.locate}>
+              <Plus color={colors.text} size={18} />
             </Pressable>
-          </View>
+          ) : null}
+          <Pressable accessibilityRole="button" accessibilityLabel={t('map.locate')} onPress={() => void locate()} style={styles.locate}>
+            <LocateFixed color={colors.text} size={18} />
+          </Pressable>
         </View>
         {!mapReady && !mapFailed ? <View style={styles.loadingBar} /> : null}
-        {selectedPending ? (
-          <Card>
-            <View style={styles.cardTop}>
-              <Badge label={t('map.pending')} tone="accent" />
-            </View>
-            <AppText variant="heading">{selectedPending.name}</AppText>
-            <AppText variant="muted">
-              {t(`venueTypes.${selectedPending.type}`)} · {selectedPending.district}
-              {selectedPending.street ? ` · ${selectedPending.street}` : ''}
-            </AppText>
-            <AppText variant="muted">{t('map.pendingBody')}</AppText>
-            {selectedPending.rules ? <AppText variant="body">{selectedPending.rules}</AppText> : null}
-            <AppText variant="bodyMedium">0 {t('map.going')}</AppText>
-          </Card>
-        ) : selected ? (
+        {selected ? (
           <Card>
             <View style={styles.cardTop}>
               <Badge label={selected.event.genres.map((genre) => t(`genres.${genre}`)).join(' · ')} tone="accent" />
@@ -294,36 +246,7 @@ export function MapScreen() {
               <Button label={t('map.viewEvent')} onPress={() => router.push(`/event/${selected.event.id}`)} />
             </View>
           </Card>
-        ) : (
-          <Card>
-            {fallbackVenue ? (
-              <View style={styles.cardTop}>
-                <Badge label={t('common.sampleData')} tone="accent" />
-                <AppText variant="heading">{fallbackVenue.name}</AppText>
-                <AppText variant="muted">
-                  {fallbackVenue.district}
-                  {fallbackVenue.street ? ` · ${fallbackVenue.street}` : ''}
-                </AppText>
-                <AppText variant="body">{t('map.noEventHere')}</AppText>
-                <Button label={t('map.openVenue')} variant="secondary" onPress={() => router.push(toHref(`/venue/${fallbackVenue.id}`))} />
-              </View>
-            ) : null}
-            <Button label={t('verify.add')} variant="secondary" onPress={() => router.push(toHref('/event/new'))} />
-            <EmptyState
-              title={t('map.emptyTitle')}
-              body={t('map.emptyBody')}
-              actionLabel={t('map.reset')}
-              onAction={() => {
-                setSearch('');
-                setGenres([]);
-                setDateFilter({ kind: 'tonight' });
-              }}
-            />
-            {nearest ? (
-              <Button label={t('map.nearest')} variant="ghost" onPress={() => setDateFilter({ kind: 'day', iso: nearest })} />
-            ) : null}
-          </Card>
-        )}
+        ) : null}
       </View>
 
       <BottomSheet visible={cityOpen} title={t('map.cityTitle')} onClose={() => setCityOpen(false)}>
@@ -401,7 +324,7 @@ const styles = StyleSheet.create({
   bottom: { position: 'absolute', left: 12, right: 12, gap: 8 },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   metaCopy: { flex: 1, gap: 2 },
-  mapActions: { flexDirection: 'row', gap: 8 },
+  mapActions: { flexDirection: 'row', gap: 8, alignSelf: 'flex-end' },
   locate: {
     width: 44,
     height: 44,
