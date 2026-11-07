@@ -103,6 +103,7 @@ export interface MessageRequest {
   eventId: string;
   status: 'pending' | 'accepted' | 'declined';
   createdAt: string;
+  sample?: boolean;
 }
 
 export interface ChatMessage {

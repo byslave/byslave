@@ -384,6 +384,7 @@ const en: Messages = {
     goingRequired: 'Mark yourself as going before sending a message request.',
     eventUnavailable: 'Message requests are available only for an active, verified event.',
     sent: 'Your message request was sent.',
+    acceptedDemo: 'The sample attendee accepted. You can test the chat.',
     duplicate: 'You already have an open request with this person.',
     blocked: 'You can’t message someone you blocked.',
     safety: 'Chat opens only when both people are going to the same event and the request is accepted. You can block at any time.',

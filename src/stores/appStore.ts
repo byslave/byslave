@@ -135,7 +135,7 @@ interface AppState {
   postponeOwnedEvent: (event: PulseEvent) => void;
   expireDue: (now: Date) => void;
   pushInbox: (item: Omit<InboxItem, 'id' | 'at'>) => void;
-  requestMessage: (input: { recipientId: string; eventId: string }) => 'sent' | 'duplicate' | 'blocked';
+  requestMessage: (input: { recipientId: string; eventId: string; sample?: boolean }) => 'sent' | 'acceptedDemo' | 'duplicate' | 'blocked';
   reviewMessageRequest: (requestId: string, status: 'accepted' | 'declined') => void;
   sendChatMessage: (requestId: string, body: string) => boolean;
   setRecording: (eventId: string | null) => void;
@@ -361,7 +361,7 @@ export const useAppStore = create<AppState>()(
         if (changed) set({ localEvents });
       },
       pushInbox: (item) => set({ inbox: [{ ...item, id: `note-${Date.now()}`, at: new Date().toISOString() }, ...get().inbox] }),
-      requestMessage: ({ recipientId, eventId }) => {
+      requestMessage: ({ recipientId, eventId, sample = false }) => {
         const senderId = get().user?.id;
         if (!senderId || get().blockedIds.includes(recipientId)) return 'blocked';
         const duplicate = get().messageRequests.some(
@@ -377,11 +377,12 @@ export const useAppStore = create<AppState>()(
           senderId,
           recipientId,
           eventId,
-          status: 'pending',
+          status: sample ? 'accepted' : 'pending',
           createdAt: new Date().toISOString(),
+          sample,
         };
         set({ messageRequests: [request, ...get().messageRequests] });
-        return 'sent';
+        return sample ? 'acceptedDemo' : 'sent';
       },
       reviewMessageRequest: (requestId, status) =>
         set({

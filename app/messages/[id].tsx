@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,8 @@ export default function ChatScreen() {
   const [body, setBody] = useState('');
   const userId = useAppStore((state) => state.user?.id);
   const request = useAppStore((state) => state.messageRequests.find((item) => item.id === id));
-  const messages = useAppStore((state) => state.chatMessages.filter((item) => item.requestId === id).reverse());
+  const chatMessages = useAppStore((state) => state.chatMessages);
+  const messages = useMemo(() => chatMessages.filter((item) => item.requestId === id).reverse(), [chatMessages, id]);
   const send = useAppStore((state) => state.sendChatMessage);
 
   if (!request || request.status !== 'accepted' || !userId) {

@@ -307,9 +307,10 @@ export function EventScreen() {
               showToast(t('messages.goingRequired'));
               return;
             }
-            const result = requestMessage({ recipientId: personId, eventId: event.id });
+            const result = requestMessage({ recipientId: personId, eventId: event.id, sample: event.sample });
             setPersonId(null);
             showToast(t(`messages.${result}`));
+            if (result === 'acceptedDemo') router.push(toHref('/messages'));
           }}
         />
         <Chip

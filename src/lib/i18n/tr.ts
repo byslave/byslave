@@ -383,6 +383,7 @@ const tr = {
     goingRequired: 'Mesaj isteği için önce bu etkinliğe “Gidiyorum” demelisin.',
     eventUnavailable: 'Mesaj isteği yalnızca aktif ve doğrulanmış bir etkinlikte gönderilebilir.',
     sent: 'Mesaj isteğin gönderildi.',
+    acceptedDemo: 'Örnek katılımcı isteği kabul etti. Sohbeti deneyebilirsin.',
     duplicate: 'Bu kişiyle zaten açık bir isteğin var.',
     blocked: 'Engellediğin biriyle mesajlaşamazsın.',
     safety: 'Sohbet yalnızca iki taraf da aynı etkinliğe gidiyorsa ve istek kabul edilirse açılır. İstediğin an engelleyebilirsin.',

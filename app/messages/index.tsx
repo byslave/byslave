@@ -42,6 +42,7 @@ export default function MessagesScreen() {
                 <AppText variant="bodyMedium">{person?.name ?? otherId}</AppText>
                 <AppText variant="muted">{incoming ? t('messages.incoming') : t('messages.outgoing')}</AppText>
               </View>
+              {request.sample ? <Badge label={t('common.sample')} tone="accent" /> : null}
               <Badge label={t(`messages.status.${request.status}`)} tone={request.status === 'accepted' ? 'success' : 'neutral'} />
             </View>
             {incoming && request.status === 'pending' ? (
