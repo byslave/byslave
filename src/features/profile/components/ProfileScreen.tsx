@@ -47,6 +47,8 @@ export function ProfileScreen() {
   const blockedIds = useAppStore((state) => state.blockedIds);
   const finishedNights = useAppStore((state) => state.finishedNights);
   const customVenues = useAppStore((state) => state.customVenues);
+  const messageRequests = useAppStore((state) => state.messageRequests);
+  const chatMessages = useAppStore((state) => state.chatMessages);
   const displayName = useAppStore((state) => state.displayName);
   const username = useAppStore((state) => state.username);
   const bio = useAppStore((state) => state.bio);
@@ -86,6 +88,8 @@ export function ProfileScreen() {
       blockedIds,
       finishedNights,
       customVenues,
+      messageRequests,
+      chatMessages,
     };
     const text = JSON.stringify(payload, null, 2);
     if (typeof document !== 'undefined') {
@@ -128,9 +132,11 @@ export function ProfileScreen() {
   const organizer = useAppStore((state) => state.organizer);
   const links: [string, string][] = [
     [t('profile.addEvent'), '/event/new'],
+    [t('profile.eventSubmissions'), '/event/submissions'],
     [t('profile.organizer'), '/organizer'],
     [t('profile.edit'), '/setup'],
     [t('profile.notifications'), '/notifications'],
+    [t('profile.messages'), '/messages'],
     [t('profile.friendsLink'), '/friends'],
     [t('profile.help'), '/help'],
     [t('help.notice'), '/legal/notice'],

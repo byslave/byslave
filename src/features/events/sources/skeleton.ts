@@ -15,6 +15,7 @@ export function disabledFeed(id: string, sourceName: string, enabled: boolean): 
         sourceName,
         externalId: raw.externalId,
         title: raw.title,
+        concept: raw.concept ?? raw.genre ?? raw.title,
         startAt: raw.startAt,
         endAt: raw.endAt,
         ticketUrl: raw.ticketUrl,

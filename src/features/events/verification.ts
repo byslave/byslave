@@ -27,8 +27,8 @@ export function checkTicketUrl(value: string): { ok: true; official: boolean } |
   return { ok: true, official };
 }
 
-export function ticketRequired(organizerVerified: boolean, verification: VerificationStatus): boolean {
-  return organizerVerified || verification === 'verified';
+export function ticketRequired(_organizerVerified: boolean, _verification: VerificationStatus): boolean {
+  return true;
 }
 
 export function foldTitle(value: string): string {

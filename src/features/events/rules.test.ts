@@ -14,7 +14,7 @@ import {
   validateWindow,
   type Schedulable,
 } from './time.ts';
-import { applyReport, checkTicketUrl, initialVerification, isDuplicateSlot, shouldNotify, titlesTooSimilar, withinDailyCap } from './verification.ts';
+import { applyReport, checkTicketUrl, initialVerification, isDuplicateSlot, shouldNotify, ticketRequired, titlesTooSimilar, withinDailyCap } from './verification.ts';
 
 function night(start: string, end: string, status: Schedulable['verificationStatus'] = 'verified'): Schedulable {
   return {
@@ -172,6 +172,11 @@ test('ticket links must be https and cannot be shorteners', () => {
   assert.equal(checkTicketUrl('https://bit.ly/abc').ok, false);
   const official = checkTicketUrl('https://www.biletix.com/etkinlik/pulse/1');
   assert.equal(official.ok && official.official, true);
+});
+
+test('every event submission needs a ticket link for review', () => {
+  assert.equal(ticketRequired(false, 'pending'), true);
+  assert.equal(ticketRequired(true, 'verified'), true);
 });
 
 test('a new account cannot publish a fourth event in a day', () => {

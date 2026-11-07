@@ -43,6 +43,7 @@ export interface DemoEvent {
   mutuals: number;
   cover: CoverKey;
   attendeeIds: string[];
+  verifiedDemo?: boolean;
 }
 
 export interface DemoPost {
@@ -100,6 +101,28 @@ export const venues: Venue[] = [
 ];
 
 export const events: DemoEvent[] = [
+  {
+    id: 'pulse-message-demo',
+    venueId: 'klein',
+    title: 'PULSE Mesajlaşma Testi',
+    date: '2026-11-07',
+    startTime: '21:00',
+    endTime: '04:00',
+    genres: ['techno', 'house'],
+    lineup: ['PULSE Demo'],
+    price: { tr: 'Örnek veri', en: 'Sample data' },
+    ageLimit: 18,
+    description: {
+      tr: 'Bu gerçek bir etkinlik değildir. Doğrulama, katılım ve mesajlaşma akışını deneyebilmen için hazırlanmış örnek gecedir.',
+      en: 'This is not a real event. It is a sample night for testing verification, attendance, and messaging.',
+    },
+    going: 3,
+    checkedIn: 0,
+    mutuals: 2,
+    cover: 'lights',
+    attendeeIds: ['ece', 'kerem', 'selin'],
+    verifiedDemo: true,
+  },
   {
     id: 'pulse-01',
     venueId: 'klein',

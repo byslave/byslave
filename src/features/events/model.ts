@@ -8,6 +8,7 @@ export interface PulseEvent {
   id: string;
   venueId: string;
   title: string;
+  concept: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -93,4 +94,22 @@ export interface InboxItem {
   title: string;
   eventId: string;
   at: string;
+}
+
+export interface MessageRequest {
+  id: string;
+  senderId: string;
+  recipientId: string;
+  eventId: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string;
+  sample?: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  requestId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
 }

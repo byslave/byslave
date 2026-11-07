@@ -18,19 +18,21 @@ export function toSchedule(event: PulseEvent): Schedulable {
 
 export function demoToPulse(event: DemoEvent): PulseEvent {
   const span = windowFromClocks(event.date, event.startTime, event.endTime);
+  const verified = event.verifiedDemo === true;
   return {
     ...event,
+    concept: event.genres.join(' · '),
     endDate: istanbulDateISO(span.end),
     startAt: span.start.toISOString(),
     endAt: span.end.toISOString(),
-    source: 'community',
+    source: verified ? 'organizer' : 'community',
     sourceName: null,
     externalId: null,
     ticketUrl: null,
-    verificationStatus: 'unverified',
-    verifiedAt: null,
-    verifiedBy: null,
-    verificationNote: null,
+    verificationStatus: verified ? 'verified' : 'unverified',
+    verifiedAt: verified ? span.start.toISOString() : null,
+    verifiedBy: verified ? 'pulse-demo' : null,
+    verificationNote: verified ? 'sample-verification' : null,
     status: 'scheduled',
     timeUnconfirmed: false,
     sessions: [],
